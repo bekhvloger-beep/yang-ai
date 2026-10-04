@@ -1,15 +1,15 @@
 {
   "_izoh": "YANG AI admin paneli — bu fayl GitHub'da: bekhvloger-beep/yang-ai -> app-config.json. Tahrirlang (web interfeys orqali), 30 daqiqada ilovalar avtomatik oladi. Reklama yoqish: ad.enabled=true qiling.",
   "ad": {
-    "enabled": false,
-    "title": "Sizning reklamaniz",
-    "body": "Matn yoki aksiya haqida qisqa xabar",
-    "link": "https://aicomp.uz",
+    "enabled": true,
+    "title": "RASMIY SAYTIMIZ",
+    "body": "bizning saytimiz",
+    "link": "https://bekhvloger-beep.github.io/yang-ai/",
     "linkText": "Batafsil",
     "imageUrl": ""
   },
   "notice": {
-    "enabled": true,
+    "enabled": false,
     "id": "hello-1",
     "text": "YANG AI yangilanishi: endi o'zbekcha tarjimon va yangi bepul miyalar bor!",
     "link": ""
