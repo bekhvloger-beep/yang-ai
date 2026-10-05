@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.0",
-    "text": "YANG AI v3.9.0 chiqdi: jonli faoliyat ko'rsatuvi (agent nima qilayotganini ko'rsatadi), lokal AI endi ilova ichida — kalitsiz ham ishlaydi, tezlik oshirildi. Ilova o'zi yangilanadi yoki Releases bo'limidan yuklab oling.",
+    "id": "release-3.9.1",
+    "text": "YANG AI v3.9.1: lokal AI (offline zaxira) endi to'g'ri ishlaydi — bulut limit bo'lsa ham ilova javob beradi. Ilova o'zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,
