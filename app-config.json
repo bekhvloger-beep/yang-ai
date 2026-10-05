@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.1",
-    "text": "YANG AI v3.9.1: lokal AI (offline zaxira) endi to'g'ri ishlaydi — bulut limit bo'lsa ham ilova javob beradi. Ilova o'zi yangilanadi.",
+    "id": "release-3.9.2",
+    "text": "YANG AI v3.9.2: yangi \"Faqat shu modelni ishlatish\" rejimi — Sozlamalarda tanlagan modelingizga qotiring, boshqa modelga o'tish o'chiriladi. Ilova o'zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,
