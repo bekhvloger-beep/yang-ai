@@ -1,20 +1,19 @@
 {
   "_izoh": "YANG AI admin paneli — bu fayl GitHub'da: bekhvloger-beep/yang-ai -> app-config.json. Tahrirlang (web interfeys orqali), 30 daqiqada ilovalar avtomatik oladi. Reklama yoqish: ad.enabled=true qiling.",
   "ad": {
-    "enabled": true,
-    "title": "RASMIY SAYTIMIZ",
-    "body": "bizning saytimiz",
-    "link": "https://bekhvloger-beep.github.io/yang-ai/",
+    "enabled": false,
+    "title": "Sizning reklamaniz",
+    "body": "Matn yoki aksiya haqida qisqa xabar",
+    "link": "https://aicomp.uz",
     "linkText": "Batafsil",
     "imageUrl": ""
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.3",
-    "text": "YANG AI v3.9.3: endi ilova lokal AI bilan kalitsiz ishlaydi (Kilo bepul zaxira), o'zbekcha tarjima tuzatildi va pin rejimi saqlandi. Ilova o'zi yangilanadi.",
+    "id": "release-3.9.4",
+    "text": "YANG AI v3.9.4: sovuq start tuzatildi — yangi o'rnatishdan keyingi BIRINCHI xabar endi lokal model tayyor bo'lishini kutadi (ilgari \"fetch failed\" bilan yiqilardi). Ilova o'zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,
-  "downloadUrl": "https://github.com/bekhvloger-beep/yang-ai/releases/latest",
-  "tg": "ODk1NDkxMzQzOTpBQUczYXNRdmFaUTdUUXNONVRaelQyd0I0ZnF4a2k3akdTODo3NTYyMDQwNzk3"
+  "downloadUrl": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
 }
