@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.2",
-    "text": "YANG AI v3.9.2: yangi \"Faqat shu modelni ishlatish\" rejimi — Sozlamalarda tanlagan modelingizga qotiring, boshqa modelga o'tish o'chiriladi. Ilova o'zi yangilanadi.",
+    "id": "release-3.9.3",
+    "text": "YANG AI v3.9.3: endi ilova lokal AI bilan kalitsiz ishlaydi (Kilo bepul zaxira), o'zbekcha tarjima tuzatildi va pin rejimi saqlandi. Ilova o'zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,
