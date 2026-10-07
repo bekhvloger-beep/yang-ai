@@ -4,7 +4,8 @@
 
 YANG AI — foydalanuvchi kompyuterida ishlaydigan ZCode/Codex-uslubidagi agentic yordamchi:
 
-- ❄️ **Sovuq start tuzatildi (v3.9.4)** — yangi o'rnatishdan keyingi BIRINCHI xabar endi lokal model tayyor bo'lishini kutadi (45 s gacha); kutish davomida "⏳ Lokal model yuklanmoqda" notisi chiqadi. Ilgari birinchi xabar "fetch failed" bilan yiqilardi.
+- ❄️ **Sovuq start tuzatildi (v3.9.4 / v3.9.5)** — yangi o'rnatishdan keyingi BIRINCHI xabar endi lokal model tayyor bo'lishini kutadi (45 s gacha); kutish davomida "⏳ Lokal model yuklanmoqda" notisi chiqadi. Ilgari birinchi xabar "fetch failed" bilan yiqilardi.
+- ✅ **Doimiy testlar (v3.9.5)** — sovuq start kutish va pin/failover zanjiri avtomatik tekshiriladi (`npm run test:pin`, `npm run test:ui`).
 - 🧠 **Lokal AI asosiy rejim** — ilova birinchi navbatda kompyuteringizdagi modeldan javob oladi (llama.cpp + Qwen3-1.7B, ilova ichida). Internet va API kaliti shart emas.
 - 🔑 **Kilo kalitsiz zaxira** — lokal model ishlamasa, kalit talab qilmaydigan Kilo gateway avtomatik ulanadi (oxirgi zaxira — Pollinations).
 - 📌 **"Faqat shu modelni ishlatish" (pin)** — Sozlamalarda tanlagan modelingizga qotib qo'yasiz: boshqa model/provayderga o'tilmaydi, ishlamasa aniq xato ko'rsatiladi.
@@ -23,7 +24,7 @@ YANG AI — foydalanuvchi kompyuterida ishlaydigan ZCode/Codex-uslubidagi agenti
 
 ### Hajm va model haqida
 
-- O'rnatuvchi hajmi **~1.7 GiB** (Setup: 1 773 392 676 B; Portable: 1 773 132 257 B). Ichida: Qwen3-1.7B modeli (1.05 GiB), NLLB tarjimon (631 MB) va llama.cpp runtime.
+- O'rnatuvchi hajmi **~1.7 GiB** (Setup: 1 773 392 758 B; Portable: 1 773 132 336 B). Ichida: Qwen3-1.7B modeli (1.05 GiB), NLLB tarjimon (631 MB) va llama.cpp runtime.
 - **Nima uchun 4B emas:** NSIS o'rnatuvchi formati 2 GiB dan katta paketni yiga olmaydi — 4B model bilan paket 3.6 GB bo'lib, build yiqilgan. Shuning uchun paketga 1.7B model kiritildi (har qanday zamonaviy PC'da ishlaydi). Kompyuterda `model-4b.gguf` bo'lsa va RAM 8 GB+ bo'lsa, ilova avtomatik o'sha kattaroq modelni tanlaydi.
 - Windows 10/11 x64.
 
