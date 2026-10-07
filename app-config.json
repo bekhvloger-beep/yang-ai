@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.4",
-    "text": "YANG AI v3.9.4: sovuq start tuzatildi — yangi o'rnatishdan keyingi BIRINCHI xabar endi lokal model tayyor bo'lishini kutadi (ilgari \"fetch failed\" bilan yiqilardi). Ilova o'zi yangilanadi.",
+    "id": "release-3.9.5",
+    "text": "YANG AI v3.9.5: sovuq start tuzatishi saqlanib qoldi (yangi o'rnatishdan keyingi BIRINCHI xabar lokal model tayyor bo'lishini kutadi) va endi doimiy testlar bilan qo'riqlanadi. Ilova o'zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,
