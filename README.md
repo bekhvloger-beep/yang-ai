@@ -13,6 +13,7 @@ YANG AI — foydalanuvchi kompyuterida ishlaydigan ZCode/Codex-uslubidagi agenti
 - 🤖 **Agentlar jamoasi** — katta loyihalar uchun parallel agentlar, har biri o'z mutaxassis API'sida
 - 📄 **Hujjat yaratish** — PDF, Word (DOCX), Excel (XLSX), CSV, PNG diagrammalar
 - 👁 **Vision** — skrinshot va rasm tahlili
+- 🔍 **Ollama / LM Studio skan** (v3.9.7) — kompyuteringizdagi lokal AI serverlarni topadi, har bir modelning hajmi va taxminiy RAM iste'molini ko'rsatadi (masalan "~5.9 GB RAM"), va siz xohlagan lokal modelni bitta bosishda asosiy AI qiladi. Faqat localhost serverlar API kalitsiz ulanadi. 7 ta benchmark topshirig'ida Qwen2.5-Coder 7B (o'rtacha 26.7s) bundled Qwen3-1.7B'dan (42s) tezroq ishlagan.
 - 🔄 **Avtomatik yangilanish** — GitHub Releases orqali
 - 🔒 **Xavfsizlik** — buyruqlar uchun ruxsat so'rovi (approval tizimi)
 

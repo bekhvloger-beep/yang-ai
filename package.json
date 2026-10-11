@@ -1,0 +1,84 @@
+{
+  "name": "yang-ai",
+  "version": "3.9.7",
+  "description": "YANG AI by AICOMP.UZ — professional desktop agentic assistant",
+  "type": "module",
+  "main": "main.js",
+  "author": "AICOMP.UZ",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never",
+    "release": "node scripts/publish_release.mjs",
+    "test:pin": "node agent/test_pin_failover.mjs",
+    "test:ui": "node scripts/ui_pin_test.mjs"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "electron": "34.0.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "uz.aicomp.yang",
+    "productName": "YANG AI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.cjs",
+      "agent/**/*",
+      "!agent/test_*",
+      "!agent/bench_result.json",
+      "!agent/lru_ref/**",
+      "!agent/lru_tests.mjs",
+      "renderer/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "translator/server.py",
+        "to": "translator/server.py"
+      },
+      {
+        "from": "translator/model",
+        "to": "translator-model"
+      },
+      {
+        "from": "translator/runtime",
+        "to": "translator-runtime"
+      },
+      {
+        "from": "local-ai/model-1.7b.gguf",
+        "to": "local-ai/model-1.7b.gguf"
+      },
+      {
+        "from": "local-ai/lc",
+        "to": "local-ai/lc"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "renderer/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "YANG-AI-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "YANG-AI-Portable-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "bekhvloger-beep",
+        "repo": "yang-ai"
+      }
+    ]
+  }
+}

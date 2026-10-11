@@ -1,0 +1,399 @@
+{
+  "generatedAt": "2026-10-11T17:59:30.192Z",
+  "benchmark": "7 selected deterministic Python coding tasks (see caseSelection); each passes only if a successful write_file targeted the requested file, that is the only workspace artifact, and a restricted-AST Python harness validates and executes every expected behavior case.",
+  "caseSelection": [
+    "twice",
+    "sum_to_n",
+    "clamp",
+    "is_even",
+    "factorial",
+    "shipping_fee",
+    "letter_grade"
+  ],
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpuCount": 6,
+    "totalSystemRamMb": 12214.7,
+    "gpuMemoryMeasured": false,
+    "ollamaServicePids": [
+      8184
+    ],
+    "notes": [
+      "Models were run sequentially and warmed before timed tasks.",
+      "Peak process-tree RSS and minimum available host RAM are sampled when Python psutil is installed; GPU VRAM is not measured.",
+      "Ollama service stays running; if its model was already loaded it is unloaded temporarily before the bundled model and is loaded again for its benchmark."
+    ],
+    "bundledStartupSeconds": 5.13,
+    "ollamaLoadedAfterBenchmark": {
+      "name": "qwen2.5-coder:7b",
+      "sizeBytes": 4740716952,
+      "vramBytes": 4740716952
+    }
+  },
+  "models": [
+    {
+      "model": "Qwen3-1.7B (bundled GGUF)",
+      "pass": 6,
+      "total": 7,
+      "passRate": 0.8571428571428571,
+      "meanSeconds": 41.95,
+      "medianSeconds": 42.39,
+      "warmupSeconds": 0.41,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 33.88,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 65,
+            "peakProcessTreeRssMb": 2730.7,
+            "minSystemAvailableRamMb": 2202.8
+          },
+          "error": null
+        },
+        {
+          "case": "sum_to_n",
+          "file": "sum_to_n.py",
+          "pass": true,
+          "seconds": 42.39,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS sum_to_n 4 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 83,
+            "peakProcessTreeRssMb": 3009.1,
+            "minSystemAvailableRamMb": 1948
+          },
+          "error": null
+        },
+        {
+          "case": "clamp",
+          "file": "clamp.py",
+          "pass": true,
+          "seconds": 51.93,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS clamp 6 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 102,
+            "peakProcessTreeRssMb": 2684.5,
+            "minSystemAvailableRamMb": 2232.3
+          },
+          "error": null
+        },
+        {
+          "case": "is_even",
+          "file": "is_even.py",
+          "pass": true,
+          "seconds": 36.86,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS is_even 4 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 72,
+            "peakProcessTreeRssMb": 2973.9,
+            "minSystemAvailableRamMb": 1820
+          },
+          "error": null
+        },
+        {
+          "case": "factorial",
+          "file": "factorial.py",
+          "pass": false,
+          "seconds": 36.93,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": false,
+            "output": "wrong result for [0]: 0 != 1"
+          },
+          "resources": {
+            "available": true,
+            "samples": 72,
+            "peakProcessTreeRssMb": 3246.3,
+            "minSystemAvailableRamMb": 1533.9
+          },
+          "error": null
+        },
+        {
+          "case": "shipping_fee",
+          "file": "shipping_fee.py",
+          "pass": true,
+          "seconds": 48.01,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS shipping_fee 6 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 94,
+            "peakProcessTreeRssMb": 3524.5,
+            "minSystemAvailableRamMb": 1255.7
+          },
+          "error": null
+        },
+        {
+          "case": "letter_grade",
+          "file": "letter_grade.py",
+          "pass": true,
+          "seconds": 43.64,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS letter_grade 10 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 84,
+            "peakProcessTreeRssMb": 3813.6,
+            "minSystemAvailableRamMb": 974.7
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "pass": 6,
+      "total": 7,
+      "passRate": 0.8571428571428571,
+      "meanSeconds": 26.71,
+      "medianSeconds": 25.09,
+      "warmupSeconds": 35.03,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 24.1,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 46,
+            "peakProcessTreeRssMb": 4987.6,
+            "minSystemAvailableRamMb": 600.5
+          },
+          "error": null
+        },
+        {
+          "case": "sum_to_n",
+          "file": "sum_to_n.py",
+          "pass": true,
+          "seconds": 24.93,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS sum_to_n 4 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 48,
+            "peakProcessTreeRssMb": 5109.9,
+            "minSystemAvailableRamMb": 355.1
+          },
+          "error": null
+        },
+        {
+          "case": "clamp",
+          "file": "clamp.py",
+          "pass": true,
+          "seconds": 25.09,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS clamp 6 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 49,
+            "peakProcessTreeRssMb": 5233.9,
+            "minSystemAvailableRamMb": 242.9
+          },
+          "error": null
+        },
+        {
+          "case": "is_even",
+          "file": "is_even.py",
+          "pass": true,
+          "seconds": 23.2,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS is_even 4 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 45,
+            "peakProcessTreeRssMb": 5356.3,
+            "minSystemAvailableRamMb": 494.5
+          },
+          "error": null
+        },
+        {
+          "case": "factorial",
+          "file": "factorial.py",
+          "pass": false,
+          "seconds": 32.91,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": false,
+            "output": "expected one top-level function and no other statements"
+          },
+          "resources": {
+            "available": true,
+            "samples": 64,
+            "peakProcessTreeRssMb": 5477.4,
+            "minSystemAvailableRamMb": 391.2
+          },
+          "error": null
+        },
+        {
+          "case": "shipping_fee",
+          "file": "shipping_fee.py",
+          "pass": true,
+          "seconds": 27.52,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS shipping_fee 6 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 53,
+            "peakProcessTreeRssMb": 5592.1,
+            "minSystemAvailableRamMb": 429.1
+          },
+          "error": null
+        },
+        {
+          "case": "letter_grade",
+          "file": "letter_grade.py",
+          "pass": true,
+          "seconds": 29.23,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS letter_grade 10 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 57,
+            "peakProcessTreeRssMb": 5715.6,
+            "minSystemAvailableRamMb": 419
+          },
+          "error": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "7 deterministic, small Python tasks are still a synthetic sample, not a broad coding-quality estimate.",
+    "Warm inference latency is reported separately from each model warm-up.",
+    "Memory sampling does not measure dedicated GPU VRAM."
+  ]
+}
