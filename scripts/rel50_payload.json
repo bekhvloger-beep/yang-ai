@@ -1,0 +1,8 @@
+{
+  "tag_name": "v5.0.0",
+  "name": "YANG AI 5.0.0",
+  "body": "YANG AI 5.0.0 — aicomp.uz\n\nYangiliklar:\n- IDE paneli: fayl daraxti, terminal va faoliyat jurnali — agent qaysi faylni ochdi/yozdi/o'zgartirdi, qaysi buyruq bajarilgani jonli ko'rinadi.\n- Rasm studiyasi: o'zbekcha prompt avtomatik inglizchaga tarjima qilinadi; sifat tanlanadi (1080 / 2K / 4K).\n- Premium font (Montserrat) va interfeys takomillashuvi.",
+  "draft": false,
+  "prerelease": false,
+  "target_commitish": "v5"
+}
