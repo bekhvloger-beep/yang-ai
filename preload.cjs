@@ -38,6 +38,9 @@ contextBridge.exposeInMainWorld('api', {
   ideRunCommand: (command, cwd) => ipcRenderer.invoke('ide:run-command', { command, cwd }),
   // v5 IDE: workspace fayl daraxti.
   ideListTree: (rel, depth) => ipcRenderer.invoke('ide:list-tree', { rel, depth }),
+  // v5.1 IDE tahrirlovchi: workspace faylini saqlash + tashqari ilovada ochish.
+  ideSaveFile: (p, content) => ipcRenderer.invoke('ide:save-file', { path: p, content }),
+  ideOpenExternal: (p) => ipcRenderer.invoke('ide:open-external', { path: p }),
   // v5 rasm menyu: o'zbekcha prompt bo'lsa inglizchaga o'giriladi, so'ng rasm chiziladi.
   imageStudio: (promptUz, quality) => ipcRenderer.invoke('image:studio', { prompt: promptUz, quality }),
   translateStatus: () => ipcRenderer.invoke('translate:status'),

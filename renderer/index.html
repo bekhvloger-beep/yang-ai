@@ -186,10 +186,13 @@
   <div id="ideFileModal" class="modal hidden">
     <div class="modal-box ide-file-box">
       <div class="modal-head">
-        <h2 id="ideFileName">fayl</h2>
+        <h2 id="ideFileName">fayl<small id="ideFileDirty"></small></h2>
+        <button id="ideFileEdit" class="btn btn-ghost" title="Tahrirlash">✏️</button>
+        <button id="ideFileSave" class="btn btn-ghost hidden" title="Saqlash (Ctrl+S)">💾</button>
+        <button id="ideFileExt" class="btn btn-ghost" title="Tizim ilovasi bilan ochish">↗</button>
         <button id="ideFileClose" class="btn btn-ghost">✕</button>
       </div>
-      <div class="modal-body"><pre id="ideFileContent" class="ide-file-pre"></pre></div>
+      <div class="modal-body"><pre id="ideFileContent" class="ide-file-pre"></pre><textarea id="ideFileEditArea" class="ide-file-edit hidden" spellcheck="false"></textarea></div>
     </div>
   </div>
 

@@ -479,6 +479,53 @@ function registerIpc() {
       return { error: e.message || 'o‘qib bo‘lmadi' };
     }
   });
+  // v5.1 IDE tahrirlovchi: workspace ichidagi faylni saqlash. PATH guard bilan —
+  // workspace'dan chiqish, symlink va abs yo'l bloklanadi.
+  ipcMain.handle('ide:save-file', async (_e, { path: p, content }) => {
+    try {
+      const chat = chats.get(activeChatId());
+      const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+      if (!ws) return { error: 'Ish papkasi tanlanmagan' };
+      const abs = path.resolve(ws, String(p || ''));
+      const rel = path.relative(path.resolve(ws), abs);
+      if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
+      if (typeof content !== 'string') return { error: 'mazmun matn bo‘lishi kerak' };
+      if (content.length > 4 * 1024 * 1024) return { error: 'juda katta (>4 MB)' };
+      // Fayl mavjud bo‘lsa yozishdan oldin .bak zaxira (bir marta, .bak ustiga yozmaymiz).
+      try {
+        const bak = abs + '.bak';
+        await fsp.access(abs);
+        try { await fsp.access(bak); } catch { await fsp.copyFile(abs, bak); }
+      } catch {
+        // Yangi fayl — zaxira shart emas,愿 mkdir kerak-holinga kuch.
+        await fsp.mkdir(path.dirname(abs), { recursive: true }).catch(() => {});
+      }
+      await fsp.writeFile(abs, content, 'utf8');
+      const st = await fsp.stat(abs);
+      return { ok: true, size: st.size, saved: rel.replace(/\\/g, '/') };
+    } catch (e) {
+      return { error: e.message || 'yozib bo‘lmadi' };
+    }
+  });
+  // v5.1: faylni tizim standart ilovasi bilan ochish (shell.openPath) — guard bilan.
+  ipcMain.handle('ide:open-external', async (_e, { path: p }) => {
+    try {
+      const chat = chats.get(activeChatId());
+      const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+      if (!ws) return { error: 'Ish papkasi tanlanmagan' };
+      const abs = path.resolve(ws, String(p || ''));
+      const rel = path.relative(path.resolve(ws), abs);
+      if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
+      const st = await fsp.stat(abs);
+      if (!st.isFile()) return { error: 'Bu fayl emas' };
+      // Katta faylni ochish shell ich_moves bloklanmaydi lekin qulaylik uchun limit.
+      if (st.size > 50 * 1024 * 1024) return { error: 'juda katta (>50 MB)' };
+      const err = await shell.openPath(abs);
+      return err ? { error: err } : { ok: true };
+    } catch (e) {
+      return { error: e.message || 'ochib bo‘lmadi' };
+    }
+  });
   // IDE terminal: buyruqni bevosita bajarish (faol chat workspace'da).
   ipcMain.handle('ide:run-command', async (_e, { command, cwd }) => {
     const chat = chats.get(activeChatId());

@@ -1552,12 +1552,22 @@ function ideInit() {
     tree: $('ideTree'), termOut: $('ideTermOut'), termIn: $('ideTermInput'), termRun: $('ideTermRun'),
     feed: $('ideFeed'), live: $('ideLive'),
     fileModal: $('ideFileModal'), fileModalName: $('ideFileName'), fileModalContent: $('ideFileContent'), fileModalClose: $('ideFileClose'),
+    fileEdit: $('ideFileEdit'), fileSave: $('ideFileSave'), fileExt: $('ideFileExt'), fileDirty: $('ideFileDirty'), fileEditArea: $('ideFileEditArea'),
   };
   if (ide.els.toggle) ide.els.toggle.addEventListener('click', () => ideToggle());
   if (ide.els.close) ide.els.close.addEventListener('click', () => ideToggle(false));
   if (ide.els.termRun) ide.els.termRun.addEventListener('click', () => ideRunTerm());
   if (ide.els.termIn) ide.els.termIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ideRunTerm(); } });
-  if (ide.els.fileModalClose) ide.els.fileModalClose.addEventListener('click', () => ide.els.fileModal.classList.add('hidden'));
+  if (ide.els.fileModalClose) ide.els.fileModalClose.addEventListener('click', () => ideFileCloseModal());
+  if (ide.els.fileEdit) ide.els.fileEdit.addEventListener('click', () => ideFileToggleEdit(true));
+  if (ide.els.fileSave) ide.els.fileSave.addEventListener('click', () => ideFileSave());
+  if (ide.els.fileExt) ide.els.fileExt.addEventListener('click', () => ideFileOpenExternal());
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && ide.els.fileModal && !ide.els.fileModal.classList.contains('hidden')) {
+      e.preventDefault();
+      if (!ide.els.fileEditArea.classList.contains('hidden')) ideFileSave();
+    }
+  });
   ideOpen(false);
 }
 
@@ -1643,18 +1653,84 @@ async function ideRefreshTree() {
 }
 
 async function ideOpenFile(relPath, size = 0) {
-  ide.els.fileModalName.textContent = relPath;
+  ide.currentFile = { path: relPath, saved: null };
+  // h2 ichida <small id="ideFileDirty"> bor — matnni birinchi child node orqali almashtiramiz.
+  if (ide.els.fileModalName.firstChild) ide.els.fileModalName.firstChild.nodeValue = relPath;
+  else ide.els.fileModalName.textContent = relPath;
+  ideFileSetDirty(false);
   ide.els.fileModalContent.textContent = 'ochilyapti…';
   ide.els.fileModal.classList.remove('hidden');
+  ideFileToggleEdit(false);
   if (size > 1200000) {
-    ide.els.fileModalContent.textContent = `(fayl juda katta — ${(size / 1024).toFixed(0)} KB) faqat terminal yoki ` +
-      'tashqi muharrir ile açın';
+    ide.els.fileModalContent.textContent = `(fayl juda katta — ${(size / 1024).toFixed(0)} KB) — tizim ilovasida oching (↗)`;
     return;
   }
   const r = await api.readWorkspaceFile(relPath);
   if (r.error) { ide.els.fileModalContent.textContent = '⚠ ' + r.error; return; }
+  ide.currentFile.saved = r.text;
   ide.els.fileModalContent.textContent = (r.truncated ? '(fayl kesildi — birinchi qism)\n\n' : '') + r.text;
 }
+
+/* ---------- v5.1: IDE fayl tahrirlovchi ---------- */
+function ideFileSetDirty(dirty) {
+  if (ide.els.fileDirty) ide.els.fileDirty.textContent = dirty ? ' • o‘zgartirildi' : '';
+  if (ide.els.fileSave) ide.els.fileSave.classList.toggle('hidden', !dirty);
+}
+
+function ideFileToggleEdit(on, savedText) {
+  ide.els.fileEditArea.classList.toggle('hidden', !on);
+  ide.els.fileModalContent.classList.toggle('hidden', !!on);
+  ide.els.fileEdit.classList.toggle('hidden', !!on);
+  if (on) {
+    ide.els.fileEditArea.value = savedText != null ? savedText : ide.currentFile?.saved ?? '';
+    ide.els.fileEditArea.focus();
+  }
+}
+
+async function ideFileSave() {
+  if (!ide.currentFile || !ide.currentFile.path) return;
+  const content = ide.els.fileEditArea.value;
+  const r = await api.ideSaveFile(ide.currentFile.path, content);
+  if (r.error) {
+    ideFileSetDirty(true);
+    ideFeedLine('✖', `save failed: ${ide.currentFile.path} — ${r.error}`, { kind: 'bad' });
+    return;
+  }
+  ide.currentFile.saved = content;
+  ideFileSetDirty(false);
+  ide.els.fileModalContent.textContent = content;
+  ideFeedLine('💾', `saved ${r.saved}`);
+  ideRefreshTree();
+}
+
+async function ideFileOpenExternal() {
+  if (!ide.currentFile || !ide.currentFile.path) return;
+  // Tahrirlovchida saqlanmagan o‘zgarish bo‘lsa avval saqlaymiz.
+  if (!ide.els.fileEditArea.classList.contains('hidden') && ide.els.fileEditArea.value !== ide.currentFile.saved) {
+    await ideFileSave();
+  }
+  const r = await api.ideOpenExternal(ide.currentFile.path);
+  if (r.error) ideFeedLine('✖', `external open failed: ${r.error}`, { kind: 'bad' });
+  else ideFeedLine('↗', `opened externally ${ide.currentFile.path}`);
+}
+
+function ideFileCloseModal() {
+  // Saqlanmagan o‘zgarish bo‘lsa — tasdiq so‘raymiz.
+  if (!ide.els.fileEditArea.classList.contains('hidden') && ide.els.fileEditArea.value !== ide.currentFile?.saved) {
+    const ok = window.confirm('Saqlanmagan o‘zgarishlar bor — saqlaymizmi?');
+    if (ok) { ideFileSave(); }
+  }
+  ide.els.fileModal.classList.add('hidden');
+}
+
+// tahrirlovchi input eventini ulash (init'da emas — fileEditArea hozir mavjud bo'lishi kerak)
+document.getElementById('ideFileEditArea')?.addEventListener('input', () => {
+  const dirty = ide.els && ide.els.fileEditArea && ide.els.fileEditArea.value !== ide.currentFile?.saved;
+  ideFileSetDirty(!!dirty);
+});
+document.getElementById('ideFileEditArea')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') { e.preventDefault(); const area = e.target; const s = area.selectionStart, en = area.selectionEnd; area.value = area.value.slice(0, s) + '  ' + area.value.slice(en); area.selectionStart = area.selectionEnd = s + 2; }
+});
 
 async function ideRunTerm() {
   const cmd = (ide.els.termIn.value || '').trim();

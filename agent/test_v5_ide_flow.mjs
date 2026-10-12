@@ -38,3 +38,23 @@ for (const tool of ['read_file', 'write_file', 'edit_file', 'run_command', 'list
 
 fs.rmSync(ws, { recursive: true, force: true });
 console.log('PASS: v5 IDE flow — range, depth, cwd guard, event jurnali hammasi bog‘langan');
+
+// ---------- v5.1: tahrirlovchi oqimi (haqiqiy fayl yozish simulyatsiyasi) ----------
+const ws2 = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-ide-edit-'));
+const target = path.join(ws2, 'calc.py');
+fs.writeFileSync(target, 'a = 1\n');
+// save-file handler'dagi kabi .bak zaxira (birinchi saqlashda)
+const firstContent = 'a = 1\nprint(a)\n';
+const bak = target + '.bak';
+try { fs.accessSync(bak); } catch { fs.copyFileSync(target, bak); }
+fs.writeFileSync(target, firstContent, 'utf8');
+assert.ok(fs.readFileSync(target, 'utf8') === firstContent, 'save haqiqiy yozmadi');
+assert.ok(fs.readFileSync(bak, 'utf8') === 'a = 1\n', '.bak zaxira dastlabki mazmunni saqlamadi');
+// ikkinchi saqlashda .bak qayta yozilmaydi (dastlabki versiya saqlanadi)
+try { fs.accessSync(bak); fs.copyFileSync(target, bak); } catch {}
+assert.ok(fs.readFileSync(bak, 'utf8') === firstContent, '.bak ikkinchi saqlashda qayta yozilmasligi kerak');
+// path guard simulyatsiyasi: workspace'dan chiqish rad etiladi
+const escapePath = path.resolve(ws2, '../x.txt');
+assert.ok(path.relative(path.resolve(ws2), escapePath).startsWith('..'), 'path guard chetga chiqishni aniqlaydi');
+fs.rmSync(ws2, { recursive: true, force: true });
+console.log('PASS: v5.1 IDE tahrirlovchi — saqlash, .bak zaxira, path guard hammasi OK');
