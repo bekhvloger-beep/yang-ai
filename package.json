@@ -1,6 +1,6 @@
 {
   "name": "yang-ai",
-  "version": "3.9.7",
+  "version": "5.0.0",
   "description": "YANG AI by AICOMP.UZ — professional desktop agentic assistant",
   "type": "module",
   "main": "main.js",

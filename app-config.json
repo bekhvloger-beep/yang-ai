@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-3.9.7",
-    "text": "YANG AI v3.9.7: Lokal skan endi har bir Ollama/LM Studio modelining hajmi va taxminiy RAM iste'molini ko'rsatadi; lokal (localhost) serverlar API kalitsiz ulanadi. 7 topshiriqli benchmarkda Qwen2.5-Coder 7B o'rtacha 26.7s, bundled Qwen3-1.7B 42s. Ilova o'zi yangilanadi.",
+    "id": "release-5.0.0",
+    "text": "YANG AI 5.0: ichida IDE paneli (fayllar + terminal + faoliyat jurnali) va Rasm studiyasi (o‘zbekcha prompt, sifat 1080/2K/4K). Ilova o‘zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,

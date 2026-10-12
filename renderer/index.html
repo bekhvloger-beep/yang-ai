@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" />
+  <title>YANG AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="logo">
+        <span class="logo-hex" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26">
+            <defs>
+              <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#6c8cff" />
+                <stop offset="100%" stop-color="#35c39a" />
+              </linearGradient>
+            </defs>
+            <path class="hex-out" d="M16 2.5 27.7 9.25v13.5L16 29.5 4.3 22.75V9.25z" />
+            <path class="hex-in" d="M16 8.4 22.6 12.2v7.6L16 23.6 9.4 19.8v-7.6z" />
+            <path class="hex-y" d="M12 12.4l4 5.2 4-5.2M16 17.6v4.2" />
+          </svg>
+        </span>
+        <span class="logo-word">YANG<span class="logo-ai"> AI</span></span>
+        <a class="logo-domain" id="siteLink" href="#" title="Rasmiy saytni ochish">aicomp.uz</a>
+      </div>
+      <button id="newChatBtn" class="btn btn-primary new-chat">＋ Yangi chat</button>
+      <div id="chatList" class="chat-list"></div>
+      <div class="sidebar-footer">
+        <button id="settingsBtn" class="btn btn-ghost">⚙ Sozlamalar</button>
+        <div class="version" id="appVersion">v3.0 · desktop</div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div id="mainSplit">
+      <header id="topbar">
+        <button id="wsChip" class="chip" title="Ish papkasini almashtirish">📁 <span id="wsName">…</span></button>
+        <div class="spacer"></div>
+        <div class="agent-now" id="agentNow" title="Hozir ishlayotgan agent">
+          <span class="agent-avatar" id="agentAvatar">⬡</span>
+          <span class="agent-now-txt"><b id="agentNameNow">YANG AI</b><small id="agentRoleNow">tayyor</small></span>
+        </div>
+        <div class="quota-ring" id="quotaRing" title="Limit holati">
+          <svg viewBox="0 0 36 36" width="34" height="34">
+            <circle class="ring-bg" cx="18" cy="18" r="15" />
+            <circle class="ring-fg" id="ringFg" cx="18" cy="18" r="15" />
+          </svg>
+          <span id="ringText" class="ring-text">—</span>
+        </div>
+        <button id="dockToggle" class="icon-btn" title="Faoliyat panelini yig‘ish/ochish">▥</button>
+        <button id="ideToggle" class="icon-btn" title="IDE panelni ochish/yopish (v5)">🖥</button>
+        <button id="modelChip" class="chip" title="Model va provayder">🤖 <span id="modelName">…</span></button>
+      </header>
+
+      <div id="chatWrap">
+        <div id="chatScroll">
+          <div id="emptyState" class="hidden">
+            <div class="empty-logo">
+              <svg viewBox="0 0 32 32" width="54" height="54">
+                <path class="hex-out" d="M16 2.5 27.7 9.25v13.5L16 29.5 4.3 22.75V9.25z" />
+                <path class="hex-in" d="M16 8.4 22.6 12.2v7.6L16 23.6 9.4 19.8v-7.6z" />
+                <path class="hex-y" d="M12 12.4l4 5.2 4-5.2M16 17.6v4.2" />
+              </svg>
+            </div>
+            <h1>YANG AI</h1>
+            <p class="empty-sub">aicomp.uz — professional agentic yordamchi</p>
+            <p>Kod yozadi, hujjat yaratadi (PDF/DOCX/XLSX), rasm tahlil qiladi, buyruq bajaradi.<br />Katta loyihalar uchun 🤝 parallel agentlar jamoasi.</p>
+            <div class="suggestions">
+              <button class="suggestion" data-text="Bu papkadagi loyihani o'rganib chiq va tuzilishini qisqacha tushuntir">Loyihani o'rganib chiq</button>
+              <button class="suggestion" data-text="Men uchun hisobot.docx hujjatini yarat: loyiha tuzilishi haqida 5 bo'limli professional hujjat. So'ng hisobot.pdf ga ham aylantir">DOCX/PDF hujjat yarat</button>
+              <button class="suggestion" data-text="sotuv.xlsx fayl yarat: 3 varaq — 'Sotuv' (12 qatorli jadval), 'Xulosa', 'Grafik ma'lumot'. So'ng grafik.png rasm ham chiz">Excel + diagramma</button>
+              <button class="suggestion" data-text="Kichik 'Todo App' web loyihasini noldan yarat: HTML+CSS+JS, chiroyli dizayn, localStorage bilan. Jamoa rejimida bajar" data-team="1">🤝 Jamoa bilan loyiha</button>
+            </div>
+          </div>
+          <div id="messages"></div>
+        </div>
+
+        <aside id="dock" class="dock">
+          <div class="dock-head">
+            <span class="dock-title">⚡ Faoliyat</span>
+            <span class="dock-live" id="dockLive">tayyor</span>
+            <button id="dockClose" class="icon-btn" title="Panelni yig‘ish">›</button>
+          </div>
+          <div class="dock-agents" id="dockAgents"></div>
+          <div class="dock-feed" id="dockFeed"></div>
+          <div class="dock-foot">
+            <button id="dockDisable" class="btn btn-ghost small" title="Panelni butunlay o‘chirish (Sozlamalar → Interfeys)">✕ Panelni o‘chirish</button>
+          </div>
+        </aside>
+      </div>
+
+      <div id="dragOverlay" class="hidden"><div class="drag-box">📎 Fayllarni shu yerga tashlang</div></div>
+
+      <footer id="composer">
+        <div class="input-wrap">
+          <div id="attachRow" class="attach-row hidden"></div>
+          <textarea id="input" rows="1" placeholder="Vazifani yozing… rasm/Telegram skrinshot ham tashlashingiz mumkin (Enter — yuborish)"></textarea>
+          <div class="composer-bar">
+            <button id="attachBtn" class="icon-btn" title="Fayl biriktirish (PDF, DOCX, XLSX, rasm...)">📎</button>
+            <button id="teamBtn" class="icon-btn" title="Agentlar jamoasi rejimi — katta loyihalar uchun">🤝</button>
+            <button id="imgStudioBtn" class="icon-btn" title="Rasm studiyasi (v5) — o‘zbekcha prompt bilan rasm chizish">🎨</button>
+            <button id="planBtn" class="mode-btn" title="Avval reja tuzadi — tasdiqlagach quradi">📋 Plan</button>
+            <button id="buildBtn" class="mode-btn" title="So‘rovni darhol bajaradi (qurish)">⚡ Build</button>
+            <span id="statusLine" class="status-line"></span>
+            <div class="spacer"></div>
+            <button id="stopBtn" class="btn btn-danger hidden">■ To‘xtatish</button>
+            <button id="sendBtn" class="btn btn-primary">Yuborish ↑</button>
+          </div>
+          <div class="bottom-bar">
+            <button id="bbModel" class="bb-chip" title="Modelni almashtirish"><span class="bb-dot"></span> <span id="bbModelName">…</span> <span class="bb-caret">▾</span></button>
+            <button id="bbTeam" class="bb-chip" title="Jamoaviy rejim">🤝 <span>Jamoa</span></button>
+            <button id="bbMode" class="bb-chip" title="Reja rejimi">📋 <span>Reja</span></button>
+            <div class="spacer"></div>
+            <span class="bb-hint" id="bbHint">Enter — yuborish · Shift+Enter — yangi qator</span>
+          </div>
+        </div>
+        <div id="modelPop" class="model-pop hidden"></div>
+      </footer>
+      </div><!-- /mainSplit -->
+    </main>
+  </div>
+
+  <!-- v5 IDE panel: desktopIDE mismoni — o'ng tomonda terminal va faoliyat jurnali -->
+  <div id="idePanel" class="ide-panel hidden">
+    <div class="ide-head">
+      <span class="ide-title">🖥 IDE</span>
+      <span class="ide-live" id="ideLive">tayyor</span>
+      <div class="spacer"></div>
+      <button id="ideClose" class="icon-btn" title="IDE panelni yopish">›</button>
+    </div>
+    <div class="ide-body">
+      <div class="ide-col ide-col-files">
+        <div class="ide-col-head">📁 Fayllar</div>
+        <div class="ide-tree" id="ideTree"></div>
+      </div>
+      <div class="ide-col ide-col-term">
+        <div class="ide-col-head">⌨ Terminal</div>
+        <div class="ide-term-out" id="ideTermOut"></div>
+        <div class="ide-term-in">
+          <input id="ideTermInput" placeholder="buyruq yozing va Enter…" spellcheck="false" />
+          <button id="ideTermRun" class="btn btn-primary small">▶</button>
+        </div>
+      </div>
+      <div class="ide-col ide-col-feed">
+        <div class="ide-col-head">⚡ Faoliyat</div>
+        <div class="ide-feed" id="ideFeed"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v5 Rasm studiyasi: o'zbekcha prompt → inglizcha, sifat tanlash -->
+  <div id="imgStudioModal" class="modal hidden">
+    <div class="modal-box img-studio-box">
+      <div class="modal-head">
+        <h2>🎨 Rasm studiyasi</h2>
+        <button id="imgStudioClose" class="btn btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <span>Prompt (o‘zbekcha yoki inglizcha — o‘zi tarjima qiladi)</span>
+          <textarea id="imgStudioPrompt" rows="3" placeholder="masalan: tog'lar orasida quyosh chiqishi, realistik surat..."></textarea>
+        </div>
+        <div class="field">
+          <span>Sifat (razmer)</span>
+          <div class="img-studio-quality" id="imgStudioQuality">
+            <button data-q="1080" class="active">1080 (tez)</button>
+            <button data-q="2160">2160 (2K)</button>
+            <button data-q="4320">4320 (4K)</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>Tarjima va provayder holati</span>
+          <div id="imgStudioStatus" class="img-studio-pre">—</div>
+        </div>
+        <div class="modal-foot">
+          <button id="imgStudioGo" class="btn btn-primary">🎨 Chizish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v5 fayl ko'ruvchi modal (IDE ichidan ochiladi) -->
+  <div id="ideFileModal" class="modal hidden">
+    <div class="modal-box ide-file-box">
+      <div class="modal-head">
+        <h2 id="ideFileName">fayl</h2>
+        <button id="ideFileClose" class="btn btn-ghost">✕</button>
+      </div>
+      <div class="modal-body"><pre id="ideFileContent" class="ide-file-pre"></pre></div>
+    </div>
+  </div>
+
+  <!-- Model almashtirish animatsiyasi (3-bosqich) -->
+  <div id="switchFx" class="switch-fx hidden">
+    <div class="switch-fx-inner">
+      <div class="fx-hex"></div>
+      <div class="fx-label" id="fxLabel">YANG AI</div>
+      <div class="fx-sub" id="fxSub">model almashtirilmoqda…</div>
+      <div class="fx-bar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- Settings modal — bo'limlarga ajratilgan (3-bosqich) -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-box settings-box">
+      <div class="modal-head">
+        <h2>⚙ Sozlamalar</h2>
+        <div class="set-tabs" id="setTabs">
+          <button class="set-tab active" data-tab="provider">🔌 Provayder</button>
+          <button class="set-tab" data-tab="model">🤖 Model</button>
+          <button class="set-tab" data-tab="translate">🌐 Tarjima</button>
+          <button class="set-tab" data-tab="ui">🎨 Interfeys</button>
+          <button class="set-tab" data-tab="system">🖥 Tizim</button>
+        </div>
+        <button id="settingsClose" class="btn btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- ---------- Provayder ---------- -->
+        <section class="set-pane" data-pane="provider">
+          <div class="pane-lead">
+            <b>API provayder ulash</b>
+            <small>Provayderni tanlang → kalitni qo‘ying → «Ulash va tekshirish» tugmasi model ro‘yxatini olib tasdiqlaydi.</small>
+          </div>
+          <div class="connect-steps">
+            <div class="cstep"><span class="cstep-n">1</span><div class="cstep-body">
+              <span>Asosiy provayder</span>
+              <select id="providerSelect"></select>
+            </div></div>
+            <div class="cstep"><span class="cstep-n">2</span><div class="cstep-body">
+              <span>API kalitlar</span>
+              <div id="keyFields" class="key-fields"></div>
+              <div class="key-actions">
+                <button id="importEnvBtn" class="btn btn-ghost small">⤓ .env dan import</button>
+                <button id="pickEnvBtn" class="btn btn-ghost small">📂 .env fayl tanlash</button>
+                <button id="clearKeysBtn" class="btn btn-ghost small" title="Barcha ulangan API kalitlarini o'chirish">🗑 Kalitlarni tozalash</button>
+              </div>
+            </div></div>
+            <div class="cstep"><span class="cstep-n">3</span><div class="cstep-body">
+              <span>Ulash va tekshirish</span>
+              <div class="row-2">
+                <button id="connectTestBtn" class="btn btn-primary small">🔌 Ulash va tekshirish</button>
+                <button id="connectSaveBtn" class="btn btn-ghost small">💾 Provayderni saqlash</button>
+              </div>
+              <div id="connectResult" class="import-result"></div>
+            </div></div>
+          </div>
+          <div class="field">
+            <span>Provayderlar holati (limit)</span>
+            <div id="quotaList" class="quota-list"><span class="dim">“Tekshirish”ni bosing</span></div>
+            <button id="quotaCheckBtn" class="btn btn-ghost small">🔄 Tekshirish</button>
+          </div>
+          <div class="field">
+            <span>Maxsus provayderlar (istalgan OpenAI-mos API)</span>
+            <div id="customProviderList" class="custom-prov-list"></div>
+            <details class="add-prov">
+              <summary class="btn btn-ghost small">＋ Provayder qo‘shish</summary>
+              <div class="add-prov-body">
+                <div class="preset-row" id="presetRow"></div>
+                <input id="npName" placeholder="Nomi (masalan: Cerebras, Z.ai, Ollama)" />
+                <input id="npBase" placeholder="Base URL (masalan: https://api.cerebras.ai/v1)" />
+                <div class="row-2">
+                  <input id="npModels" placeholder="Modellar (vergul bilan)" />
+                  <button id="npFetch" class="btn btn-ghost small" title="Serverdan model ro‘yxatini olish">⤓ Modellar</button>
+                </div>
+                <input id="npKey" type="password" placeholder="API kalit (lokal serverlar uchun bo‘sh qoldiring)" />
+                <label class="chk"><input type="checkbox" id="npVision" /> Rasm tahlili (vision) qo‘llaydi</label>
+                <button id="npAdd" class="btn btn-primary small">Qo‘shish</button>
+              </div>
+            </details>
+          </div>
+          <div id="importResult" class="import-result"></div>
+          <label class="field" id="customUrlField">
+            <span>Custom Base URL (faqat “Custom” provayder uchun)</span>
+            <input id="customBaseUrl" placeholder="https://…/v1" />
+          </label>
+        </section>
+
+        <!-- ---------- Model ---------- -->
+        <section class="set-pane hidden" data-pane="model">
+          <div class="field">
+            <span>Model</span>
+            <div class="row-2">
+              <input id="modelInput" list="modelList" placeholder="model nomi" />
+              <button id="modelFetchBtn" class="btn btn-ghost small" title="Serverdan mavjud modellar ro‘yxatini olish — bosib tanlashingiz mumkin">⤓ Modellar</button>
+            </div>
+            <datalist id="modelList"></datalist>
+            <div id="modelFetchResult" class="dim" style="margin-top:4px"></div>
+          </div>
+          <label class="chk" id="pinModelField"><input type="checkbox" id="pinModelToggle" /> <span><b>Faqat shu modelni ishlatish</b> — boshqa model/provayderga o‘tmaydi, ishlamasa aniq xato ko‘rsatadi</span></label>
+          <div class="field">
+            <span>Tez almashtirish</span>
+            <div id="quickModels" class="preset-row"></div>
+            <div class="dim" style="margin-top:6px">Provayderning barcha modellari — bosib darhol almashadi (switch animatsiyasi bilan).</div>
+          </div>
+          <label class="field checkbox-field">
+            <input type="checkbox" id="autoApprove" />
+            <span>Buyruqlarni so‘roqsiz bajarish (auto-approve) — <b>ehtiyot bo‘ling</b></span>
+          </label>
+        </section>
+
+        <!-- ---------- Tarjima ---------- -->
+        <section class="set-pane hidden" data-pane="translate">
+          <div class="pane-lead">
+            <b>Lokal NLLB tarjimon</b>
+            <small>Kichik lokal model o‘zbekchani tushunmaydi — tarjimon uz↔en ko‘prik bo‘lib xizmat qiladi.</small>
+          </div>
+          <label class="chk"><input type="checkbox" id="transEnabled" /> <span><b>Tarjimadan foydalanish</b> (lokal model uchun tavsiya etiladi)</span></label>
+          <label class="field">
+            <span>Tarjimon manzili</span>
+            <input id="transUrl" placeholder="http://127.0.0.1:8788" />
+          </label>
+          <label class="field">
+            <span>Maqsad til (javob tili)</span>
+            <select id="transTarget">
+              <option value="uzn_Latn">O‘zbek (lotin)</option>
+              <option value="uzn_Cyrl">Ўзбек (кирилл)</option>
+              <option value="rus_Cyrl">Русский</option>
+              <option value="eng_Latn">English</option>
+              <option value="tur_Latn">Türkçe</option>
+            </select>
+          </label>
+          <div class="field">
+            <span>Holat va sinov</span>
+            <div class="row-2">
+              <button id="transStatusBtn" class="btn btn-ghost small">🔄 Holatni tekshirish</button>
+              <button id="transTestBtn" class="btn btn-primary small">▶ Sinov tarjimasi</button>
+            </div>
+            <div id="transResult" class="import-result"></div>
+          </div>
+        </section>
+
+        <!-- ---------- Interfeys ---------- -->
+        <section class="set-pane hidden" data-pane="ui">
+          <div class="pane-lead">
+            <b>Ko‘rinish</b>
+            <small>Hexagon uslubi (#101423 fon · #6c8cff · #35c39a aksent).</small>
+          </div>
+          <label class="chk"><input type="checkbox" id="uiPanelToggle" /> <span><b>O‘ng faoliyat paneli</b> — agent nima qilayotganini jonli ko‘rsatadi</span></label>
+          <label class="chk"><input type="checkbox" id="uiAnimToggle" /> <span><b>Kreativ animatsiyalar</b> — model almashish o‘tishi va effektlar</span></label>
+          <label class="chk"><input type="checkbox" id="uiStepsToggle" /> <span><b>Har qadamni chatda ham ko‘rsatish</b> (o‘chirilsa faqat o‘ng panelda)</span></label>
+          <label class="chk"><input type="checkbox" id="uiAdToggle" /> <span><b>Reklama/e’lon bannerlari</b> (admin yuboradigan xabarlar)</span></label>
+          <div class="field">
+            <span>Panel joyi</span>
+            <select id="uiPanelSide">
+              <option value="right">O‘ng tomonda</option>
+              <option value="left">Chat ichida (chap)</option>
+            </select>
+          </div>
+          <div class="field">
+            <span>Ish papkasi (workspace)</span>
+            <div class="ws-row">
+              <code id="settingsWs">—</code>
+              <button id="settingsWsBtn" class="btn btn-ghost small">Tanlash</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- Tizim ---------- -->
+        <section class="set-pane hidden" data-pane="system">
+          <div class="field">
+            <span>Yangilanishlar</span>
+            <div class="ws-row">
+              <code id="updateStatus">—</code>
+              <button id="updateCheckBtn" class="btn btn-ghost small">🔄 Tekshirish</button>
+              <button id="updateInstallBtn" class="btn btn-primary small hidden">⬆ O‘rnatish</button>
+            </div>
+            <div class="dim" style="margin-top:4px">Avtomatik tekshiruv: har ishga tushishda (GitHub Releases orqali)</div>
+          </div>
+          <div class="field">
+            <span>Qo‘llab-quvvatlash</span>
+            <div class="support-card">
+              <div class="support-head">
+                <span class="support-icon">💬</span>
+                <div class="support-head-txt">
+                  <b>Savol va takliflar — Telegram bot</b>
+                  <small>Botda yozing — admin tez orada shu chatga javob beradi. Reklama va hamkorlik alohida.</small>
+                </div>
+              </div>
+              <div class="support-actions">
+                <button id="tgQuestionBtn" class="btn btn-primary small">✈️ Botda savol berish</button>
+                <button id="tgAdBtn" class="btn btn-ghost small">📣 Reklama / hamkorlik</button>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <span>Ma’lumot</span>
+            <div class="dim">YANG AI by AICOMP.UZ · aicomp.uz · barcha sozlamalar shu kompyuterda saqlanadi.</div>
+          </div>
+        </section>
+      </div>
+      <div class="modal-foot">
+        <button id="settingsSave" class="btn btn-primary">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

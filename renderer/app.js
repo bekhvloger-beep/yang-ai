@@ -1090,6 +1090,7 @@ function dropLiveIfEmpty() {
 }
 
 window.api.onEvent(({ chatId, event }) => {
+  try { ideOnAgentEvent(event); } catch {}
   if (!currentChat || chatId !== currentChat.id) return;
   if (event.type !== 'run_finished') showEmpty(false);
   switch (event.type) {
@@ -1535,6 +1536,172 @@ function maybeShowWizard() {
     api.openExternal(a.dataset.url);
   }));
   document.body.appendChild(ov);
+}
+
+/* ---------------- v5 IDE panel ---------------- */
+const ide = {
+  open: false,
+  els: {},
+  seq: 0,
+  termHistory: [],
+};
+
+function ideInit() {
+  ide.els = {
+    panel: $('idePanel'), toggle: $('ideToggle'), close: $('ideClose'),
+    tree: $('ideTree'), termOut: $('ideTermOut'), termIn: $('ideTermInput'), termRun: $('ideTermRun'),
+    feed: $('ideFeed'), live: $('ideLive'),
+    fileModal: $('ideFileModal'), fileModalName: $('ideFileName'), fileModalContent: $('ideFileContent'), fileModalClose: $('ideFileClose'),
+  };
+  if (ide.els.toggle) ide.els.toggle.addEventListener('click', () => ideToggle());
+  if (ide.els.close) ide.els.close.addEventListener('click', () => ideToggle(false));
+  if (ide.els.termRun) ide.els.termRun.addEventListener('click', () => ideRunTerm());
+  if (ide.els.termIn) ide.els.termIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ideRunTerm(); } });
+  if (ide.els.fileModalClose) ide.els.fileModalClose.addEventListener('click', () => ide.els.fileModal.classList.add('hidden'));
+  ideOpen(false);
+}
+
+function ideToggle(force) {
+  const want = force === undefined ? !ide.open : !!force;
+  ide.open = want;
+  ide.els.panel.classList.toggle('hidden', !want);
+  if (want) ideRefreshTree();
+}
+
+function ideOpen(v) { ideToggle(v); }
+
+/* ---------------- v5: rasm studiyasi ---------------- */
+let imgStudioQ = '1080';
+function imgStudioInit() {
+  const modal = $('imgStudioModal');
+  if (!modal) return;
+  $('imgStudioClose').addEventListener('click', () => modal.classList.add('hidden'));
+  $('imgStudioGo').addEventListener('click', async () => {
+    const prompt = ($('imgStudioPrompt').value || '').trim();
+    const status = $('imgStudioStatus');
+    if (!prompt) { status.textContent = '⚠ Prompt bo‘sh'; return; }
+    $('imgStudioGo').disabled = true;
+    status.textContent = '⏳ tarjima + generatsiya… bir necha daqiqa olishi mumkin';
+    const r = await api.imageStudio(prompt, imgStudioQ);
+    $('imgStudioGo').disabled = false;
+    if (r.error) {
+      status.textContent = '⚠ ' + r.error + (r.promptEn ? '\n(natija prompti: ' + r.promptEn + ')' : '');
+      return;
+    }
+    status.innerHTML = `✅ rasm tayyor: ${r.path}\nProvayder: ${r.via} · ${r.size}\n(natija prompti: ${r.promptEn})`;
+    // chatga ham yo'llab qo'yamiz (foydalanuvchi ko'rsin)
+    try {
+      const msg = document.createElement('div');
+      msg.className = 'msg';
+      msg.innerHTML = '🎨 Rasm yaratildi — <b>fayl:</b> ';
+      const b = document.createElement('button');
+      b.className = 'btn btn-ghost small';
+      b.textContent = r.path.split(/[\\/]/).pop();
+      b.addEventListener('click', () => api.openPath(r.path));
+      msg.appendChild(b);
+      els.messages.appendChild(msg);
+      scrollPin();
+    } catch {}
+  });
+  document.querySelectorAll('#imgStudioQuality button').forEach((b) => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#imgStudioQuality button').forEach((x) => x.classList.remove('active'));
+      b.classList.add('active');
+      imgStudioQ = b.dataset.q || '1080';
+    });
+  });
+}
+
+function ideFeedLine(icon, text, { kind = '' } = {}) {
+  if (!ide.els.feed) return;
+  const el = document.createElement('div');
+  el.className = 'ide-line ' + kind;
+  el.innerHTML = `<span class="ide-line-i">${icon}</span><span class="ide-line-t"></span>`;
+  el.querySelector('.ide-line-t').textContent = text;
+  ide.els.feed.appendChild(el);
+  ide.els.feed.scrollTop = ide.els.feed.scrollHeight;
+  while (ide.els.feed.children.length > 300) ide.els.feed.firstElementChild.remove();
+}
+
+function ideLiveSet(text) { if (ide.els.live) ide.els.live.textContent = text; }
+
+async function ideRefreshTree() {
+  if (!ide.els.tree) return;
+  const r = await api.ideListTree('.', 2);
+  ide.els.tree.innerHTML = '';
+  if (r.error) { ide.els.tree.innerHTML = `<div class="dim">${r.error}</div>`; return; }
+  for (const it of (r.entries || [])) {
+    const row = document.createElement('div');
+    row.className = 'ide-tree-row';
+    row.textContent = (it.dir ? '📁 ' : '📄 ') + it.path;
+    row.style.paddingLeft = (String(it.path).split('/').length - 1) * 12 + 6 + 'px';
+    if (!it.dir) {
+      row.addEventListener('click', () => ideOpenFile(it.path, it.size));
+    }
+    ide.els.tree.appendChild(row);
+  }
+}
+
+async function ideOpenFile(relPath, size = 0) {
+  ide.els.fileModalName.textContent = relPath;
+  ide.els.fileModalContent.textContent = 'ochilyapti…';
+  ide.els.fileModal.classList.remove('hidden');
+  if (size > 1200000) {
+    ide.els.fileModalContent.textContent = `(fayl juda katta — ${(size / 1024).toFixed(0)} KB) faqat terminal yoki ` +
+      'tashqi muharrir ile açın';
+    return;
+  }
+  const r = await api.readWorkspaceFile(relPath);
+  if (r.error) { ide.els.fileModalContent.textContent = '⚠ ' + r.error; return; }
+  ide.els.fileModalContent.textContent = (r.truncated ? '(fayl kesildi — birinchi qism)\n\n' : '') + r.text;
+}
+
+async function ideRunTerm() {
+  const cmd = (ide.els.termIn.value || '').trim();
+  if (!cmd) return;
+  ide.els.termIn.value = '';
+  ide.els.termOut.innerHTML += `<div class="ide-line ">⌨ <b>${cmd.replace(/</g, '&lt;')}</b></div>`;
+  ide.els.termOut.scrollTop = ide.els.termOut.scrollHeight;
+  ideFeedLine('⌨', `terminal: ${cmd.slice(0, 120)}`);
+  const r = await api.ideRunCommand(cmd, '.');
+  const out = r.error ? '⚠ ' + r.error : r.output || '(bo‘sh)';
+  const div = document.createElement('div');
+  div.className = 'ide-line ' + (r.failed ? 'bad' : 'ok');
+  div.textContent = out.length > 12000 ? out.slice(0, 12000) + '\n…[kesildi]' : out;
+  ide.els.termOut.appendChild(div);
+  ide.els.termOut.scrollTop = ide.els.termOut.scrollHeight;
+  ideFeedLine(r.failed ? '✖' : '✓', `terminal natijasi ${r.failed ? '(xato)' : '(OK)'}`);
+  ideRefreshTree();
+}
+
+// agent eventlarini IDE jurnaliga yozish (tool/tool_start'da chaqiriladi)
+function ideOnAgentEvent(event) {
+  if (!ide || !ide.els || !ide.els.feed) return;
+  if (event.type === 'tool_start') {
+    const t = event.tool;
+    const args = event.args || {};
+    if (t === 'read_file') ideFeedLine('📂', `opened ${args.path || ''}`);
+    else if (t === 'write_file') ideFeedLine('📝', `creating ${args.path || ''}`);
+    else if (t === 'edit_file') ideFeedLine('✏️', `editing ${args.path || ''}`);
+    else if (t === 'run_command') ideFeedLine('⌨️', `terminal: ${String(args.command || '').slice(0, 120)}`);
+    else if (t === 'list_dir') ideFeedLine('🗂', `listing ${args.path || '.'}`);
+    else if (t === 'search_files') ideFeedLine('🔍', `searching ${args.pattern || args.query || ''}`);
+    else if (t === 'create_image' || t === 'generate_image') ideFeedLine('🎨', `drawing ${args.path || ''}`);
+    else if (t === 'create_document') ideFeedLine('📄', `document ${args.path || ''}`);
+    else ideFeedLine('🔧', `${t} ${JSON.stringify(args).slice(0, 90)}`);
+    ideLiveSet('ishlayapti…');
+  } else if (event.type === 'tool') {
+    if (Array.isArray(event.files) && event.files.length) {
+      for (const f of event.files.slice(0, 5)) ideFeedLine(IMAGE_EXT.test(f) ? '🖼️' : '✅', `${f} — tugatildi`);
+    }
+    ideLiveSet('tayyor');
+    if (ide.open) ideRefreshTree();
+  } else if (event.type === 'done' || event.type === 'run_finished') {
+    ideLiveSet('tayyor');
+  } else if (event.type === 'error') {
+    ideFeedLine('✖', String(event.message || '').slice(0, 200), { kind: 'bad' });
+    ideLiveSet('xato');
+  }
 }
 
 /* presets + local scan + model fetch */
@@ -2138,6 +2305,10 @@ els.teamBtn.addEventListener('click', () => {
   updateBottomBar();
 });
 
+// v5: rasm studiyasi tugmasi
+const imgStudioBtnEl = $('imgStudioBtn');
+if (imgStudioBtnEl) imgStudioBtnEl.addEventListener('click', () => $('imgStudioModal').classList.remove('hidden'));
+
 els.newChatBtn.addEventListener('click', async () => {
   if (running) return;
   currentChat = await api.newChat({ workspace: cfg.config.lastWorkspace });
@@ -2224,6 +2395,8 @@ window.api.onUpdateEvent((u) => {
   updateChips();
   // 3-bosqich: interfeys sozlamalari va pastdagi bar
   try { applyUiPrefs(); wireUiPrefs(); wireBottomBar(); } catch (e) { console.error('UI init', e); }
+  // v5 IDE panel + rasm studiyasi
+  try { ideInit(); imgStudioInit(); } catch (e) { console.error('IDE init', e); }
   // Ishga tushishda limit chipini darhol to'ldirish (default provayder bo'yicha)
   try {
     const qs = await api.checkQuota();
