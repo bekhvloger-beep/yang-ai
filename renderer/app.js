@@ -1551,6 +1551,8 @@ const ide = {
   els: {},
   seq: 0,
   termHistory: [],
+  // v5.4: yon panelning HAQIQIY terminali (xterm + PTY). `mode` — 'pty' yoki 'pipe'.
+  term: { mode: 'pipe', x: null, id: null, fit: null, ro: null, wired: false, opening: false, _rt: null },
 };
 
 function ideInit() {
@@ -1558,6 +1560,7 @@ function ideInit() {
     panel: $('idePanel'), toggle: $('ideToggle'), close: $('ideClose'),
     tree: $('ideTree'), termOut: $('ideTermOut'), termIn: $('ideTermInput'), termRun: $('ideTermRun'),
     feed: $('ideFeed'), live: $('ideLive'),
+    termHost: $('ideXtermHost'), termMode: $('ideTermMode'), termNote: $('ideTermNote'),
     fileModal: $('ideFileModal'), fileModalName: $('ideFileName'), fileModalContent: $('ideFileContent'), fileModalClose: $('ideFileClose'),
     fileEdit: $('ideFileEdit'), fileSave: $('ideFileSave'), fileExt: $('ideFileExt'), fileDirty: $('ideFileDirty'), fileEditArea: $('ideFileEditArea'),
   };
@@ -1565,6 +1568,7 @@ function ideInit() {
   if (ide.els.close) ide.els.close.addEventListener('click', () => ideToggle(false));
   if (ide.els.termRun) ide.els.termRun.addEventListener('click', () => ideRunTerm());
   if (ide.els.termIn) ide.els.termIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ideRunTerm(); } });
+  if (ide.els.termMode) ide.els.termMode.addEventListener('click', () => ideTermSwitch());
   if (ide.els.fileModalClose) ide.els.fileModalClose.addEventListener('click', () => ideFileCloseModal());
   if (ide.els.fileEdit) ide.els.fileEdit.addEventListener('click', () => ideFileToggleEdit(true));
   if (ide.els.fileSave) ide.els.fileSave.addEventListener('click', () => ideFileSave());
@@ -1582,10 +1586,130 @@ function ideToggle(force) {
   const want = force === undefined ? !ide.open : !!force;
   ide.open = want;
   ide.els.panel.classList.toggle('hidden', !want);
-  if (want) ideRefreshTree();
+  if (want) { ideRefreshTree(); ideTermEnsure(); }
 }
 
 function ideOpen(v) { ideToggle(v); }
+
+/* ---------------- v5.4: HAQIQIY terminal (xterm + PTY) ----------------
+   Ilgari yon paneldagi terminal faqat buyruq maydoni edi: bitta buyruq yoziladi,
+   chiqishi ko'rsatiladi — interaktiv dasturlar (vim, top, ssh, python REPL) ishlamasdi.
+   Endi «haqiqiy» rejim ham bor: ConPTY ustidagi psevdo-terminal + xterm.js ekrani.
+   Kanallar IDE yadrosi bilan bir xil (`yide:pty-*`) — ular main jarayonda allaqachon
+   ro'yxatga olingan, shu sabab bu yerda ikkinchi manba ochilmaydi. PTY yoki xterm
+   bo'lmasa panel jimgina eski buyruq maydoni rejimida qoladi. */
+function ideTermNote(text) { if (ide.els.termNote) ide.els.termNote.textContent = String(text || ''); }
+
+function ideTermSetMode(mode) {
+  const t = ide.term;
+  t.mode = mode;
+  const pty = mode === 'pty';
+  if (ide.els.termHost) ide.els.termHost.classList.toggle('hidden', !pty);
+  if (ide.els.termOut) ide.els.termOut.classList.toggle('hidden', pty);
+  if (ide.els.termIn) ide.els.termIn.classList.toggle('hidden', pty);
+  if (ide.els.termMode) ide.els.termMode.textContent = pty ? 'haqiqiy' : 'buyruq';
+}
+
+function ideTermFit() {
+  const t = ide.term;
+  if (t.mode !== 'pty' || !t.x) return;
+  try { if (t.fit) t.fit.fit(); } catch { /* o'lcham hali tayyor emas */ }
+  if (t.id) { try { api.ptyResize(t.id, t.x.cols, t.x.rows); } catch { /* sessiya yopilgan */ } }
+}
+
+async function ideTermOpenSession() {
+  const t = ide.term;
+  if (t.mode !== 'pty' || t.id || !t.x) return;
+  let r = null;
+  try { r = await api.ptyOpen({ cols: t.x.cols || 100, rows: t.x.rows || 26 }); } catch (e) { r = { error: String((e && e.message) || e) }; }
+  if (!r || r.error) {
+    ideTermSetMode('pipe');
+    ideTermNote(`terminal ochilmadi: ${(r && r.error) || 'xato'} — oddiy rejim`);
+    return;
+  }
+  t.id = r.id;
+  const shell = String(r.shell || '').split(/[\\/]/).pop();
+  ideTermNote(`PTY · ${shell} · ${r.cwd || ''}`);
+  try { t.x.focus(); } catch { /* fokus ixtiyoriy */ }
+}
+
+async function ideTermStart() {
+  const t = ide.term;
+  if (t.x || t.opening || !ide.els.termHost) return;
+  if (typeof window.Terminal !== 'function') { ideTermNote('oddiy rejim (xterm.js topilmadi)'); return; }
+  t.opening = true;
+  try {
+    let info = null;
+    try { info = await api.ptyInfo(); } catch { info = null; }
+    if (!info || !info.available) { ideTermNote('oddiy rejim (PTY yo\u2018q)'); return; }
+    t.x = new window.Terminal({
+      fontFamily: 'Consolas, "Cascadia Mono", "Courier New", monospace',
+      fontSize: 12, lineHeight: 1.25, cursorBlink: true, scrollback: 5000, allowProposedApi: true,
+      theme: {
+        background: '#0b0d12', foreground: '#d7dbe6', cursor: '#8aa2ff',
+        selectionBackground: 'rgba(108,140,255,0.32)',
+        black: '#1b1f2a', red: '#f87171', green: '#6ee7a8', yellow: '#fbbf24',
+        blue: '#60a5fa', magenta: '#c084fc', cyan: '#22d3ee', white: '#e5e7eb',
+      },
+    });
+    try { const fit = new window.FitAddon.FitAddon(); t.x.loadAddon(fit); t.fit = fit; } catch { t.fit = null; }
+    t.x.open(ide.els.termHost);
+    t.x.onData((d) => { if (t.id) { try { api.ptyWrite(t.id, d); } catch { /* yopilgan */ } } });
+    api.onPtyData((d) => { try { if (d && d.id === t.id && t.x) t.x.write(d.chunk); } catch { /* chizish */ } });
+    api.onPtyExit((d) => {
+      if (!d || d.id !== t.id) return;
+      t.id = null;
+      try { if (t.x) t.x.write(`\r\n\u001b[90m[sessiya tugadi — kod ${d.code}]\u001b[0m\r\n`); } catch { /* */ }
+      ideTermNote(`sessiya yopildi (kod ${d.code})`);
+      ideFeedLine('⌨', `terminal sessiyasi tugadi (kod ${d.code})`);
+    });
+    ideTermSetMode('pty');
+    ideTermFit();
+    await ideTermOpenSession();
+    if (ide.term.mode === 'pty') {
+      ideFeedLine('⌨', 'haqiqiy terminal ochildi (PTY) — vim, top, ssh ishlaydi');
+      if (window.ResizeObserver) {
+        t.ro = new ResizeObserver(() => { clearTimeout(t._rt); t._rt = setTimeout(ideTermFit, 140); });
+        t.ro.observe(ide.els.termHost);
+      }
+    }
+  } finally {
+    t.opening = false;
+  }
+}
+
+/** Panel ochilganda bir marta sinaladi: imkon bo'lsa haqiqiy terminalga o'tadi. */
+async function ideTermEnsure() {
+  const t = ide.term;
+  if (t.wired) return;
+  t.wired = true;
+  if (!ide.els.termHost || typeof window.Terminal !== 'function') { ideTermNote('buyruq maydoni'); return; }
+  try { await ideTermStart(); } catch { /* xato bo'lsa eski rejim qoladi */ }
+  if (ide.term.mode !== 'pty') {
+    // Nega o'tilmadi — foydalanuvchi bilib tursin (xterm yoki PTY yo'q).
+    let reason = '';
+    try { const info = await api.ptyInfo(); reason = info && info.reason ? String(info.reason).slice(0, 60) : ''; } catch { /* */ }
+    ideTermNote(reason ? `oddiy rejim (${reason})` : 'buyruq maydoni');
+  }
+}
+
+/** «haqiqiy ↔ buyruq» almashinuvi. */
+function ideTermSwitch() {
+  const t = ide.term;
+  if (t.mode === 'pty') {
+    if (t.id) { try { api.ptyClose(t.id); } catch { /* */ } t.id = null; }
+    ideTermSetMode('pipe');
+    ideTermNote('buyruq maydoni');
+    return;
+  }
+  ideTermSetMode('pty');
+  if (!t.x) {
+    ideTermSetMode('pipe');
+    ideTermStart().then(() => { if (ide.term.mode === 'pty') ideTermFit(); else ideTermNote('haqiqiy terminal mavjud emas'); });
+    return;
+  }
+  ideTermOpenSession().then(() => ideTermFit());
+}
 
 /* ---------------- v5: rasm studiyasi ---------------- */
 let imgStudioQ = '1080';
@@ -2306,6 +2430,27 @@ els.settingsClose.addEventListener('click', () => els.settingsModal.classList.ad
 els.settingsBtn.addEventListener('click', openSettings);
 els.modelChip.addEventListener('click', openSettings);
 els.quotaRing.addEventListener('click', openSettings);
+
+/* ---------------- v5.3: to‘liq YANG IDE oynasi ---------------- */
+// Yon paneldagi kichik IDE panelidan farqi: bu yerda to'liq IDE oynasi ochiladi —
+// fayl daraxti, tahrirlovchi, terminal, AI assistent. Oyna AYNAN shu ilova ichida
+// ishlaydi, ya'ni alohida o'rnatuvchi kerak emas.
+(function wireOpenIde() {
+  const btn = document.getElementById('openIdeBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const r = await window.api.openIde();
+      if (r && r.error) console.error('IDE ochilmadi:', r.error);
+    } catch (e) {
+      console.error('IDE ochilmadi:', e);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
 
 /* ---------------- qo'llab-quvvatlash (Telegram botga yo'naltirilgan) ---------------- */
 (function wireSupport() {

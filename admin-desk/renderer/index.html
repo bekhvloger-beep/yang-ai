@@ -18,10 +18,11 @@
         <button class="nav-btn active" data-tab="inbox">📥 Savollar</button>
         <button class="nav-btn" data-tab="content">📣 Reklama / E'lon</button>
         <button class="nav-btn" data-tab="stats">📊 Statistika</button>
+        <button class="nav-btn" data-tab="release">🚀 Reliz holati</button>
         <button class="nav-btn" data-tab="setup">⚙ Sozlash</button>
       </nav>
       <div class="sidebar-footer">
-        <div class="version" id="deskVersion">v1.1 · faqat admin uchun</div>
+        <div class="version" id="deskVersion">v1.2 · faqat admin uchun</div>
       </div>
     </aside>
 
@@ -128,13 +129,47 @@
           <h3>Versiyalar bo'yicha</h3>
           <div id="stVersions" class="dim">—</div>
         </div>
-        <div class="card">
-          <h3>🚀 GitHub release holati</h3>
+        <p class="dim">Reliz holati alohida <b>🚀 Reliz holati</b> bo‘limida (tekshiruv + e’lon nashri).</p>
+      </section>
+
+      <!-- Reliz holati: teg/versiya mosligi + majburiy fayllar + e'lon nashri -->
+      <section id="tab-release" class="tab">
+        <div class="tab-head">
+          <h2>🚀 Reliz holati</h2>
           <div class="row">
-            <button id="releaseStatusBtn" class="btn btn-ghost">🔄 Tekshirish</button>
-            <code id="releaseStatus" class="dim">—</code>
+            <button id="releaseStatusBtn" class="btn btn-primary">🔄 Tekshirish</button>
+            <span id="releaseStatus" class="dim">—</span>
           </div>
-          <div id="releaseAssets" class="dim" style="margin-top:6px"></div>
+        </div>
+        <p class="dim">Tekshiruv ikki savolga javob beradi: (1) oxirgi reliz tegi <b>package.json</b>
+          dagi versiya bilan mos keladimi; (2) relizda <b>to‘rtta</b> majburiy fayl bormi:
+          <code>YANG-AI-Setup-&lt;v&gt;.exe</code>, uning <code>.exe.blockmap</code>i,
+          <code>YANG-AI-Portable-&lt;v&gt;.exe</code> va <code>latest.yml</code>.
+          <code>latest.yml</code> yoki <code>.blockmap</code> tushib qolsa avto-yangilanish ishlamaydi.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Reliz</h3>
+            <div id="relSummary" class="dim">«Tekshirish»ni bosing</div>
+            <div id="relExpected" class="dim" style="margin-top:8px"></div>
+          </div>
+          <div class="card">
+            <h3>Yuklangan fayllar</h3>
+            <div id="releaseAssets" class="dim">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📣 app-config.json ni nashr qilish</h3>
+          <p class="dim">Ilovalar e’lon va reklamani GitHub'dagi <b>app-config.json</b> faylidan o‘qiydi
+            (shoxobcha: <b id="localCfgBranch">main</b>). Tugma loyihadagi haqiqiy faylni yuklaydi — avval
+            ko‘rib chiqing, keyin nashr qiling. Nashrdan keyin commit SHA ko‘rsatiladi.</p>
+          <div class="row">
+            <button id="localCfgPreviewBtn" class="btn btn-ghost">👁 Faylni ko‘rish</button>
+            <button id="localCfgPushBtn" class="btn btn-primary">⬆ Nashr qilish</button>
+            <span id="localCfgStatus" class="dim"></span>
+          </div>
+          <pre id="localCfgPreview" style="display:none; max-height:320px; overflow:auto; margin-top:10px; padding:10px; border:1px solid #232a3a; border-radius:8px; background:#0a0c12; font-size:11px; line-height:1.55"></pre>
         </div>
       </section>
 

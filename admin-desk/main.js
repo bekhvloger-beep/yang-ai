@@ -182,7 +182,67 @@ async function ghPut(file, contentJson, message) {
     signal: AbortSignal.timeout(30000),
   });
   const j = await res.json().catch(() => ({}));
-  return res.ok ? { ok: true } : { ok: false, error: j.message || `HTTP ${res.status}` };
+  return res.ok
+    ? { ok: true, sha: (j.commit && j.commit.sha) || null, url: (j.commit && j.commit.html_url) || null }
+    : { ok: false, error: j.message || `HTTP ${res.status}` };
+}
+
+/* ---------- Reliz tekshiruvi ----------
+ * `scripts/publish_release.mjs` har relizga aynan to'rt faylni yuklaydi. Ro'yxat shu yerda:
+ * reliz chala bo'lsa (`latest.yml` yoki `.blockmap` tushib qolsa avto-yangilanish ishlamaydi)
+ * operator buni bir qarashda ko'radi. */
+const expectedAssets = (version) => [
+  `YANG-AI-Setup-${version}.exe`,
+  `YANG-AI-Setup-${version}.exe.blockmap`,
+  `YANG-AI-Portable-${version}.exe`,
+  'latest.yml',
+];
+
+/** Relizdagi fayllar orasidan nom bo'yicha qidirish (katta/kichik harfga sezgir emas). */
+const hasAsset = (list, name) => (list || []).some((a) => String(a.name || '').toLowerCase() === name.toLowerCase());
+
+/** Loyiha ildizidagi app-config.json (dev rejimda ham, `process.cwd()` da ham izlanadi). */
+function localConfigPath() {
+  const candidates = [
+    path.join(__dirname, '..', 'app-config.json'),
+    path.join(process.cwd(), 'app-config.json'),
+  ];
+  for (const p of candidates) {
+    try { if (fs.existsSync(p)) return p; } catch { /* o'qilmadi — keyingisini sinaymiz */ }
+  }
+  return null;
+}
+
+/** Oxirgi reliz. Token bo'lmasa ham ishlaydi (GitHub anonim so'rovga ruxsat beradi). */
+async function fetchLatestRelease() {
+  const headers = { accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' };
+  if (admin.ghToken) headers.authorization = `Bearer ${admin.ghToken}`;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${admin.owner}/${admin.repo}/releases/latest`, {
+      headers,
+      signal: AbortSignal.timeout(20000),
+    });
+    if (res.status === 404) {
+      return {
+        ok: false,
+        noRelease: true,
+        authorized: !!admin.ghToken,
+        error: `${admin.owner}/${admin.repo} da hali reliz yo‘q — «npm run release» bilan birinchi relizni yuklang.`,
+      };
+    }
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, authorized: !!admin.ghToken, error: j.message || `HTTP ${res.status}` };
+    return { ok: true, authorized: !!admin.ghToken, raw: j, assets: j.assets || [] };
+  } catch (e) {
+    return { ok: false, authorized: !!admin.ghToken, error: e.message };
+  }
+}
+
+/** Repo'dagi (sozlangan branch) ilova versiyasi — reliz teg bilan solishtirish uchun. */
+async function branchAppVersion() {
+  const r = await ghGet('package.json');
+  if (r.error || !r.content) return null;
+  try { return JSON.parse(r.content).version || null; } catch { return null; }
 }
 
 function registerIpc() {
@@ -374,26 +434,107 @@ function registerIpc() {
 
   // GitHub'dagi oxirgi release holati (yangi versiya chiqqanini tekshirish)
   ipcMain.handle('release:status', async () => {
-    if (!admin.ghToken) return { ok: false, error: 'GitHub token kiritilmagan' };
+    const r = await fetchLatestRelease();
+    if (!r.ok) return { ok: false, error: r.error, noRelease: !!r.noRelease, authorized: r.authorized };
+    const j = r.raw;
+    return {
+      ok: true,
+      authorized: r.authorized,
+      tag: j.tag_name,
+      name: j.name,
+      publishedAt: j.published_at,
+      url: j.html_url,
+      assets: (j.assets || []).map((a) => ({ name: a.name, sizeMb: +(a.size / 1e6).toFixed(1), downloads: a.download_count })),
+    };
+  });
+
+  // TO‘LIQ tekshiruv: reliz tegi ↔ repo versiyasi va to‘rt kutilgan asset bormi.
+  ipcMain.handle('release:verify', async () => {
+    const repoVersion = await branchAppVersion().catch(() => null);
+    const want = expectedAssets(repoVersion || 'x.y.z');
+    const r = await fetchLatestRelease();
+    if (!r.ok) {
+      return {
+        ok: false,
+        error: r.error,
+        noRelease: !!r.noRelease,
+        authorized: r.authorized,
+        repoVersion,
+        expected: want.map((n) => ({ name: n, present: false })),
+        missing: want,
+      };
+    }
+    const j = r.raw;
+    const assets = r.assets;
+    const expected = want.map((n) => ({ name: n, present: hasAsset(assets, n) }));
+    const tagVersion = String(j.tag_name || '').replace(/^v/, '');
+    return {
+      ok: true,
+      authorized: r.authorized,
+      repoVersion,
+      tag: j.tag_name,
+      tagVersion,
+      upToDate: !!repoVersion && tagVersion === repoVersion,
+      publishedAt: j.published_at,
+      url: j.html_url,
+      expected,
+      missing: expected.filter((e) => !e.present).map((e) => e.name),
+      assets: assets.map((a) => ({ name: a.name, sizeMb: +(a.size / 1e6).toFixed(1), downloads: a.download_count })),
+    };
+  });
+
+  // Mahalliy app-config.json: nashr qilishdan OLDIN operator ko‘rib chiqadi.
+  ipcMain.handle('cfg:local-preview', async () => {
+    const p = localConfigPath();
+    if (!p) return { ok: false, error: 'app-config.json topilmadi (loyiha ildizida bo‘lishi kerak)' };
     try {
-      const res = await fetch(`https://api.github.com/repos/${admin.owner}/${admin.repo}/releases/latest`, {
-        headers: { authorization: `Bearer ${admin.ghToken}`, accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' },
-        signal: AbortSignal.timeout(20000),
-      });
-      if (res.status === 404) return { ok: false, error: 'Hali release yo‘q' };
-      const j = await res.json();
-      if (!res.ok) return { ok: false, error: j.message || `HTTP ${res.status}` };
+      const text = await fsp.readFile(p, 'utf8');
+      let valid = true;
+      let jsonError = null;
+      let noticeId = null;
+      try {
+        const parsed = JSON.parse(text);
+        noticeId = (parsed.notice && parsed.notice.id) || null;
+      } catch (e) { valid = false; jsonError = e.message; }
       return {
         ok: true,
-        tag: j.tag_name,
-        name: j.name,
-        publishedAt: j.published_at,
-        url: j.html_url,
-        assets: (j.assets || []).map((a) => ({ name: a.name, sizeMb: +(a.size / 1e6).toFixed(1), downloads: a.download_count })),
+        path: p,
+        text,
+        bytes: Buffer.byteLength(text, 'utf8'),
+        valid,
+        jsonError,
+        noticeId,
+        owner: admin.owner,
+        repo: admin.repo,
+        branch: admin.branch,
       };
     } catch (e) {
       return { ok: false, error: e.message };
     }
+  });
+
+  // Mahalliy faylni to‘g‘ridan-to‘g‘ri nashr qilish — commit SHA qaytadi.
+  ipcMain.handle('cfg:push-local', async (_e, { message } = {}) => {
+    if (!admin.ghToken) return { ok: false, error: 'GitHub token kiritilmagan (Sozlash bo‘limi)' };
+    const p = localConfigPath();
+    if (!p) return { ok: false, error: 'app-config.json topilmadi (loyiha ildizida bo‘lishi kerak)' };
+    let text;
+    try {
+      text = await fsp.readFile(p, 'utf8');
+    } catch (e) {
+      return { ok: false, error: 'o‘qilmadi: ' + e.message };
+    }
+    // Buzuq JSON nashr qilinmasin — aks holda barcha ilovalar e'lonni o‘qiy olmay qoladi.
+    try { JSON.parse(text); } catch (e) { return { ok: false, error: 'JSON buzuq — nashr qilinmadi: ' + e.message }; }
+    const put = await ghPut(DEFAULT_REPO.file, text, String(message || '').slice(0, 200) || 'app-config.json: 5.4 reliz e’loni (YANG Admin Desk)');
+    if (!put.ok) return put;
+    return {
+      ok: true,
+      commit: put.sha || null,
+      commitUrl: put.url || null,
+      branch: admin.branch,
+      bytes: Buffer.byteLength(text, 'utf8'),
+    };
   });
 }
 

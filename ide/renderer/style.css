@@ -260,3 +260,80 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
   background: transparent; color: var(--text-dim); font: 12px var(--ui); cursor: pointer;
 }
 #ctxMenu button:hover { background: var(--accent-soft); color: #cdd8ff; }
+
+/* ============================================================================
+   v5.4 qo'shimchalari: haqiqiy terminal (xterm), til xizmati, debugger, tarix.
+   ============================================================================ */
+
+/* --- Haqiqiy terminal (PTY + xterm.js) --- */
+#xtermHost {
+  flex: 1; min-height: 0; padding: 6px 8px 2px 10px; overflow: hidden;
+  background: var(--bg);
+}
+#xtermHost .xterm { height: 100%; }
+#xtermHost .xterm-viewport { background: transparent !important; }
+
+/* --- Panel sarlavhasidagi holat matni (PTY yoki oddiy rejim) --- */
+#termNote { font-size: 11px; padding: 0 8px; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- Holat qatoridagi yangi belgilar --- */
+#bigNote { color: var(--warn); font-size: 11.5px; padding-right: 10px; }
+#tsNote { color: var(--text-mute); font-size: 11.5px; padding-right: 10px; }
+#dbgNote { color: var(--accent); font-size: 11.5px; padding-right: 10px; }
+
+/* --- Semantik xatolar (tsserver/pyflakes) — sintaksisdan ajralib tursin --- */
+.problem-row.semantic { border-left: 2px solid var(--accent); }
+
+/* --- Tarix (log) paneli --- */
+.hist-row {
+  padding: 5px 8px; border-radius: 6px; cursor: pointer; font: 12px/1.4 var(--mono);
+  color: var(--text-dim); display: flex; gap: 8px; align-items: baseline;
+}
+.hist-row:hover { background: var(--bg-3); color: var(--text); }
+.hist-row.ok { color: #8fe0c0; }
+.hist-row.bad { color: #f3a2a2; }
+.hist-out {
+  margin: 2px 0 8px 8px; padding: 8px 10px; border-radius: 6px; background: #0a0c11;
+  border: 1px solid var(--border); color: #c8ceda; font: 11.5px/1.45 var(--mono);
+  white-space: pre-wrap; max-height: 260px; overflow: auto;
+}
+
+/* --- Hover (tur/imzo) kartochkasi: muharrirning yuqori o'ng burchagida --- */
+#hoverTip {
+  position: absolute; right: 14px; top: 8px; z-index: 6; max-width: 520px;
+  padding: 7px 10px; border-radius: 8px; background: #121722ee; border: 1px solid var(--border-2);
+  color: var(--text-dim); font: 11.5px/1.45 var(--mono); white-space: pre-wrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+
+/* --- Nuqtalar (breakpoints) qatlami: qator raqamlari ustida --- */
+#breakGutter {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--gutter-w);
+  z-index: 4; cursor: pointer; will-change: transform;
+}
+.break-dot {
+  position: absolute; left: 6px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--danger); box-shadow: 0 0 6px rgba(240, 112, 112, 0.7);
+}
+.dbg-cur {
+  position: absolute; left: 0; right: 0; height: calc(13px * 1.55);
+  background: rgba(240, 200, 112, 0.12); border-left: 2px solid var(--warn);
+}
+
+/* --- Debugger paneli --- */
+#debugPanel { display: flex; flex-direction: column; gap: 8px; }
+#dbgBar { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+#dbgBar .btn { padding: 3px 9px; font-size: 12px; }
+#dbgBody { display: flex; gap: 10px; flex: 1; min-height: 0; }
+.dbg-col { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.dbg-head {
+  font: 11px var(--ui); text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-mute); padding: 2px 4px 6px;
+}
+.dbg-list { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: #0a0c11; }
+.dbg-row {
+  padding: 4px 8px; font: 11.5px/1.4 var(--mono); color: var(--text-dim);
+  cursor: pointer; border-bottom: 1px solid #12161f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dbg-row:hover { background: var(--bg-3); color: var(--text); }
+.dbg-scope { padding: 5px 8px 2px; font: 10.5px var(--ui); text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em; }

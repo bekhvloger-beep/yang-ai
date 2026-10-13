@@ -16,5 +16,10 @@ contextBridge.exposeInMainWorld('api', {
   blockToggle: (installId, blocked) => ipcRenderer.invoke('block:toggle', { installId, blocked }),
   stats: () => ipcRenderer.invoke('stats:summary'),
   releaseStatus: () => ipcRenderer.invoke('release:status'),
+  // Reliz tekshiruvi: tag ↔ repo versiyasi + to'rtta kutilgan asset.
+  releaseVerify: () => ipcRenderer.invoke('release:verify'),
+  // Mahalliy app-config.json: ko'rish va to'g'ridan-to'g'ri nashr qilish.
+  localCfgPreview: () => ipcRenderer.invoke('cfg:local-preview'),
+  pushLocalConfig: (message) => ipcRenderer.invoke('cfg:push-local', { message }),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

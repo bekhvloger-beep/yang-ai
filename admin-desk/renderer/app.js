@@ -51,19 +51,68 @@ $('discoverChatBtn').addEventListener('click', async () => {
   }
 });
 
-/* ---------- GitHub release holati ---------- */
+/* ---------- Reliz holati: tekshiruv + e'lon nashri ---------- */
+const fmtDate = (s) => (s ? new Date(s).toLocaleString('uz-UZ') : '—');
+
 $('releaseStatusBtn')?.addEventListener('click', async () => {
   $('releaseStatus').textContent = 'tekshirilmoqda…';
-  $('releaseAssets').textContent = '';
-  const r = await api.releaseStatus();
+  $('relSummary').textContent = '…';
+  $('relExpected').innerHTML = '';
+  const r = await api.releaseVerify();
   if (!r.ok) {
-    $('releaseStatus').textContent = r.error || 'xato';
+    $('releaseStatus').textContent = r.noRelease ? 'reliz yo‘q' : 'xato';
+    $('relSummary').innerHTML = `<span class="err">${escapeHtml(r.error || 'xato')}</span>`
+      + (r.repoVersion ? `<div class="dim" style="margin-top:6px">Repo versiyasi: <b>${escapeHtml(r.repoVersion)}</b></div>` : '');
+    $('relExpected').innerHTML = ((r.expected || []).length)
+      ? '<b>Kutilgan fayllar:</b>' + r.expected.map((e) => `<div>✗ <code>${escapeHtml(e.name)}</code></div>`).join('')
+      : '';
+    $('releaseAssets').textContent = '—';
     return;
   }
-  const d = r.publishedAt ? new Date(r.publishedAt).toLocaleString() : '';
-  $('releaseStatus').innerHTML = `<a href="#" id="relUrl" style="text-decoration:underline">${r.tag}</a> — ${d}`;
-  $('releaseAssets').textContent = r.assets.map((a) => `${a.name} (${a.sizeMb} MB, ${a.downloads} yuklab olingan)`).join(' · ');
+  $('releaseStatus').innerHTML = `<a href="#" id="relUrl" style="text-decoration:underline">${escapeHtml(r.tag || '—')}</a> — ${fmtDate(r.publishedAt)}`;
   $('relUrl').addEventListener('click', (e) => { e.preventDefault(); api.openExternal(r.url); });
+  const match = r.upToDate
+    ? `<span class="ok-chip">✓ teg repo versiyasiga mos (${escapeHtml(r.tagVersion || '')})</span>`
+    : `<span class="err">✗ teg (${escapeHtml(r.tagVersion || '—')}) repo versiyasiga (${escapeHtml(r.repoVersion || '—')}) mos emas</span>`;
+  $('relSummary').innerHTML = `<div><b>${escapeHtml(r.tag || '—')}</b> · ${fmtDate(r.publishedAt)}</div>`
+    + `<div style="margin-top:6px">${match}</div>`
+    + `<div class="dim" style="margin-top:6px">${r.authorized ? 'GitHub token bilan so‘raldi' : 'tokensiz so‘raldi (60 so‘rov/soat)'}</div>`;
+  $('relExpected').innerHTML = '<b>Majburiy fayllar:</b>'
+    + r.expected.map((e) => `<div>${e.present ? '✓' : '✗'} <code>${escapeHtml(e.name)}</code></div>`).join('')
+    + ((r.missing || []).length
+      ? `<div class="err" style="margin-top:6px">Yetishmayapti: ${r.missing.length} ta — avto-yangilanish ishlamasligi mumkin</div>`
+      : '<div class="ok-chip" style="margin-top:6px">Hammasi joyida</div>');
+  $('releaseAssets').innerHTML = (r.assets || []).length
+    ? r.assets.map((a) => `<div>${escapeHtml(a.name)} — ${a.sizeMb} MB · ${a.downloads} yuklab olingan</div>`).join('')
+    : '<span class="dim">fayl yo‘q</span>';
+});
+
+// Mahalliy app-config.json ni ko'rish (nashrdan oldin operator tekshiradi).
+$('localCfgPreviewBtn')?.addEventListener('click', async () => {
+  $('localCfgStatus').textContent = 'o‘qilmoqda…';
+  const r = await api.localCfgPreview();
+  if (!r.ok) { $('localCfgStatus').textContent = 'xato: ' + (r.error || ''); return; }
+  $('localCfgBranch').textContent = r.branch || 'main';
+  const el = $('localCfgPreview');
+  el.textContent = r.text;
+  el.style.display = 'block';
+  $('localCfgStatus').textContent = `${r.path} · ${r.bytes} B · ${r.valid ? '✓ JSON to‘g‘ri' : '✗ JSON buzuq: ' + r.jsonError}`
+    + (r.noticeId ? ` · e’lon ID: ${r.noticeId}` : '');
+});
+
+// Mahalliy faylni nashr qilish (commit SHA qaytadi).
+$('localCfgPushBtn')?.addEventListener('click', async () => {
+  const r0 = await api.localCfgPreview();
+  if (!r0.ok) { $('localCfgStatus').textContent = 'xato: ' + (r0.error || ''); return; }
+  if (!r0.valid) { $('localCfgStatus').textContent = 'JSON buzuq — nashr qilinmadi'; return; }
+  if (!confirm(`app-config.json → ${r0.owner}/${r0.repo} (${r0.branch}) shoxobchasiga nashr qilinsinmi?`)) return;
+  $('localCfgPushBtn').disabled = true;
+  $('localCfgStatus').textContent = 'nashr qilinmoqda…';
+  const r = await api.pushLocalConfig('app-config.json: 5.4 reliz e’loni (YANG Admin Desk)');
+  $('localCfgPushBtn').disabled = false;
+  $('localCfgStatus').textContent = r.ok
+    ? `✓ nashr qilindi · commit ${String(r.commit || '').slice(0, 10)} · ${r.bytes} B · ${r.branch}`
+    : 'xato: ' + (r.error || '');
 });
 
 /* ---------- inbox ---------- */
@@ -311,3 +360,6 @@ $('statsBtn').addEventListener('click', async () => {
 pullCfg();
 pollInbox();
 setInterval(pollInbox, 60 * 1000);
+
+// Ochilishda reliz holatini ko'rsatib qo'yamiz (operator birinchi bo'lib shuni ko'radi).
+$('releaseStatusBtn')?.click();

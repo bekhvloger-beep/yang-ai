@@ -1,6 +1,7 @@
 {
   "appId": "uz.aicomp.yang.ide",
   "productName": "YANG IDE",
+  "npmRebuild": false,
   "copyright": "AICOMP.UZ",
   "directories": {
     "output": "dist-ide"
@@ -16,6 +17,7 @@
   "files": [
     "ide/**/*",
     "!ide/test_*",
+    "node_modules/@homebridge/node-pty-prebuilt-multiarch/build/**/*",
     "agent/**/*",
     "!agent/test_*",
     "!agent/bench_*",

@@ -2,9 +2,14 @@
 <html lang="uz">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" />
+  <!-- `file:` — vendor qilingan xterm.js/CSS shu mahalliy fayllardan yuklanadi (ide/vendor/).
+       Tarmoq ochilmaydi: faqat local fayllar ruxsat etilgan. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' data: https:;" />
   <title>YANG AI</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Haqiqiy terminal (xterm.js): fayllar `npm run vendor:ide` bilan nusxalanadi.
+       PTY bo'lmasa panel eski buyruq maydoni rejimida qoladi. -->
+  <link id="xtermCss" rel="stylesheet" href="../ide/vendor/xterm.css" />
 </head>
 <body>
   <!-- Ikona to‘plami: emoji o‘rniga monoxrom chizma ikonalar (premium ko‘rinish).
@@ -60,6 +65,7 @@
       <button id="newChatBtn" class="btn btn-primary new-chat">Yangi chat</button>
       <div id="chatList" class="chat-list"></div>
       <div class="sidebar-footer">
+        <button id="openIdeBtn" class="btn btn-ghost" title="To‘liq YANG IDE oynasini ochish (Ctrl+Shift+I)"><svg class="ico"><use href="#i-screen" /></svg> YANG IDE</button>
         <button id="settingsBtn" class="btn btn-ghost"><svg class="ico"><use href="#i-gear" /></svg> Sozlamalar</button>
         <div class="version" id="appVersion">v3.0 · desktop</div>
       </div>
@@ -168,7 +174,14 @@
         <div class="ide-tree" id="ideTree"></div>
       </div>
       <div class="ide-col ide-col-term">
-        <div class="ide-col-head">Terminal</div>
+        <div class="ide-col-head">
+          <span>Terminal</span>
+          <span class="spacer"></span>
+          <button id="ideTermMode" class="ide-mini-btn" title="Haqiqiy terminal ↔ buyruq maydoni">buyruq</button>
+        </div>
+        <div id="ideTermNote" class="ide-term-note"></div>
+        <!-- Haqiqiy psevdo-terminal ekrani (xterm.js). PTY yo'q bo'lsa yashirin qoladi. -->
+        <div id="ideXtermHost" class="ide-xterm hidden"></div>
         <div class="ide-term-out" id="ideTermOut"></div>
         <div class="ide-term-in">
           <input id="ideTermInput" placeholder="buyruq yozing va Enter…" spellcheck="false" />
@@ -431,6 +444,9 @@
     </div>
   </div>
 
+  <!-- xterm.js — yon panelning haqiqiy terminali uchun (app.js dan OLDIN yuklanadi). -->
+  <script src="../ide/vendor/xterm.js"></script>
+  <script src="../ide/vendor/addon-fit.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

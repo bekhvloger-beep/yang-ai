@@ -41,6 +41,18 @@ contextBridge.exposeInMainWorld('api', {
   // v5.1 IDE tahrirlovchi: workspace faylini saqlash + tashqari ilovada ochish.
   ideSaveFile: (p, content) => ipcRenderer.invoke('ide:save-file', { path: p, content }),
   ideOpenExternal: (p) => ipcRenderer.invoke('ide:open-external', { path: p }),
+  // v5.3: to'liq YANG IDE oynasini ochish (asosiy ilova ichida ishlaydi).
+  openIde: () => ipcRenderer.invoke('ide:open-window'),
+  ideWindowOpen: () => ipcRenderer.invoke('ide:window-open'),
+  // v5.4: yon panelning HAQIQIY terminali (xterm + ConPTY). Kanal nomlari IDE yadrosi
+  // bilan bir xil (`yide:pty-*`): main jarayon ularni ide_host.js orqali allaqachon
+  // ro'yxatga olgan, shu sabab bu yerda faqat ko'prik ochiladi — ikkinchi manba yo'q.
+  ptyInfo: () => ipcRenderer.invoke('yide:pty-info'),
+  ptyOpen: (opts = {}) => ipcRenderer.invoke('yide:pty-open', opts),
+  ptyWrite: (id, data) => ipcRenderer.invoke('yide:pty-write', { id, data }),
+  ptyResize: (id, cols, rows) => ipcRenderer.invoke('yide:pty-resize', { id, cols, rows }),
+  ptyClose: (id) => ipcRenderer.invoke('yide:pty-close', { id }),
+  ptyList: () => ipcRenderer.invoke('yide:pty-list'),
   // v5 rasm menyu: o'zbekcha prompt bo'lsa inglizchaga o'giriladi, so'ng rasm chiziladi.
   imageStudio: (promptUz, quality) => ipcRenderer.invoke('image:studio', { prompt: promptUz, quality }),
   translateStatus: () => ipcRenderer.invoke('translate:status'),
@@ -54,6 +66,18 @@ contextBridge.exposeInMainWorld('api', {
     const listener = (_e, data) => cb(data);
     ipcRenderer.on('update:event', listener);
     return () => ipcRenderer.removeListener('update:event', listener);
+  },
+
+  // v5.4: PTY oqimi (terminal chiqishi) va sessiya tugashi.
+  onPtyData: (cb) => {
+    const listener = (_e, data) => cb(data);
+    ipcRenderer.on('yide:pty-data', listener);
+    return () => ipcRenderer.removeListener('yide:pty-data', listener);
+  },
+  onPtyExit: (cb) => {
+    const listener = (_e, data) => cb(data);
+    ipcRenderer.on('yide:pty-exit', listener);
+    return () => ipcRenderer.removeListener('yide:pty-exit', listener);
   },
 
   onEvent: (cb) => {

@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-5.0.0",
-    "text": "YANG AI 5.0: ichida IDE paneli (fayllar + terminal + faoliyat jurnali) va Rasm studiyasi (o‘zbekcha prompt, sifat 1080/2K/4K). Ilova o‘zi yangilanadi.",
+    "id": "release-5.4.0",
+    "text": "YANG AI 5.4: IDE endi chinakam muharrir — haqiqiy terminal (vim, top, ssh, REPL), tip tekshiruvi (tsserver: yo‘q funksiya/noto‘g‘ri tur, F12 haqiqiy ta’rif, Shift+F12 havolalar, hover), qadamlab debugger (nuqtalar, chaqiruvlar zanjiri, o‘zgaruvchilar), «Sinab ko‘r + tuzat» halqasi xato chiqsa tarixni ko‘rib o‘zi tuzatadi va qayta ishga tushiradi, tahrir hajmi chegarasi (2 MB) olib tashlandi. Ilova o‘zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,

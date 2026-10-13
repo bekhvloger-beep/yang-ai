@@ -52,45 +52,66 @@ function makeWorkspace() {
 const workspace = makeWorkspace();
 
 function registerStubs() {
-  ipcMain.handle('ide:init', () => ({
+  ipcMain.handle('yide:init', () => ({
     workspace: { path: workspace, name: path.basename(workspace) },
     recent: [workspace],
     tabs: ['sample.py'],
   }));
-  ipcMain.handle('ide:sys-info', () => ({
+  ipcMain.handle('yide:sys-info', () => ({
     platform: process.platform, electron: process.versions.electron, node: process.versions.node,
     cpus: os.cpus().length, ramMb: Math.round(os.totalmem() / 1024 ** 2), version: 'test', localModel: null, localStarted: false,
   }));
-  ipcMain.handle('ide:list-tree', () => ({
+  ipcMain.handle('yide:list-tree', () => ({
     entries: [
       { path: 'notes.md', dir: false, size: 18 },
       { path: 'sample.py', dir: false, size: SAMPLE.length },
     ],
   }));
-  ipcMain.handle('ide:read-file', (_e, { path: p } = {}) => {
+  ipcMain.handle('yide:read-file', (_e, { path: p } = {}) => {
     const abs = path.join(workspace, String(p || ''));
     if (!fs.existsSync(abs)) return { error: 'topilmadi' };
     const text = fs.readFileSync(abs, 'utf8');
     return { text, size: text.length, truncated: false, path: p };
   });
-  ipcMain.handle('ide:diagnostics', () => ({ items: [], note: null }));
-  ipcMain.handle('ide:ai-status', () => ({ provider: 'localmini', model: 'qwen3-instruct', providers: [{ id: 'localmini', name: 'Lokal', models: ['qwen3-instruct'] }] }));
-  ipcMain.handle('ide:save-tabs', () => ({ ok: true }));
-  ipcMain.handle('ide:error-links', () => ({ links: [] }));
-  ipcMain.handle('ide:search', () => ({ results: [] }));
-  ipcMain.handle('ide:write-file', () => ({ ok: true }));
-  ipcMain.handle('ide:ai-set-model', () => ({ ok: true }));
-  ipcMain.handle('ide:pick-folder', () => ({ canceled: true }));
-  ipcMain.handle('ide:open-folder', () => ({ path: workspace, name: path.basename(workspace) }));
-  ipcMain.handle('ide:create', () => ({ ok: true }));
-  ipcMain.handle('ide:rename', () => ({ ok: true }));
-  ipcMain.handle('ide:delete', () => ({ ok: true }));
-  ipcMain.handle('ide:open-external', () => ({ ok: true }));
-  ipcMain.handle('ide:run-command', () => ({ id: 'stub', cwd: workspace }));
-  ipcMain.handle('ide:run-file', () => ({ id: 'stub', cwd: workspace, command: 'echo' }));
-  ipcMain.handle('ide:kill-command', () => ({ ok: true }));
-  ipcMain.handle('ide:ai-run', () => ({ ok: true }));
-  ipcMain.handle('ide:ai-stop', () => ({ ok: true }));
+  ipcMain.handle('yide:diagnostics', () => ({ items: [], note: null }));
+  ipcMain.handle('yide:ai-status', () => ({ provider: 'localmini', model: 'qwen3-instruct', providers: [{ id: 'localmini', name: 'Lokal', models: ['qwen3-instruct'] }] }));
+  ipcMain.handle('yide:save-tabs', () => ({ ok: true }));
+  ipcMain.handle('yide:error-links', () => ({ links: [] }));
+  ipcMain.handle('yide:search', () => ({ results: [] }));
+  ipcMain.handle('yide:write-file', () => ({ ok: true }));
+  ipcMain.handle('yide:ai-set-model', () => ({ ok: true }));
+  ipcMain.handle('yide:pick-folder', () => ({ canceled: true }));
+  ipcMain.handle('yide:open-folder', () => ({ path: workspace, name: path.basename(workspace) }));
+  ipcMain.handle('yide:create', () => ({ ok: true }));
+  ipcMain.handle('yide:rename', () => ({ ok: true }));
+  ipcMain.handle('yide:delete', () => ({ ok: true }));
+  ipcMain.handle('yide:open-external', () => ({ ok: true }));
+  ipcMain.handle('yide:run-command', () => ({ id: 'stub', cwd: workspace }));
+  ipcMain.handle('yide:run-file', () => ({ id: 'stub', cwd: workspace, command: 'echo' }));
+  ipcMain.handle('yide:kill-command', () => ({ ok: true }));
+  ipcMain.handle('yide:ai-run', () => ({ ok: true }));
+  ipcMain.handle('yide:ai-stop', () => ({ ok: true }));
+
+  // --- cheklovlarsiz qatlam (PTY, til xizmati, debugger, yurish tarixi) ---
+  // Renderer ishga tushishda shu kanallarni ham chaqiradi. Stub'lar qo'lda yozilgani
+  // uchun ular orqada qolib, konsolda "No handler registered for 'yide:pty-info'"
+  // kabi xatolar chiqardi ("konsol xatolari yo'q" tekshiruvi shu sababdan yiqilardi).
+  ipcMain.handle('yide:pty-info', () => ({ available: false, reason: 'sinov stubi' }));
+  ipcMain.handle('yide:pty-open', () => ({ error: 'sinov stubi' }));
+  ipcMain.handle('yide:lsp-status', () => ({ available: false, reason: 'sinov stubi' }));
+  ipcMain.handle('yide:run-log', () => ({ runs: [], lastFailure: null }));
+  ipcMain.handle('yide:debug-status', () => ({ running: false }));
+  ipcMain.handle('yide:fix-busy', () => ({ busy: false }));
+
+  // Qolgan kanallar preload'dan o'qib olinadi — yangi kanal qo'shilsa, test o'zi
+  // qoplaydi va yana "handler yo'q" xatosi bilan yiqilmaydi.
+  const preloadSrc = fs.readFileSync(path.join(HERE, 'preload.cjs'), 'utf8');
+  const channels = [...preloadSrc.matchAll(/ipcRenderer\.invoke\(\s*'([^']+)'/g)].map((m) => m[1]);
+  let auto = 0;
+  for (const ch of channels) {
+    try { ipcMain.handle(ch, () => ({})); auto += 1; } catch { /* allaqachon qo'yilgan */ }
+  }
+  console.log(`  ${auto} ta kanal uchun zaxira (bo'sh) stub qo'yildi — preload'dan o'qildi`);
 }
 
 app.commandLine.appendSwitch('disable-gpu');
@@ -193,16 +214,16 @@ console.log('YANG IDE boot testi');
 
   // ---- JAMOA REJIMI UI: haqiqiy renderer team hodisalarini ko‘rsatadimi ----
   await win.webContents.executeJavaScript(`document.getElementById('aiToggleBtn').click(); true;`);
-  win.webContents.send('ide:ai-event', { type: 'team_plan', agents: [
+  win.webContents.send('yide:ai-event', { type: 'team_plan', agents: [
     { name: 'Coder', role: 'dasturchi', icon: '👨‍💻', task: 'app.py yozish' },
     { name: 'QA', role: 'tester', icon: '🧪', task: 'testlarni yozish' },
   ] });
-  win.webContents.send('ide:ai-event', { type: 'team_assign', agent: 'Coder', provider: 'Lokal', model: 'qwen3-instruct' });
-  win.webContents.send('ide:ai-event', { type: 'agent_begin', name: 'Coder', role: 'dasturchi', icon: '👨‍💻', model: 'Lokal · qwen3-instruct' });
-  win.webContents.send('ide:ai-event', { type: 'agent_end', name: 'Coder', role: 'dasturchi', icon: '👨‍💻', summary: 'app.py tayyor' });
-  win.webContents.send('ide:ai-event', { type: 'team_done', summary: 'Jamoa yakunladi: 2 fayl.' });
-  win.webContents.send('ide:ai-event', { type: 'done', content: 'Jamoa yakunladi: 2 fayl.' });
-  win.webContents.send('ide:ai-event', { type: 'run_finished' });
+  win.webContents.send('yide:ai-event', { type: 'team_assign', agent: 'Coder', provider: 'Lokal', model: 'qwen3-instruct' });
+  win.webContents.send('yide:ai-event', { type: 'agent_begin', name: 'Coder', role: 'dasturchi', icon: '👨‍💻', model: 'Lokal · qwen3-instruct' });
+  win.webContents.send('yide:ai-event', { type: 'agent_end', name: 'Coder', role: 'dasturchi', icon: '👨‍💻', summary: 'app.py tayyor' });
+  win.webContents.send('yide:ai-event', { type: 'team_done', summary: 'Jamoa yakunladi: 2 fayl.' });
+  win.webContents.send('yide:ai-event', { type: 'done', content: 'Jamoa yakunladi: 2 fayl.' });
+  win.webContents.send('yide:ai-event', { type: 'run_finished' });
   await new Promise((r) => setTimeout(r, 600));
 
   const teamProbe = await win.webContents.executeJavaScript(`(() => {

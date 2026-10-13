@@ -5,6 +5,9 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
   <title>YANG IDE</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Haqiqiy terminal (xterm.js): PTY bilan birga interaktiv TUI (vim/top/ssh) ishlaydi.
+       Fayllar `npm run vendor:ide` bilan nusxalanadi (ide/vendor/). -->
+  <link id="xtermCss" rel="stylesheet" href="vendor/xterm.css">
 </head>
 <body>
   <div id="app">
@@ -13,7 +16,9 @@
       <button id="openFolderBtn" class="btn">Papka ochish</button>
       <span id="wsName" title="">—</span>
       <div class="spacer"></div>
-      <button id="runBtn" class="btn">Ishga tushirish</button>
+      <button id="runBtn" class="btn" title="F5 — faylni ishga tushirish">Ishga tushirish</button>
+      <button id="runFixBtn" class="btn" title="Ishga tushirib, xato bo'lsa AI tuzatib qayta sinaydi (log bilan)">Sinab ko‘r + tuzat</button>
+      <button id="dbgRunBtn" class="btn" title="Nuqtalar bilan qadamlab debug qilish (Node)">Debug</button>
       <button id="saveBtn" class="btn">Saqlash</button>
       <button id="aiToggleBtn" class="btn">AI</button>
       <button id="termToggleBtn" class="btn">Terminal</button>
@@ -25,6 +30,7 @@
         <div id="sidebarTabs">
           <button data-view="files" class="active">Fayllar</button>
           <button data-view="search">Qidiruv</button>
+          <button data-view="refs">Havolalar</button>
         </div>
 
         <div id="filesView">
@@ -35,6 +41,12 @@
         <div id="searchView" class="hidden">
           <div class="side-pad"><input id="searchInput" placeholder="Qidiruv (Enter)"></div>
           <div id="searchResults"></div>
+        </div>
+
+        <!-- Til xizmati: Shift+F12 «barcha havolalar» natijalari shu yerda -->
+        <div id="refsView" class="hidden">
+          <div class="side-pad"><span id="refsHint" class="dim">Faylda belgi ustida Shift+F12 bosing</span></div>
+          <div id="refsResults"></div>
         </div>
       </aside>
 
@@ -55,6 +67,9 @@
             <pre id="highlight" class="editor-hl" aria-hidden="true"></pre>
             <textarea id="editorArea" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"></textarea>
             <div id="autocomplete" class="hidden"></div>
+            <div id="hoverTip" class="hidden"></div>
+            <!-- Nuqtalar (breakpoints): qator raqamlari ustida bosiladi -->
+            <div id="breakGutter" title="Nuqta qo'yish/olib tashlash"></div>
           </div>
 
           <div id="findBar" class="hidden">
@@ -73,20 +88,43 @@
           <div id="panelTabs">
             <button data-panel="terminal" class="active">Terminal</button>
             <button data-panel="problems">Muammolar <span id="problemsCount">0</span></button>
+            <button data-panel="debug">Debug</button>
+            <button data-panel="history">Tarix</button>
             <button data-panel="activity">Faoliyat</button>
             <div class="spacer"></div>
+            <span id="termNote" class="dim"></span>
             <button id="panelClose" class="btn btn-icon" title="Panelni yopish">▾</button>
           </div>
 
           <div id="terminalPanel" class="panel-body">
+            <!-- Haqiqiy terminal (PTY + xterm). PTY bo'lmasa pastdagi oddiy rejim ishlaydi. -->
+            <div id="xtermHost" class="hidden"></div>
             <div id="termOut"></div>
-            <div class="term-input-row">
+            <div id="termFallbackRow" class="term-input-row">
               <span class="term-prompt">$</span>
               <input id="termInput" placeholder="Buyruq… (Enter)" spellcheck="false">
             </div>
           </div>
 
           <div id="problemsPanel" class="panel-body hidden"></div>
+
+          <div id="debugPanel" class="panel-body hidden">
+            <div id="dbgBar">
+              <button id="dbgContinue" class="btn">Davom</button>
+              <button id="dbgStepOver" class="btn">Qadam</button>
+              <button id="dbgStepInto" class="btn">Ichiga</button>
+              <button id="dbgStepOut" class="btn">Tashqari</button>
+              <button id="dbgStop" class="btn">To'xtatish</button>
+              <span id="dbgStatus" class="dim">to‘xtatilgan</span>
+            </div>
+            <div id="dbgBody">
+              <div class="dbg-col"><div class="dbg-head">Chaqiruvlar</div><div id="dbgStack" class="dbg-list"></div></div>
+              <div class="dbg-col"><div class="dbg-head">O'zgaruvchilar</div><div id="dbgVars" class="dbg-list"></div></div>
+              <div class="dbg-col"><div class="dbg-head">Nuqtalar</div><div id="dbgBreaks" class="dbg-list"></div></div>
+            </div>
+          </div>
+
+          <div id="historyPanel" class="panel-body hidden"></div>
           <div id="activityPanel" class="panel-body hidden"></div>
         </div>
       </main>
@@ -113,6 +151,9 @@
     <footer id="statusBar">
       <span id="statusLeft">tayyor</span>
       <div class="spacer"></div>
+      <span id="bigNote"></span>
+      <span id="tsNote"></span>
+      <span id="dbgNote"></span>
       <span id="cursorPos">1:1</span>
       <span id="langLabel">—</span>
       <span id="dirtyLabel"></span>
@@ -135,6 +176,8 @@
 
   <div id="ctxMenu" class="hidden"></div>
 
+  <script src="vendor/xterm.js"></script>
+  <script src="vendor/addon-fit.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -710,6 +710,23 @@ body { font-size: 13px; }
   padding: 7px 10px; color: var(--text); font-family: var(--mono); font-size: 12px; outline: none;
 }
 .ide-term-in input:focus { border-color: var(--accent); }
+
+/* --- v5.4: yon panelda haqiqiy terminal (xterm + PTY) --- */
+.ide-col-head { display: flex; align-items: center; gap: 8px; }
+.ide-mini-btn {
+  margin-left: auto; background: var(--panel); border: 1px solid var(--border-2);
+  color: var(--text-dim); border-radius: 7px; padding: 2px 9px; font: 600 11px var(--mono);
+  cursor: pointer; text-transform: none; letter-spacing: 0;
+}
+.ide-mini-btn:hover { border-color: var(--accent); color: var(--text); }
+.ide-term-note {
+  padding: 4px 12px; font: 10.5px/1.4 var(--mono); color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ide-term-note:empty { display: none; }
+.ide-xterm { flex: 1; min-height: 0; padding: 6px 8px 2px; background: var(--bg-3); overflow: hidden; }
+.ide-xterm .xterm { height: 100%; }
+.ide-xterm .xterm-viewport { background: transparent !important; }
 .ide-feed { flex: 1; overflow: auto; padding: 8px 10px; }
 .ide-line { display: flex; gap: 7px; align-items: baseline; padding: 2px 0; font-size: 12px; line-height: 1.45; }
 .ide-line-i { width: 18px; text-align: center; flex: none; }

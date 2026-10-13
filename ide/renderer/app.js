@@ -6,6 +6,10 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
+// Katta fayl rejimi: shu belgidan katta matnda sintaksis bo'yash O'CHADI (terish tez qoladi),
+// lekin fayl baribir to'liq ochiladi va saqlanadi — tahrir chegarasi yo'q.
+const HIGHLIGHT_MAX = 2 * 1024 * 1024;
+
 const state = {
   workspace: null,
   treeRoot: null,
@@ -19,6 +23,12 @@ const state = {
   termIdx: -1,
   quickMode: false,
   aiBusy: false,
+  // Yangi qatlamlar (5.4): til xizmati, yurish tarixi, katta fayl rejimi.
+  problemSets: {},      // path -> { lite: [], lsp: [] } (sintaksis + semantik birlashtirilgan)
+  runLog: [],           // yurishlar tarixi (main'dagi log nusxasi)
+  lsp: null,            // { available, info }
+  bigMode: false,       // katta fayl: sintaksis bo'yash o'chirilgan
+  gutterFirst: null,    // qator raqamlari oynasining boshlanishi
 };
 
 function toast(text, ms = 2600) {
@@ -519,28 +529,57 @@ function paint(forceText = false) {
   if (!area || !hl || !gutter) return;
   const tab = activeTab();
   const lang = tab ? langKeyFor(tab.path) : 'txt';
-  hl.innerHTML = tokenize(area.value, lang);
-  const count = linesOf(area.value).length;
-  const { line: curLine } = lineOfIndex(area.value, area.selectionStart);
+  const text = area.value;
+  const big = text.length > HIGHLIGHT_MAX;
+  // Katta faylda butun matnni tokenlash har bosishda sekundlab vaqt oladi — bo'yashni
+  // o'chiramiz (matn textarea'da baribir ko'rinadi). Shu bilan chegarasiz tahrir + tez terish.
+  hl.innerHTML = big ? '' : tokenize(text, lang);
+  if (big !== state.bigMode) {
+    state.bigMode = big;
+    if ($('bigNote')) $('bigNote').textContent = big ? 'katta fayl: sintaksis bo‘yash o‘chirildi' : '';
+  }
+  const { line: curLine } = lineOfIndex(text, area.selectionStart);
+  paintGutter(text, curLine, forceText);
+  syncScroll();
+}
+
+// Qator raqamlari endi FAQAT ko'rinib turgan oyna uchun chiziladi (ilgari butun fayl uchun
+// yasalardi — 100 000 qatorli faylda brauzer qotardi).
+function paintGutter(text, curLine, forceText = false) {
+  const area = $('editorArea'), gutter = $('gutter');
+  if (!area || !gutter) return;
   let inner = gutter.firstElementChild;
-  if (!inner) {
+  if (!inner || inner.id !== 'gutterLines') {
     inner = document.createElement('div');
     inner.id = 'gutterLines';
     gutter.innerHTML = '';
     gutter.appendChild(inner);
   }
-  if (forceText || Number(gutter.dataset.count) !== count) {
+  const count = linesOf(text).length;
+  const viewH = area.clientHeight || 400;
+  const visible = Math.ceil(viewH / LINE_H) + 2;
+  const first = clamp(Math.floor(area.scrollTop / LINE_H) + 1, 1, Math.max(1, count));
+  const last = Math.min(count, first + visible);
+  const same = !forceText && Number(inner.dataset.from) === first
+    && Number(inner.dataset.to) === last && Number(inner.dataset.count) === count;
+  if (!same) {
     let html = '';
-    for (let i = 1; i <= count; i++) html += `<div class="gline">${i}</div>`;
+    for (let i = first; i <= last; i++) html += `<div class="gline">${i}</div>`;
     inner.innerHTML = html;
-    gutter.dataset.count = String(count);
+    inner.dataset.from = String(first);
+    inner.dataset.to = String(last);
+    inner.dataset.count = String(count);
+    // Oyna suradi: konteyner butun hujjat ichida o'z o'rnida tursin.
+    inner.style.paddingTop = `${(first - 1) * LINE_H}px`;
   }
-  const cur = inner.children[curLine - 1];
+  const cur = inner.children[curLine - first];
   if (cur && !cur.classList.contains('gutter-cur')) {
     for (const child of inner.children) child.classList.remove('gutter-cur');
     cur.classList.add('gutter-cur');
+  } else if (cur) {
+    // allaqachon shu qatorda — qolganlarini tozalash shart emas
   }
-  syncScroll();
+  state.gutterFirst = first;
 }
 
 function syncScroll() {
@@ -548,8 +587,13 @@ function syncScroll() {
   if (!area || !hl) return;
   hl.scrollTop = area.scrollTop;
   hl.scrollLeft = area.scrollLeft;
-  if (gutter && gutter.firstElementChild) {
-    gutter.firstElementChild.style.transform = `translateY(${-area.scrollTop}px)`;
+  const inner = gutter && gutter.firstElementChild;
+  if (inner) inner.style.transform = `translateY(${-area.scrollTop}px)`;
+  renderBreakDots();
+  // Scroll paytida qator raqamlari oynasi siljiydi (cheksizlikda ham yengil qoladi).
+  if (inner && (state.gutterFirst == null || Math.floor(area.scrollTop / LINE_H) + 1 !== state.gutterFirst)) {
+    const { line } = lineOfIndex(area.value, area.selectionStart);
+    paintGutter(area.value, line);
   }
 }
 
@@ -558,14 +602,21 @@ function updateCursor() {
   if (!area) return;
   const { line, col } = lineOfIndex(area.value, area.selectionStart);
   if ($('cursorPos')) $('cursorPos').textContent = `Ln ${line}, Col ${col}`;
+  scheduleHover();
+  scheduleLspDiagnostics();
   const tab = activeTab();
   if ($('langLabel')) $('langLabel').textContent = tab ? LANG_NAME[langKeyFor(tab.path)] || 'Text' : '';
   const gutter = $('gutter');
   const inner = gutter && gutter.firstElementChild;
   if (inner) {
-    for (const child of inner.children) child.classList.remove('gutter-cur');
-    const cur = inner.children[line - 1];
-    if (cur) cur.classList.add('gutter-cur');
+    const first = Number(inner.dataset.from) || 1;
+    const cur = inner.children[line - first];
+    if (cur && !cur.classList.contains('gutter-cur')) {
+      for (const child of inner.children) child.classList.remove('gutter-cur');
+      cur.classList.add('gutter-cur');
+    }
+    // Kursor oynadan tashqariga chiqsa oyna suriladi.
+    if (line < first || line > (Number(inner.dataset.to) || first)) paintGutter(area.value, line);
   }
 }
 
@@ -573,6 +624,12 @@ function updateDirty() {
   const tab = activeTab();
   if ($('dirtyLabel')) $('dirtyLabel').textContent = tab ? (tab.dirty ? 'o‘zgartirilgan' : 'saqlangan') : '';
 }
+
+/* Til xizmati (tsserver) uchun kechiktirilgan chaqiruvlar — pastda to'ldiriladi. */
+let hoverTimer = null;
+let lspTimer = null;
+function scheduleHover() { if (typeof scheduleHoverImpl === 'function') scheduleHoverImpl(); }
+function scheduleLspDiagnostics() { if (typeof scheduleLspDiagnosticsImpl === 'function') scheduleLspDiagnosticsImpl(); }
 
 function markDirtyFromArea() {
   const tab = activeTab();
@@ -727,7 +784,8 @@ function scheduleDiagnostics(tab) {
 async function runDiagnostics(tab) {
   const r = await safe(() => window.ide.diagnostics(tab.path));
   if (!r) return;
-  renderProblems(r.items || [], r.note || null, tab.path);
+  // Sintaksis natijasi semantik (tsserver/pyflakes) natijasi bilan BIRLASHTIRILADI.
+  mergeProblems(tab.path, 'lite', r.items || [], r.note || null);
 }
 
 function renderProblems(items, note, tabPath) {
@@ -754,8 +812,11 @@ function renderProblems(items, note, tabPath) {
   }
   for (const item of items) {
     const row = document.createElement('div');
-    row.className = 'problem-row error';
-    row.textContent = `Ln ${item.line}: ${item.message}`;
+    // Semantik xatolar (tsserver/pyflakes) alohida belgilanadi — manba ko'rinsin.
+    row.className = `problem-row ${item.source && item.source !== 'lite' ? 'semantic' : 'error'}`;
+    const tag = item.source === 'tsserver' ? '[ts] ' : item.source === 'pyflakes' ? '[py] ' : '';
+    row.textContent = `Ln ${item.line}: ${tag}${item.message}`;
+    row.title = item.source ? `manba: ${item.source}${item.code ? ` · kod ${item.code}` : ''}` : '';
     row.addEventListener('click', () => gotoLine(item.line));
     box.appendChild(row);
   }
@@ -1002,6 +1063,19 @@ async function goToDefinition() {
   }
   const word = value.slice(start, end);
   if (!word || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(word)) { toast('So‘z ustiga kursor qo‘ying'); return; }
+  // 1) Haqiqiy til xizmati (tsserver): qayerda e'lon qilinganini aniq biladi.
+  if (lspEligible(tab.path)) {
+    const pos = lineOfIndex(value, area.selectionStart);
+    const def = await safe(() => window.ide.lspDefinition(tab.path, pos.line, pos.col, value));
+    const first = def && def.items && def.items[0];
+    if (first && first.path) {
+      await openTab(first.path, { line: first.line });
+      gotoLine(first.line);
+      activity(`⌖ ${word} → ${first.path}:${first.line} (tsserver)`, 'ok');
+      return;
+    }
+  }
+  // 2) Til xizmati topmasa — zaxira: matn bo‘yicha qidiruv (eski lite usul).
   const r = await safe(() => window.ide.search(word, true));
   if (!r || !r.results || !r.results.length) { toast(`Ta'rif topilmadi: ${word}`); return; }
   // Ta'rif qatorini afzal ko'ramiz (def/class/function/const), keyin birinchi mos.
@@ -1225,14 +1299,405 @@ async function reloadCleanTabs() {
 
 async function aiFixFromContext() {
   const tab = activeTab();
-  const probs = tab ? (state.problems[tab.path] || []).slice(0, 3).map((p) => `Ln ${p.line}: ${p.message}`) : [];
+  const probs = tab ? (state.problems[tab.path] || []).slice(0, 5).map((p) => `Ln ${p.line}: ${p.message}`) : [];
+  // TARIX ham kontekstga kiradi: model oldingi urinishlar natijasini ko'radi (shu sabab
+  // bir xil xatoni qayta urinmaydi) — "o'zi logni ko'rib tuzatadimi?" savolining javobi.
+  const hist = (state.runLog || []).slice(-4).map((r) => `- ${r.path || ''} → kod ${r.code}${r.timedOut ? ' (vaqt tugadi)' : ''}\n  chiqish oxiri: ${String(r.output || '').split('\n').slice(-6).join(' | ').slice(0, 400)}`);
   const parts = [
     'Terminaldagi xatoni topib tuzatib ber va ishga tushirib tasdiqla.',
     `Faol fayl: ${tab ? tab.path : '(ochiq fayl yo‘q)'}`,
     probs.length ? `Muammolar:\n${probs.join('\n')}` : '',
+    hist.length ? `Yurishlar TARIXI (oxirgisi eng yangi):\n${hist.join('\n')}` : '',
     `Terminal chiqishi (oxirgi qism):\n${state.termBuffer.slice(-4000) || '(bo‘sh)'}`,
   ].filter(Boolean);
   await runAi(parts.join('\n\n'), false);
+}
+
+/* =====================================================================================
+   HAQIQIY TERMINAL (PTY + xterm.js)
+   Ilgari terminal `spawn` + quvur edi: buyruq chiqishi kelardi, lekin interaktiv dasturlar
+   (vim, top, ssh, python REPL) ishlamasdi. Endi ConPTY orqali haqiqiy psevdo-terminal
+   ochiladi va xterm.js uni ekranga chizadi — ya'ni bu CHINAKAM terminal.
+   PTY yuklanmasa IDE o'sha eski (quvur) rejimga tushadi — hech narsa buzilmaydi.
+   ===================================================================================== */
+const term = { mode: 'pipe', x: null, fit: null, id: null, resizeObserver: null };
+
+function setTermNote(text) {
+  if ($('termNote')) $('termNote').textContent = text || '';
+}
+
+async function initTerminal() {
+  const host = $('xtermHost');
+  if (!host || term.x) return;
+  const info = await safe(() => window.ide.ptyInfo());
+  if (!info || !info.available) {
+    term.mode = 'pipe';
+    setTermNote(`oddiy rejim (PTY yo‘q${info && info.reason ? `: ${String(info.reason).slice(0, 50)}` : ''})`);
+    return;
+  }
+  if (typeof window.Terminal !== 'function') {
+    term.mode = 'pipe';
+    setTermNote('oddiy rejim (xterm.js topilmadi — npm run vendor:ide)');
+    return;
+  }
+  const x = new window.Terminal({
+    fontFamily: 'Consolas, "Cascadia Mono", "Courier New", monospace',
+    fontSize: 12.5,
+    lineHeight: 1.2,
+    cursorBlink: true,
+    scrollback: 8000,
+    allowProposedApi: true,
+    theme: {
+      background: '#0b0d12', foreground: '#d7dbe6', cursor: '#8aa2ff',
+      selectionBackground: 'rgba(108,140,255,0.32)',
+      black: '#1b1f2a', red: '#f87171', green: '#6ee7a8', yellow: '#fbbf24',
+      blue: '#60a5fa', magenta: '#c084fc', cyan: '#22d3ee', white: '#e5e7eb',
+    },
+  });
+  try {
+    const fit = new window.FitAddon.FitAddon();
+    x.loadAddon(fit);
+    term.fit = fit;
+  } catch { term.fit = null; }
+  x.open(host);
+  host.classList.remove('hidden');
+  $('termOut')?.classList.add('hidden');
+  $('termFallbackRow')?.classList.add('hidden');
+  term.x = x;
+  term.mode = 'pty';
+  x.onData((data) => { if (term.id) window.ide.ptyWrite(term.id, data); });
+  ptyFit();
+  await openPtySession();
+
+  window.ide.onPtyData((d) => {
+    try { if (d && d.id === term.id && term.x) term.x.write(d.chunk); } catch (e) { catchLog('PTY oqimi', e); }
+  });
+  window.ide.onPtyExit((d) => {
+    if (!d || d.id !== term.id) return;
+    term.id = null;
+    if (term.x) term.x.write(`\r\n\u001b[90m[sessiya tugadi — kod ${d.code}]\u001b[0m\r\n`);
+    setTermNote(`sessiya yopildi (kod ${d.code})`);
+    activity(`⌨ terminal sessiyasi tugadi (kod ${d.code})`);
+  });
+  // Panel o'lchami o'zgarsa PTY ham o'sha o'lchamga o'tadi (vim kabi TUI lar to'g'ri chiziladi).
+  if (window.ResizeObserver) {
+    term.resizeObserver = new ResizeObserver(() => { clearTimeout(term._rt); term._rt = setTimeout(ptyFit, 120); });
+    term.resizeObserver.observe(host);
+  }
+}
+
+async function openPtySession() {
+  if (term.mode !== 'pty' || term.id) return;
+  const cols = term.x ? term.x.cols : 100;
+  const rows = term.x ? term.x.rows : 24;
+  const cwd = state.workspace ? state.workspace.path : undefined;
+  const r = await safe(() => window.ide.ptyOpen({ cols, rows, cwd }));
+  if (!r || r.error) {
+    term.mode = 'pipe';
+    setTermNote(`terminal ochilmadi: ${(r && r.error) || 'xato'} — oddiy rejim`);
+    $('xtermHost')?.classList.add('hidden');
+    $('termOut')?.classList.remove('hidden');
+    $('termFallbackRow')?.classList.remove('hidden');
+    renderTerminal();
+    return;
+  }
+  term.id = r.id;
+  const shellName = String(r.shell || '').split(/[\\/]/).pop();
+  setTermNote(`PTY · ${shellName} · ${r.cwd}`);
+  if (term.x) term.x.focus();
+}
+
+function ptyFit() {
+  if (term.mode !== 'pty') return;
+  try { term.fit && term.fit.fit(); } catch { /* o'lcham hali yo'q */ }
+  if (term.id && term.x) window.ide.ptyResize(term.id, term.x.cols, term.x.rows);
+}
+
+/** Terminalga yozish: PTY bo'lsa xterm'ga, baribir tarix uchun buferga ham. */
+function termWrite(text) {
+  const s = String(text == null ? '' : text);
+  if (term.mode === 'pty' && term.x) {
+    // Quvur rejimidagi chiqish ANSI ranglar bilan keladi — xterm ularni o'zi tushunadi.
+    term.x.write(s.replace(/\n/g, '\r\n'));
+  }
+  pushTerminal(s);
+}
+
+function restartPty() {
+  if (term.mode !== 'pty') return;
+  if (term.id) { window.ide.ptyClose(term.id); term.id = null; }
+  openPtySession();
+}
+
+/* =====================================================================================
+   TARIX (log) — har bir yurish: buyruq, chiqish kodi, vaqt, chiqish oxiri.
+   AI tuzatish halqasi ham, «Xatoni tuzat» ham shu tarixdan oziqlanadi.
+   ===================================================================================== */
+async function loadHistory() {
+  const r = await safe(() => window.ide.runLog());
+  state.runLog = (r && r.runs) || [];
+  renderHistory(state.runLog);
+}
+
+function renderHistory(runs) {
+  const box = $('historyPanel');
+  if (!box) return;
+  box.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'dim';
+  head.textContent = runs && runs.length
+    ? `${runs.length} yurish saqlangan · qatorni bosing — chiqish ko‘rinadi`
+    : 'Hali yurish bo‘lmagan. F5 yoki «Sinab ko‘r + tuzat» bilan sinab ko‘ring.';
+  box.appendChild(head);
+  for (const run of [...(runs || [])].reverse()) {
+    const row = document.createElement('div');
+    row.className = `hist-row ${run.code === 0 ? 'ok' : 'bad'}`;
+    const time = new Date(run.ts).toLocaleTimeString();
+    row.textContent = `${run.code === 0 ? '✓' : '✖'} ${time} · ${run.path || '(buyruq)'} · kod ${run.code}${run.seconds ? ` · ${run.seconds}s` : ''}`;
+    row.title = 'Chiqishni ko‘rish/yashirish';
+    row.addEventListener('click', () => {
+      const next = row.nextElementSibling;
+      if (next && next.classList.contains('hist-out')) { next.remove(); return; }
+      const pre = document.createElement('pre');
+      pre.className = 'hist-out';
+      pre.textContent = `$ ${run.command || ''}\n${run.output || '(chiqish bo‘sh)'}`;
+      row.after(pre);
+    });
+    box.appendChild(row);
+  }
+}
+
+let fixBusy = false;
+async function runFixLoop() {
+  const tab = activeTab();
+  if (!tab) { toast('Avval faylni oching'); return; }
+  if (fixBusy) { toast('Tuzatish halqasi allaqachon ishlayapti'); return; }
+  if (tab.dirty) await saveActive();
+  fixBusy = true;
+  showPanel('history');
+  if ($('runFixBtn')) { $('runFixBtn').disabled = true; $('runFixBtn').textContent = 'Sinab ko‘rilyapti…'; }
+  activity(`🛠 sinab ko‘rish + tuzatish: ${tab.path}`, 'ok');
+  const r = await safe(() => window.ide.fixRun(tab.path, 3));
+  fixBusy = false;
+  if ($('runFixBtn')) { $('runFixBtn').disabled = false; $('runFixBtn').textContent = 'Sinab ko‘r + tuzat'; }
+  if (r && r.ok) {
+    toast(`✅ ${r.attempts} urinishda muvaffaqiyatli tugadi`);
+    activity(`✅ tuzatildi (${r.attempts} urinish)`, 'ok');
+  } else {
+    toast(`❌ halqa tuzata olmadi (${(r && r.error) || 'xato'}) — Tarix panelini ko‘ring`);
+    activity(`❌ tuzatilmadi: ${(r && r.error) || 'xato'}`, 'bad');
+  }
+  await loadHistory();
+  await reloadCleanTabs();
+}
+
+/* =====================================================================================
+   TIL XIZMATI (tsserver): semantik xato, haqiqiy ta'rif, barcha havolalar, hover.
+   ===================================================================================== */
+const LSP_EXT = new Set(['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'mts', 'cts', 'py']);
+function lspEligible(p) { return LSP_EXT.has(String(p || '').split('.').pop().toLowerCase()); }
+
+async function initLsp() {
+  const info = await safe(() => window.ide.lspStatus());
+  const ok = !!(info && info.available);
+  if ($('tsNote')) $('tsNote').textContent = ok ? `til xizmati: tsserver ${info.server || ''}`.trim() : 'til xizmati: faqat sintaksis';
+  state.lsp = { available: ok, info };
+}
+
+/** Diagnostikani birlashtirish: sintaksis (lite) + semantik (tsserver/pyflakes). */
+function mergeProblems(path, kind, items, note) {
+  if (!path) return;
+  const set = (state.problemSets[path] = state.problemSets[path] || { lite: [], lsp: [] });
+  set[kind] = items || [];
+  set[kind + 'Note'] = note || null;
+  const merged = [...(set.lsp || []), ...(set.lite || [])];
+  renderProblems(merged, set.lspNote || set.liteNote || null, path);
+}
+
+function scheduleLspDiagnosticsImpl() {
+  clearTimeout(lspTimer);
+  const tab = activeTab();
+  if (!tab || !lspEligible(tab.path)) return;
+  lspTimer = setTimeout(() => runLspDiagnostics(tab), 700);
+}
+
+async function runLspDiagnostics(tab) {
+  const area = $('editorArea');
+  const text = area && tab.path === state.active ? area.value : tab.text;
+  if (typeof text === 'string' && text.length > 2 * 1024 * 1024) return;   // juda katta fayl — til xizmatisiz
+  const r = await safe(() => window.ide.lspDiagnostics(tab.path, text));
+  if (!r) return;
+  const note = r.note || (r.engine ? `manba: ${r.engine}` : null);
+  mergeProblems(tab.path, 'lsp', r.items || [], note);
+}
+
+function scheduleHoverImpl() {
+  clearTimeout(hoverTimer);
+  const tab = activeTab();
+  if (!tab || !lspEligible(tab.path)) return;
+  hoverTimer = setTimeout(() => showHover(tab), 700);
+}
+
+async function showHover(tab) {
+  const area = $('editorArea');
+  const tip = $('hoverTip');
+  if (!area || !tip || tab.path !== state.active) return;
+  const pos = lineOfIndex(area.value, area.selectionStart);
+  const r = await safe(() => window.ide.lspHover(tab.path, pos.line, pos.col, area.value));
+  if (!r || !r.text) { tip.classList.add('hidden'); return; }
+  tip.textContent = r.text;
+  tip.classList.remove('hidden');
+}
+
+/** Shift+F12 — barcha havolalar (haqiqiy semantik izlash). */
+async function findReferences() {
+  const area = $('editorArea');
+  const tab = activeTab();
+  if (!area || !tab) { toast('Avval faylni oching'); return; }
+  if (!lspEligible(tab.path)) { toast('Havolalar qidiruvi JS/TS/Python uchun'); return; }
+  const pos = lineOfIndex(area.value, area.selectionStart);
+  showView('refs');
+  const box = $('refsResults');
+  if ($('refsHint')) $('refsHint').textContent = 'qidirilmoqda…';
+  const r = await safe(() => window.ide.lspReferences(tab.path, pos.line, pos.col, area.value));
+  const items = (r && r.items) || [];
+  if (box) box.innerHTML = '';
+  if ($('refsHint')) $('refsHint').textContent = items.length
+    ? `${items.length} ta havola — ${tab.path}:${pos.line}:${pos.col}`
+    : (r && r.error ? `xato: ${r.error}` : 'havola topilmadi (kursor belgi ustida bo‘lsin)');
+  for (const it of items) {
+    const row = document.createElement('div');
+    row.className = 'problem-row';
+    row.textContent = `${it.path}:${it.line}:${it.col}`;
+    row.addEventListener('click', async () => { await openTab(it.path, { line: it.line }); gotoLine(it.line); });
+    box?.appendChild(row);
+  }
+  activity(`⇄ ${items.length} ta havola topildi`, items.length ? 'ok' : '');
+}
+
+/* =====================================================================================
+   QADAMLAB DEBUGGER (nuqtalar, chaqiruvlar, o'zgaruvchilar)
+   ===================================================================================== */
+const dbg = { breaks: [], running: false, paused: false, frames: [], file: null, current: null };
+
+function setDbgStatus(text) { if ($('dbgStatus')) $('dbgStatus').textContent = text; }
+
+/** Nuqta qo'yish/olib tashlash — qator raqamlari ustida bosiladi. */
+function toggleBreak(line) {
+  const tab = activeTab();
+  if (!tab || !line) return;
+  if (!['.js', '.mjs', '.cjs'].includes(`.${String(tab.path).split('.').pop()}`)) {
+    toast('Nuqtalar hozircha JS fayllar uchun');
+    return;
+  }
+  const idx = dbg.breaks.findIndex((b) => b.path === tab.path && b.line === line);
+  if (idx >= 0) dbg.breaks.splice(idx, 1);
+  else dbg.breaks.push({ path: tab.path, line });
+  renderBreakDots();
+  if (dbg.running) window.ide.debugSetBreakpoints(dbg.breaks);
+}
+
+function renderBreakDots() {
+  const host = $('breakGutter');
+  const area = $('editorArea');
+  if (!host || !area) return;
+  const tab = activeTab();
+  host.innerHTML = '';
+  const mine = dbg.breaks.filter((b) => tab && b.path === tab.path);
+  for (const b of mine) {
+    const dot = document.createElement('div');
+    dot.className = 'break-dot';
+    dot.style.top = `${(b.line - 1) * LINE_H + TOP_PAD}px`;
+    host.appendChild(dot);
+  }
+  if (dbg.current && tab && dbg.current.path === tab.path) {
+    const cur = document.createElement('div');
+    cur.className = 'dbg-cur';
+    cur.style.top = `${(dbg.current.line - 1) * LINE_H + TOP_PAD}px`;
+    host.appendChild(cur);
+  }
+  // Scroll bilan birga siljiydi (boshqa qatlamlar kabi).
+  host.style.transform = `translateY(${-area.scrollTop}px)`;
+}
+
+async function debugStartOrContinue() {
+  const tab = activeTab();
+  if (!tab) { toast('Avval faylni oching'); return; }
+  showPanel('debug');
+  if (dbg.running) {
+    const r = await safe(() => window.ide.debugResume());
+    setDbgStatus(r && r.error ? `xato: ${r.error}` : 'davom etdi');
+    return;
+  }
+  if (tab.dirty) await saveActive();
+  const r = await safe(() => window.ide.debugStart(tab.path, dbg.breaks, false));
+  if (!r || r.error) { toast(`Debug ishga tushmadi: ${(r && r.error) || 'xato'}`); setDbgStatus('ishga tushmadi'); return; }
+  dbg.running = true;
+  dbg.file = r.file;
+  setDbgStatus(`ishga tushdi (port ${r.port}) — nuqtalar kutilyapti`);
+  activity(`🐞 debug boshlandi: ${r.file}`, 'ok');
+}
+
+async function debugStep(kind) {
+  if (!dbg.running) { toast('Avval debug boshlang'); return; }
+  const r = await safe(() => window.ide.debugStep(kind));
+  if (r && r.error) setDbgStatus(`xato: ${r.error}`);
+}
+
+async function debugStop() {
+  await safe(() => window.ide.debugStop());
+  dbg.running = false;
+  dbg.paused = false;
+  dbg.current = null;
+  renderBreakDots();
+  setDbgStatus('to‘xtatildi');
+}
+
+function renderDbgStack(frames, scopes) {
+  const stack = $('dbgStack');
+  const vars = $('dbgVars');
+  if (stack) {
+    stack.innerHTML = '';
+    for (const f of frames || []) {
+      const row = document.createElement('div');
+      row.className = 'dbg-row';
+      row.textContent = `${f.name} · ${f.path || '?'}:${f.line}`;
+      row.addEventListener('click', async () => { if (f.path) { await openTab(f.path, { line: f.line }); gotoLine(f.line); } });
+      stack.appendChild(row);
+    }
+    if (!(frames || []).length) stack.innerHTML = '<div class="dim">chaqiruv yo‘q</div>';
+  }
+  if (vars) {
+    vars.innerHTML = '';
+    for (const sc of scopes || []) {
+      const head = document.createElement('div');
+      head.className = 'dbg-scope';
+      head.textContent = sc.type;
+      vars.appendChild(head);
+      for (const v of sc.vars || []) {
+        const row = document.createElement('div');
+        row.className = 'dbg-row';
+        row.textContent = `${v.name} = ${v.value}`;
+        vars.appendChild(row);
+      }
+    }
+    if (!(scopes || []).length) vars.innerHTML = '<div class="dim">o‘zgaruvchi yo‘q</div>';
+  }
+}
+
+function renderDbgBreakpoints(list) {
+  const box = $('dbgBreaks');
+  if (!box) return;
+  box.innerHTML = '';
+  const rows = list && list.length ? list : dbg.breaks;
+  for (const b of rows) {
+    const row = document.createElement('div');
+    row.className = 'dbg-row';
+    row.textContent = `${b.resolved === false ? '○' : '●'} ${b.path}:${b.line}`;
+    row.addEventListener('click', async () => { await openTab(b.path, { line: b.line }); gotoLine(b.line); });
+    box.appendChild(row);
+  }
+  if (!rows.length) box.innerHTML = '<div class="dim">nuqta yo‘q — qator raqami ustida bosing yoki F9</div>';
 }
 
 /* ------------------------------------------------------------------- boot */
@@ -1244,6 +1709,23 @@ function wireUi() {
 
   on('openFolderBtn', 'click', () => pickFolder().catch((e) => catchLog('papka ochish', e)));
   on('runBtn', 'click', () => runActiveFile().catch((e) => catchLog('ishga tushirish', e)));
+  on('runFixBtn', 'click', () => runFixLoop().catch((e) => catchLog('tuzatish halqasi', e)));
+  on('dbgRunBtn', 'click', () => debugStartOrContinue().catch((e) => catchLog('debug', e)));
+  on('dbgContinue', 'click', () => debugStartOrContinue().catch((e) => catchLog('debug davom', e)));
+  on('dbgStepOver', 'click', () => debugStep('over'));
+  on('dbgStepInto', 'click', () => debugStep('into'));
+  on('dbgStepOut', 'click', () => debugStep('out'));
+  on('dbgStop', 'click', () => debugStop());
+
+  // Nuqta qo'yish: qator raqamlari ustidagi shaffof qatlam bosiladi.
+  on('breakGutter', 'click', (e) => {
+    const area = $('editorArea');
+    if (!area) return;
+    const rect = area.getBoundingClientRect();
+    const y = e.clientY - rect.top + area.scrollTop - TOP_PAD;
+    const line = Math.floor(y / LINE_H) + 1;
+    toggleBreak(Math.max(1, line));
+  });
   on('saveBtn', 'click', () => saveActive().catch((e) => catchLog('saqlash', e)));
   on('termToggleBtn', 'click', () => {
     const bottom = $('bottomPanel');
@@ -1342,9 +1824,10 @@ function wireUi() {
 }
 
 function showView(which) {
-  const files = $('filesView'), search = $('searchView');
+  const files = $('filesView'), search = $('searchView'), refs = $('refsView');
   if (files) files.classList.toggle('hidden', which !== 'files');
   if (search) search.classList.toggle('hidden', which !== 'search');
+  if (refs) refs.classList.toggle('hidden', which !== 'refs');
   document.querySelectorAll('#sidebarTabs button[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === which));
   if (which === 'search') $('searchInput')?.focus();
 }
@@ -1381,7 +1864,18 @@ function onGlobalKey(e) {
     return;
   }
   if (e.key === 'F5') { e.preventDefault(); runActiveFile(); return; }
-  if (e.key === 'F12') { e.preventDefault(); goToDefinition().catch((err) => catchLog('ta’rifga o‘tish', err)); return; }
+  if (e.key === 'F12') {
+    e.preventDefault();
+    if (e.shiftKey) findReferences().catch((err) => catchLog('havolalar', err));
+    else goToDefinition().catch((err) => catchLog('ta’rifga o‘tish', err));
+    return;
+  }
+  if (e.key === 'F9') { e.preventDefault(); const area2 = $('editorArea'); if (area2) toggleBreak(lineOfIndex(area2.value, area2.selectionStart).line); return; }
+  if (dbg.running && (e.key === 'F10' || e.key === 'F11')) {
+    e.preventDefault();
+    debugStep(e.key === 'F10' ? 'over' : 'into');
+    return;
+  }
   if (e.key === '`' && e.ctrlKey) {
     e.preventDefault();
     $('bottomPanel')?.classList.toggle('hidden');
@@ -1422,9 +1916,13 @@ async function runActiveFile() {
   if (!tab) { toast('Ishga tushirish uchun fayl oching yoki papka tanlang'); return; }
   if (tab.dirty) await saveActive();
   showPanel('terminal');
+  // Yurish endi CAPTURED: chiqish oqim bilan keladi (terminalda ko'rinadi), oxiri va
+  // chiqish kodi TARIXGA yoziladi — shu asosda AI tuzatish halqasi ishlaydi.
   const r = await safe(() => window.ide.runFile(tab.path));
   if (r && r.opened) { toast('Tashqi ilovada ochildi'); return; }
-  if (r && r.command) activity(`▶ running ${tab.path}`, 'ok');
+  if (r && r.error) { toast(`Ishga tushmadi: ${r.error}`); return; }
+  if (r && r.command) activity(`▶ ${tab.path} (kod ${r.code}, ${r.seconds}s)`, r.code === 0 ? 'ok' : 'bad');
+  await loadHistory();
 }
 
 async function pickFolder() {
@@ -1437,10 +1935,16 @@ async function enterWorkspace(info) {
   state.workspace = { path: info.path, name: info.name };
   state.collapsed.clear();
   state.filter = '';
+  state.problemSets = {};
   if ($('fileFilter')) $('fileFilter').value = '';
   if ($('wsName')) $('wsName').textContent = info.name || info.path;
   activity(`📂 papka ochildi: ${info.path}`);
   await refreshTree();
+  // Yangi papkada: terminal sessiyasi o'sha papkada ochilsin, nuqtalar tozalansin.
+  dbg.breaks = [];
+  renderBreakDots();
+  renderDbgBreakpoints();
+  restartPty();
   toast(`Papka ochildi: ${info.name || info.path}`);
 }
 
@@ -1469,11 +1973,67 @@ async function boot() {
     $('statusLeft').textContent = `YANG IDE v${info.version} · ${info.platform} · ${info.cpus} CPU · ${info.ramMb} MB RAM`;
   }
 
-  window.ide.onTermData((d) => { try { if (d && d.chunk) pushTerminal(d.chunk); } catch (e) { catchLog('terminal oqimi', e); } });
+  // Yangi qatlamlar: haqiqiy terminal, til xizmati, yurish tarixi, debugger.
+  try { await initTerminal(); } catch (e) { catchLog('terminal (PTY)', e); }
+  try { await initLsp(); } catch (e) { catchLog('til xizmati', e); }
+  try { await loadHistory(); } catch (e) { catchLog('tarix', e); }
+
+  window.ide.onRunLogged((d) => {
+    try {
+      if (d && d.runs) { state.runLog = d.runs; renderHistory(d.runs); }
+    } catch (e) { catchLog('tarix yangilandi', e); }
+  });
+  window.ide.onRunFinished((d) => {
+    try {
+      const run = d && d.run;
+      if (!run) return;
+      activity(`${run.code === 0 ? '✓' : '✖'} ${run.path} tugadi (kod ${run.code}, ${run.seconds}s)`, run.code === 0 ? 'ok' : 'bad');
+      if (run.code !== 0) {
+        toast(`Kod ${run.code} — «Sinab ko‘r + tuzat» yoki Tarix panelini ko‘ring`);
+        showPanel('history');
+      }
+    } catch (e) { catchLog('yurish tugadi', e); }
+  });
+  window.ide.onFixEvent((d) => {
+    try {
+      if (!d || !d.text) return;
+      const kind = d.phase === 'error' || d.phase === 'give-up' ? 'bad' : d.phase === 'done' ? 'ok' : '';
+      activity(d.text, kind);
+      if (d.phase === 'done' || d.phase === 'give-up') toast(d.text);
+    } catch (e) { catchLog('tuzatish hodisasi', e); }
+  });
+  window.ide.onDebugPaused(async (d) => {
+    try {
+      if (!d) return;
+      dbg.paused = true;
+      dbg.running = true;
+      dbg.current = { path: d.path, line: d.line };
+      setDbgStatus(`to‘xtadi: ${d.path}:${d.line} (${d.reason})`);
+      renderDbgStack(d.frames, d.scopes);
+      if (d.path) {
+        await openTab(d.path, { line: d.line });
+        gotoLine(d.line);
+      }
+      renderBreakDots();
+      showPanel('debug');
+      activity(`🐞 to‘xtadi ${d.path}:${d.line}`, 'ok');
+    } catch (e) { catchLog('debug to‘xtashi', e); }
+  });
+  window.ide.onDebugResumed(() => { setDbgStatus('davom etmoqda…'); });
+  window.ide.onDebugOutput((d) => { try { if (d && d.chunk) termWrite(d.chunk); } catch (e) { catchLog('debug chiqishi', e); } });
+  window.ide.onDebugExit((d) => {
+    dbg.running = false;
+    dbg.paused = false;
+    dbg.current = null;
+    renderBreakDots();
+    setDbgStatus(d && d.code != null ? `tugadi (kod ${d.code})` : 'to‘xtatildi');
+  });
+
+  window.ide.onTermData((d) => { try { if (d && d.chunk) termWrite(d.chunk); } catch (e) { catchLog('terminal oqimi', e); } });
   window.ide.onTermExit(async (d) => {
     try {
       const code = d ? d.code : null;
-      pushTerminal(`\r\n\u001b[90m[tugadi — kod ${code}]\u001b[0m\r\n`);
+      termWrite(`\r\n\u001b[90m[tugadi — kod ${code}]\u001b[0m\r\n`);
       if (code && code !== 0) {
         const tail = state.termBuffer.slice(-4000);
         const r = await window.ide.errorLinks(tail);

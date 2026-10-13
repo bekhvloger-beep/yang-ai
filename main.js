@@ -1,10 +1,10 @@
 // main.js — Electron main process: window, IPC, engine orchestration, chat persistence.
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, exec } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { AgentEngine } from './agent/engine.js';
 import { TeamRunner } from './agent/team.js';
@@ -16,6 +16,9 @@ import {
   loadConfig, saveConfig, importKeysFromEnv,
   listChats, loadChat, saveChat, deleteChat,
 } from './agent/config.js';
+// YANG IDE yadrosi — to'liq IDE oynasi SHU jarayonda ochiladi, ya'ni IDE asosiy
+// ilova o'rnatuvchisi bilan birga keladi (alohida exe shart emas).
+import { registerIdeIpc, openIdeWindow, disposeIde, ideWindow } from './ide/ide_host.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname);
@@ -29,6 +32,21 @@ let lastActiveChatId = null; // v5 IDE IPC uchun aktiv chat
 
 // Renderer tomonidan "joriy chat" sifatida ko'rsatilgan chat id (IDE IPC'da ishlatiladi).
 function activeChatId() { return activeRun?.chatId || lastActiveChatId || null; }
+
+// Faol chat ish papkasi (bo'lmasa oxirgi ishlatilgan papka).
+// Diqqat: avval bu yerda umuman mavjud bo'lmagan `chats` Map o'qilardi — shu sabab
+// ilova ichidagi IDE panelining fayl daraxti va tahrirlash oqimi ReferenceError bilan
+// yiqilardi (chat o'rniga xato qaytarardi). Endi papka haqiqiy manbadan olinadi.
+async function activeWorkspace() {
+  try {
+    const id = activeChatId();
+    if (id) {
+      const chat = await loadChat(userDataDir(), id);
+      if (chat && chat.workspace) return chat.workspace;
+    }
+  } catch { /* chat o'qilmadi — zaxira manbaga o'tamiz */ }
+  return (cfg && cfg.config && cfg.config.lastWorkspace) || app.getPath('home');
+}
 
 function userDataDir() {
   return app.getPath('userData');
@@ -458,21 +476,44 @@ function registerIpc() {
   });
 
   ipcMain.handle('local:scan', async () => scanLocalProviders());
+  // ---------- v5.4 xavfsizlik: HAQIQIY yo'l tekshiruvi ----------
+  // O'lchandi (agent/test_security_attacks.mjs): ish papkasi ichiga havola qo'yilsa
+  // (`mklink /J link C:\Windows`), `path.relative` uni «ichkarida» deb hisoblaydi va
+  // `link/win.ini` o'qib ketiladi — ya'ni oddiy nisbiy tekshiruv havolani ko'rmaydi.
+  // Shu sababli ikkala tomonni ham `realpath` bilan haqiqiy yo'lga keltiramiz.
+  const realOrNull = (p) => {
+    try { return fs.realpathSync.native(p); } catch { return null; }
+  };
+  // Yo'l ish papkasi ichidami? Ichkarida bo'lsa HAQIQIY yo'lni, aks holda null qaytaradi.
+  // Hali yaratilmagan fayl ham qabul qilinadi: eng yaqin mavjud ota-papka tekshiriladi.
+  const insideWorkspace = (wsRoot, abs) => {
+    const root = realOrNull(wsRoot) || path.resolve(wsRoot);
+    let real = realOrNull(abs);
+    if (!real) {
+      const parent = realOrNull(path.dirname(abs));
+      if (!parent) return null;
+      real = path.join(parent, path.basename(abs));
+    }
+    const r = path.relative(root, real);
+    if (r.startsWith('..') || path.isAbsolute(r)) return null;
+    return real;
+  };
   // ---------- v5: IDE IPC ----------
   // workspace ichidagi faylni o'qish (IDE ko'ruvchi). PATH'dan chiqmaydi — xavfsizlik uchun.
   ipcMain.handle('ide:read-file', async (_e, { path: p, maxBytes }) => {
     try {
-      const chat = chats.get(activeChatId());
-      const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+      const ws = await activeWorkspace();
       if (!ws) return { error: 'Ish papkasi tanlanmagan' };
       const abs = path.resolve(ws, String(p || ''));
       const rel = path.relative(path.resolve(ws), abs);
       if (rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
-      const st = await fsp.stat(abs);
+      const real = insideWorkspace(ws, abs);
+      if (!real) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
+      const st = await fsp.stat(real);
       if (!st.isFile()) return { error: 'Bu fayl emas' };
       const limit = Math.min(Math.max(Number(maxBytes) || 300000, 1000), 300000);
       if (st.size > limit * 4) return { error: `Fayl juda katta (${(st.size / 1024).toFixed(0)} KB)` };
-      const buf = await fsp.readFile(abs);
+      const buf = await fsp.readFile(real);
       const text = buf.toString('utf8').slice(0, limit);
       return { text, size: st.size, truncated: buf.length > limit };
     } catch (e) {
@@ -483,25 +524,26 @@ function registerIpc() {
   // workspace'dan chiqish, symlink va abs yo'l bloklanadi.
   ipcMain.handle('ide:save-file', async (_e, { path: p, content }) => {
     try {
-      const chat = chats.get(activeChatId());
-      const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+      const ws = await activeWorkspace();
       if (!ws) return { error: 'Ish papkasi tanlanmagan' };
       const abs = path.resolve(ws, String(p || ''));
       const rel = path.relative(path.resolve(ws), abs);
       if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
+      const target = insideWorkspace(ws, abs);
+      if (!target) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
       if (typeof content !== 'string') return { error: 'mazmun matn bo‘lishi kerak' };
       if (content.length > 4 * 1024 * 1024) return { error: 'juda katta (>4 MB)' };
       // Fayl mavjud bo‘lsa yozishdan oldin .bak zaxira (bir marta, .bak ustiga yozmaymiz).
       try {
-        const bak = abs + '.bak';
-        await fsp.access(abs);
-        try { await fsp.access(bak); } catch { await fsp.copyFile(abs, bak); }
+        const bak = target + '.bak';
+        await fsp.access(target);
+        try { await fsp.access(bak); } catch { await fsp.copyFile(target, bak); }
       } catch {
-        // Yangi fayl — zaxira shart emas,愿 mkdir kerak-holinga kuch.
-        await fsp.mkdir(path.dirname(abs), { recursive: true }).catch(() => {});
+        // Yangi fayl — zaxira shart emas, faqat papka kerak bo‘lsa yaratamiz.
+        await fsp.mkdir(path.dirname(target), { recursive: true }).catch(() => {});
       }
-      await fsp.writeFile(abs, content, 'utf8');
-      const st = await fsp.stat(abs);
+      await fsp.writeFile(target, content, 'utf8');
+      const st = await fsp.stat(target);
       return { ok: true, size: st.size, saved: rel.replace(/\\/g, '/') };
     } catch (e) {
       return { error: e.message || 'yozib bo‘lmadi' };
@@ -510,17 +552,18 @@ function registerIpc() {
   // v5.1: faylni tizim standart ilovasi bilan ochish (shell.openPath) — guard bilan.
   ipcMain.handle('ide:open-external', async (_e, { path: p }) => {
     try {
-      const chat = chats.get(activeChatId());
-      const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+      const ws = await activeWorkspace();
       if (!ws) return { error: 'Ish papkasi tanlanmagan' };
       const abs = path.resolve(ws, String(p || ''));
       const rel = path.relative(path.resolve(ws), abs);
       if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
-      const st = await fsp.stat(abs);
+      const openTarget = insideWorkspace(ws, abs);
+      if (!openTarget) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
+      const st = await fsp.stat(openTarget);
       if (!st.isFile()) return { error: 'Bu fayl emas' };
-      // Katta faylni ochish shell ich_moves bloklanmaydi lekin qulaylik uchun limit.
+      // Katta faylni ochish bloklanmaydi, lekin qulaylik uchun limit qo'yamiz.
       if (st.size > 50 * 1024 * 1024) return { error: 'juda katta (>50 MB)' };
-      const err = await shell.openPath(abs);
+      const err = await shell.openPath(openTarget);
       return err ? { error: err } : { ok: true };
     } catch (e) {
       return { error: e.message || 'ochib bo‘lmadi' };
@@ -528,12 +571,13 @@ function registerIpc() {
   });
   // IDE terminal: buyruqni bevosita bajarish (faol chat workspace'da).
   ipcMain.handle('ide:run-command', async (_e, { command, cwd }) => {
-    const chat = chats.get(activeChatId());
-    const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+    const ws = await activeWorkspace();
     if (!ws || !command) return { error: 'papka/buyruq yo‘q' };
-    const cwdAbs = path.resolve(ws, String(cwd || '.'));
-    const rel = path.relative(path.resolve(ws), cwdAbs);
+    const cwdResolved = path.resolve(ws, String(cwd || '.'));
+    const rel = path.relative(path.resolve(ws), cwdResolved);
     if (rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'cwd ish papkasidan chiqib ketdi' };
+    const cwdAbs = insideWorkspace(ws, cwdResolved) || realOrNull(path.resolve(ws));
+    if (!cwdAbs) return { error: 'cwd ish papkasidan chiqib ketdi' };
     return new Promise((resolve) => {
       exec(String(command), { cwd: cwdAbs, timeout: 120000, maxBuffer: 4 * 1024 * 1024, windowsHide: true, env: { ...process.env, FORCE_COLOR: '0' } }, (err, stdout, stderr) => {
         let out = '';
@@ -546,16 +590,18 @@ function registerIpc() {
   });
   // IDE fayl daraxti (2 qadamli).
   ipcMain.handle('ide:list-tree', async (_e, { rel = '.', depth = 2 }) => {
-    const chat = chats.get(activeChatId());
-    const ws = chat?.workspace || cfg.config.lastWorkspace || '';
+    const ws = await activeWorkspace();
     if (!ws) return { error: 'papka yo‘q' };
     const root = path.resolve(ws, String(rel));
     const relChk = path.relative(path.resolve(ws), root);
     if (relChk.startsWith('..') || path.isAbsolute(relChk)) return { error: 'yo‘l tashqarida' };
-    // Har bir ko'rsatilgan fayl ham workspace ichida qolishini tekshiramiz (symlink hollari).
+    const wsReal = realOrNull(path.resolve(ws)) || path.resolve(ws);
+    // Har bir ko'rsatilgan fayl ham workspace ichida qolishini tekshiramiz — havolani
+    // ham hisobga olgan holda (`insideWorkspace` realpath bo'yicha qaraydi).
     const safeRel = (p) => {
-      const r = path.relative(path.resolve(ws), p);
-      return r.startsWith('..') || path.isAbsolute(r) ? null : r.replace(/\\/g, '/');
+      const real = insideWorkspace(ws, p);
+      if (!real) return null;
+      return path.relative(wsReal, real).replace(/\\/g, '/');
     };
     const out = [];
     const walk = async (dir, d) => {
@@ -568,7 +614,10 @@ function registerIpc() {
         if (!relPath) continue;
         if (e.isDirectory()) {
           out.push({ path: relPath, dir: true });
-          if (d < depth) await walk(full, d + 1);
+          // Havola orqali tashqariga chiqadigan papkaga KIRMAYMIZ: aks holda daraxt
+          // ish papkasidan tashqaridagi nomlarni o'qib ko'rsatardi.
+          const realDir = insideWorkspace(ws, full);
+          if (d < depth && realDir && realDir !== wsReal) await walk(full, d + 1);
         } else {
           let size = 0;
           try { size = (await fsp.stat(full)).size; } catch {}
@@ -579,6 +628,20 @@ function registerIpc() {
     await walk(root, 0);
     return { entries: out };
   });
+  // ---------- v5.3: to'liq YANG IDE oynasi ----------
+  // IDE o'z jarayonida emas, AYNAN SHU jarayonda ochiladi: shuning uchun alohida
+  // o'rnatuvchi kerak emas — YANG AI o'rnatilganda IDE ham birga keladi (Freebuff
+  // desktop bilan bir xil yondashuv). Ish papkasi faol chatdan olinadi.
+  ipcMain.handle('ide:open-window', async () => {
+    try {
+      await openIdeWindow({ workspace: await activeWorkspace() });
+      return { ok: true };
+    } catch (e) {
+      return { error: String((e && e.message) || e) };
+    }
+  });
+  ipcMain.handle('ide:window-open', () => ({ open: !!ideWindow() }));
+
   // ---------- v5: rasm studiyasi IPC ----------
   // O‘zbekcha prompt avtomatik inglizchaga o‘giriladi (NLLB), so‘ng generateImage chaqiriladi.
   ipcMain.handle('image:studio', async (_e, { prompt, quality }) => {
@@ -595,7 +658,7 @@ function registerIpc() {
     try {
       const result = await generateImage({ prompt: promptEn, config: cfg.config, registerChildSignal: null, size });
       const outName = `image_${Date.now()}.png`;
-      const ws = cfg.config.lastWorkspace || (chats.get(activeChatId())?.workspace) || app.getPath('pictures');
+      const ws = (await activeWorkspace()) || app.getPath('pictures');
       const outPath = path.isAbsolute(ws) ? path.join(ws, outName) : path.join(app.getPath('pictures'), outName);
       await fsp.writeFile(outPath, result.buffer);
       return { path: outPath, via: result.via, promptEn, size };
@@ -853,6 +916,53 @@ async function smokeTest() {
   }
 }
 
+// ---------- menyu: YANG IDE ni bir bosishda ochish ----------
+// Ilovada menyu yo'q edi: foydalanuvchi IDE ni faqat yon paneldagi tugmadan
+// topa olardi. Endi «Fayl → YANG IDE oynasi» (Ctrl+Shift+I) ham bor.
+function buildMenu() {
+  const openIde = () => {
+    activeWorkspace()
+      .then((ws) => openIdeWindow({ workspace: ws }))
+      .catch(() => {});
+  };
+  const template = [
+    {
+      label: 'Fayl',
+      submenu: [
+        { label: 'YANG IDE oynasi', accelerator: 'CmdOrCtrl+Shift+I', click: openIde },
+        { type: 'separator' },
+        { role: 'close', label: 'Oynani yopish' },
+        { role: 'quit', label: 'Chiqish' },
+      ],
+    },
+    { role: 'editMenu', label: 'Tahrir' },
+    {
+      label: 'Ko‘rinish',
+      submenu: [
+        { role: 'reload', label: 'Qayta yuklash' },
+        { role: 'forceReload', label: 'Majburiy qayta yuklash' },
+        { role: 'toggleDevTools', label: 'Ishlab chiquvchi asboblari' },
+        { type: 'separator' },
+        { role: 'resetZoom', label: 'Masshtabni tiklash' },
+        { role: 'zoomIn', label: 'Kattalashtirish' },
+        { role: 'zoomOut', label: 'Kichiklashtirish' },
+        { type: 'separator' },
+        { role: 'togglefullscreen', label: 'To‘liq ekran' },
+      ],
+    },
+    { role: 'windowMenu', label: 'Oyna' },
+    {
+      role: 'help',
+      label: 'Yordam',
+      submenu: [
+        { label: 'IDE haqida (README)', click: () => shell.openPath(path.join(app.getAppPath(), 'ide', 'README.md')).catch(() => {}) },
+        { label: 'aicomp.uz', click: () => shell.openExternal('https://bekhvloger-beep.github.io/yang-ai/').catch(() => {}) },
+      ],
+    },
+  ];
+  try { Menu.setApplicationMenu(Menu.buildFromTemplate(template)); } catch { /* menyu qurilmadi — ilova ishlashda davom etadi */ }
+}
+
 app.whenReady().then(async () => {
   await migrateOldData();
   cfg = await loadConfig(userDataDir());
@@ -864,6 +974,8 @@ app.whenReady().then(async () => {
   }
   await firstRunImport();
   registerIpc();
+  registerIdeIpc();   // to'liq IDE yadrosi (yide:* kanallari) — asosiy ilova ichida
+  buildMenu();
   await createWindow();
   ensureTranslator();
   ensureLocalAI();
@@ -872,6 +984,8 @@ app.whenReady().then(async () => {
   setupAutoUpdate();
   if (process.env.AGENT_SMOKE === '1') smokeTest();
 });
+
+app.on('before-quit', () => disposeIde());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
