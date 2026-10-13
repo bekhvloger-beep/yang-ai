@@ -184,12 +184,22 @@ async function deleteAssetByName(name) {
   }
 }
 
+// Allaqachon yuklangan va HAJMI bir xil assetlar qayta yuborilmaydi — 3.5 GB ni behuda
+// qayta yuklamaslik uchun (skript idempotent: qayta yurishda faqat yangilari ketadi).
+const currentRelease = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
+const uploadedSizes = new Map((((currentRelease.json || {}).assets) || []).map((a) => [a.name, a.size]));
+
 for (const file of assets) {
   if (!fs.existsSync(file)) {
     console.log('⚠ Topilmadi:', file);
     continue;
   }
   const name = path.basename(file);
+  const sizeNow = fs.statSync(file).size;
+  if (uploadedSizes.get(name) === sizeNow) {
+    console.log(`= O‘zgarmagan: ${name} — qayta yuklanmadi`);
+    continue;
+  }
   let done = false;
   for (let attempt = 1; attempt <= 3 && !done; attempt++) {
     if (attempt > 1) {
