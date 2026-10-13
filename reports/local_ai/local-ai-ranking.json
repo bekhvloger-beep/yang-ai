@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-10-13T01:55:11.107Z",
+  "formula": "score = idePass * 10 + min(3, 60 / avgIdeSeconds) + oneShotPass * 0.1",
+  "source": [
+    "reports/local_ai/bench_raw.json",
+    "reports/local_ai/run-2b/bench_raw.json",
+    "reports/local_ai/run-coder3b/bench_raw.json"
+  ],
+  "ranking": [
+    {
+      "rank": 1,
+      "model": "qwen2.5:latest",
+      "params": "7.6B",
+      "diskBytes": 4683087332,
+      "score": 41.25,
+      "idePass": 4,
+      "oneShotPass": 4,
+      "totalTasks": 4,
+      "avgSeconds": 70.8,
+      "verdict": "IDE bilan to‘liq yaroqli"
+    },
+    {
+      "rank": 2,
+      "model": "qwen2.5-coder:7b",
+      "params": "7.6B",
+      "diskBytes": 4683087561,
+      "score": 41,
+      "idePass": 4,
+      "oneShotPass": 2,
+      "totalTasks": 4,
+      "avgSeconds": 75,
+      "verdict": "IDE bilan to‘liq yaroqli"
+    },
+    {
+      "rank": 3,
+      "model": "local:model-qwen3.5-2b-q4_k_m.gguf",
+      "params": "2B",
+      "diskBytes": 1280835840,
+      "score": 30.9,
+      "idePass": 3,
+      "oneShotPass": 3,
+      "totalTasks": 4,
+      "avgSeconds": 99.6,
+      "verdict": "qisman yaroqli"
+    },
+    {
+      "rank": 4,
+      "model": "local:model-1.7b.gguf",
+      "params": "1.7B",
+      "diskBytes": 1107409472,
+      "score": 30.86,
+      "idePass": 3,
+      "oneShotPass": 2,
+      "totalTasks": 4,
+      "avgSeconds": 91.4,
+      "verdict": "qisman yaroqli"
+    },
+    {
+      "rank": 5,
+      "model": "qwen2.5-coder:3b",
+      "params": "3.1B",
+      "diskBytes": 1929912626,
+      "score": 30.84,
+      "idePass": 3,
+      "oneShotPass": 2,
+      "totalTasks": 4,
+      "avgSeconds": 93.4,
+      "verdict": "qisman yaroqli"
+    },
+    {
+      "rank": 6,
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "params": "4B",
+      "diskBytes": 2497281120,
+      "score": 30.65,
+      "idePass": 3,
+      "oneShotPass": 2,
+      "totalTasks": 4,
+      "avgSeconds": 132.7,
+      "verdict": "qisman yaroqli"
+    },
+    {
+      "rank": 7,
+      "model": "llama3:latest",
+      "params": "8.0B",
+      "diskBytes": 4661224676,
+      "score": 0,
+      "idePass": 0,
+      "oneShotPass": 0,
+      "totalTasks": 4,
+      "avgSeconds": 0.1,
+      "verdict": "kodlash uchun yaroqsiz"
+    },
+    {
+      "rank": 8,
+      "model": "qwen2.5:0.5b",
+      "params": "494.03M",
+      "diskBytes": 397821319,
+      "score": 0,
+      "idePass": 0,
+      "oneShotPass": 0,
+      "totalTasks": 4,
+      "avgSeconds": 26.6,
+      "verdict": "kodlash uchun yaroqsiz"
+    }
+  ]
+}

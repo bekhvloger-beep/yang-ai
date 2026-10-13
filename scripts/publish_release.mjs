@@ -57,18 +57,27 @@ async function gh(method, url, body, isJson = true) {
   console.log(`✓ Repo topildi: ${OWNER}/${REPO}`);
 }
 
+// Chiqarish izohi (body): `docs/<tag>-chiqarish.md` bo'lsa o'shandan olinadi — shunda har
+// versiyaning izohi alohida faylda yoziladi va skript ichidagi matn eskirib qolmaydi.
+const NOTES_FILE = process.env.YANG_RELEASE_NOTES || path.join(ROOT, 'docs', `${tag}-chiqarish.md`);
+const notes = fs.existsSync(NOTES_FILE) ? fs.readFileSync(NOTES_FILE, 'utf8').trim() : null;
+console.log(notes ? `✓ Izoh fayli: docs/${tag}-chiqarish.md (${notes.length} belgi)` : '⚠ Izoh fayli topilmadi — skript ichidagi zaxira matn ishlatiladi');
+
 // 2. create release (idempotent)
 let release;
 {
   const existing = await gh('GET', `/repos/${OWNER}/${REPO}/releases/tags/${tag}`);
   if (existing.status === 200) {
     release = existing.json;
-    console.log(`✓ Release ${tag} allaqachon bor — assetlar ustiga yoziladi`);
+    console.log(`✓ Release ${tag} allaqachon bor — izoh yangilanadi, assetlar ustiga yoziladi`);
+    // Izohni ham yangilaymiz: qayta yurishda eski matn qolib ketmasin.
+    const patch = await gh('PATCH', `/repos/${OWNER}/${REPO}/releases/${release.id}`, { body: notes || release.body });
+    if (patch.status === 200) console.log('✓ Izoh yangilandi');
   } else {
     const r = await gh('POST', `/repos/${OWNER}/${REPO}/releases`, {
       tag_name: tag,
       name: `YANG AI ${tag}`,
-      body: `YANG AI v${version} — aicomp.uz
+      body: notes || `YANG AI v${version} — aicomp.uz
 
 Yangiliklar (v3.9.7):
 - 🔍 Lokal skan kengaytirildi: Ollama / LM Studio modellari endi hajmi va taxminiy RAM ko‘rsatkichi bilan ko‘rinadi, bir bosishda asosiy AI qilib o‘rnatiladi
@@ -139,6 +148,13 @@ const assets = [
   path.join(ROOT, 'dist', `YANG-AI-Portable-${version}.exe`),
   path.join(ROOT, 'dist', 'latest.yml'),
 ];
+// Qo'shimcha assetlar (masalan mustaqil IDE o'rnatuvchilari):
+//   YANG_EXTRA_ASSETS="dist-ide/YANG-IDE-Setup-1.0.0.exe,dist-ide/YANG-IDE-Portable-1.0.0.exe"
+// Diqqat: boshqa ilovaning latest.yml'ini bu yerga qo'shmang — u AI ilovasining
+// avto-yangilanish faylini almashtirib qo'yadi.
+for (const extra of String(process.env.YANG_EXTRA_ASSETS || '').split(',').map((s) => s.trim()).filter(Boolean)) {
+  assets.push(path.isAbsolute(extra) ? extra : path.join(ROOT, extra));
+}
 const uploadUrl = release.upload_url.split('{')[0];
 
 async function uploadOnce(file, name) {

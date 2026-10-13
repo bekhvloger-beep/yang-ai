@@ -1,0 +1,56 @@
+{
+  "appId": "uz.aicomp.yang.ide",
+  "productName": "YANG IDE",
+  "copyright": "AICOMP.UZ",
+  "directories": {
+    "output": "dist-ide"
+  },
+  "asar": false,
+  "extraMetadata": {
+    "name": "yang-ide",
+    "productName": "YANG IDE",
+    "version": "1.0.0",
+    "description": "YANG IDE — mustaqil ish stoli kod muharriri (AICOMP.UZ)",
+    "main": "ide/main.js"
+  },
+  "files": [
+    "ide/**/*",
+    "!ide/test_*",
+    "agent/**/*",
+    "!agent/test_*",
+    "!agent/bench_*",
+    "!agent/benchmark_*",
+    "!agent/compare_*",
+    "!agent/lru_ref/**",
+    "!agent/*.md",
+    "renderer/icon.ico",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "local-ai/lc",
+      "to": "local-ai/lc"
+    },
+    {
+      "from": "local-ai/model-qwen3.5-2b-q4_k_m.gguf",
+      "to": "local-ai/model-qwen3.5-2b-q4_k_m.gguf"
+    }
+  ],
+  "win": {
+    "target": [
+      "nsis",
+      "portable"
+    ],
+    "icon": "renderer/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "artifactName": "YANG-IDE-Setup-${version}.${ext}",
+    "deleteAppDataOnUninstall": false,
+    "shortcutName": "YANG IDE"
+  },
+  "portable": {
+    "artifactName": "YANG-IDE-Portable-${version}.${ext}"
+  }
+}

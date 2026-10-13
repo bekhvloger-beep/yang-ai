@@ -72,12 +72,12 @@ let teamPipeline = null; // {el, agents:Map}
 let teamActive = false;
 let sessionUsage = { input: 0, output: 0 };
 let pinned = true;
-let currentAgent = { icon: '⬡', name: 'YANG AI', role: 'tayyor' };
+let currentAgent = { icon: '', name: 'YANG AI', role: 'tayyor' };
 let agentIcons = new Map(); // jamoa rejimi: agent nomi → ikonka
 let lastQuota = null; // tepadagi aylana progress uchun oxirgi limit holati
 let lastTask = ''; // Plan → Qurishni boshlash uchun asl vazifa
 let planPending = null; // tasdiqlangan reja matni (Build bosilganda uzatiladi)
-let planMode = false; // 📋 Plan tugmasi tanlangan bo'lsa — keyingi so'rov reja tuzadi
+let planMode = false; // Plan tugmasi tanlangan bo'lsa — keyingi so'rov reja tuzadi
 
 window.__ready = false;
 window.__openChat = openChat; // smoke-test uchun
@@ -156,36 +156,36 @@ function mdToHtml(src) {
 }
 
 // 2-bosqich: har harakat uchun ikonka va o'qiladigan nom.
-// 💭 Thinking · 📖 Read · ✍️ Write · ⌨️ Run/Code · 🌐 Internet · 🐍 Python · 🖼 Image
+// Thinking · Read · Write · Run/Code · Internet · Python · Image
 const TOOL_META = {
-  run_command: { icon: '⌨️', label: 'Buyruq', kind: 'run' },
-  write_file: { icon: '✍️', label: 'Yozish', kind: 'write' },
-  edit_file: { icon: '✏️', label: 'Tahrir', kind: 'write' },
-  read_file: { icon: '📖', label: 'O‘qish', kind: 'read' },
-  list_dir: { icon: '📂', label: 'Papka', kind: 'read' },
-  search_files: { icon: '🔍', label: 'Qidiruv', kind: 'read' },
-  extract_file: { icon: '📤', label: 'Ajratish', kind: 'read' },
-  create_document: { icon: '📑', label: 'Hujjat', kind: 'doc' },
-  create_image: { icon: '🖼️', label: 'Rasm', kind: 'image' },
-  generate_image: { icon: '🖼️', label: 'AI rasm', kind: 'image' },
-  web_search: { icon: '🌐', label: 'Internet qidiruv', kind: 'web' },
-  fetch_url: { icon: '🌐', label: 'Sahifa ochish', kind: 'web' },
+  run_command: { icon: '', label: 'Buyruq', kind: 'run' },
+  write_file: { icon: '', label: 'Yozish', kind: 'write' },
+  edit_file: { icon: '', label: 'Tahrir', kind: 'write' },
+  read_file: { icon: '', label: 'O‘qish', kind: 'read' },
+  list_dir: { icon: '', label: 'Papka', kind: 'read' },
+  search_files: { icon: '', label: 'Qidiruv', kind: 'read' },
+  extract_file: { icon: '', label: 'Ajratish', kind: 'read' },
+  create_document: { icon: '', label: 'Hujjat', kind: 'doc' },
+  create_image: { icon: '', label: 'Rasm', kind: 'image' },
+  generate_image: { icon: '', label: 'AI rasm', kind: 'image' },
+  web_search: { icon: '', label: 'Internet qidiruv', kind: 'web' },
+  fetch_url: { icon: '', label: 'Sahifa ochish', kind: 'web' },
 };
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|ico|svg)$/i;
 
-// Python buyrug'ini aniqlash (🐍 kartasi uchun).
+// Python buyrug'ini aniqlash (Python kartasi uchun).
 function isPythonCommand(cmd) {
   return /(^|[\s;&|])(python|python3|py)(\s|$)/i.test(String(cmd || '')) || /\.py(\s|$|")/i.test(String(cmd || ''));
 }
 function toolKind(tool, args) {
-  const meta = TOOL_META[tool] || { icon: '🔧', label: tool, kind: 'run' };
+  const meta = TOOL_META[tool] || { icon: '', label: tool, kind: 'run' };
   if (tool === 'run_command' && isPythonCommand(args && args.command)) return 'python';
   return meta.kind || 'run';
 }
 function toolIcon(tool, args) {
   const kind = toolKind(tool, args);
-  if (kind === 'python') return '🐍';
-  return (TOOL_META[tool] || { icon: '🔧' }).icon;
+  if (kind === 'python') return '';
+  return (TOOL_META[tool] || { icon: '' }).icon;
 }
 function toolLabel(tool, args) {
   const kind = toolKind(tool, args);
@@ -228,7 +228,7 @@ function agentBadgeClass(name) {
 function agentBadge(name) {
   const color = agentBadgeClass(name);
   // Jamoa rejimida agent ikonkasi ham ko'rsatiladi (nom + ikon).
-  const icon = agentIcons.get(name) || '🤖';
+  const icon = agentIcons.get(name) || '';
   return `<span class="agent-badge" style="--ac:${color}">${icon} ${escapeHtml(name)}</span>`;
 }
 
@@ -239,28 +239,29 @@ function toolActivity(tool, args, done) {
   const mark = done === undefined ? '…' : (done ? ' ✓' : ' ✖');
   const a = args || {};
   switch (tool) {
-    case 'list_dir': return `📂 ${a.path || '.'} papkasi ko‘rilmoqda${mark}`;
-    case 'read_file': return `📖 ${a.path || ''} o‘qilmoqda${mark}`;
-    case 'write_file': return `💾 ${a.path || ''} yozilmoqda${mark}`;
-    case 'edit_file': return `✏️ ${a.path || ''} tahrirlanmoqda${mark}`;
-    case 'search_files': return `🔍 “${String(a.pattern || '').slice(0, 40)}” qidirilmoqda${mark}`;
-    case 'run_command': return `⚡ ${String(a.command || '').slice(0, 50)}${mark}`;
-    case 'extract_file': return `📤 ${a.path || ''} matni ajratilmoqda${mark}`;
-    case 'create_document': return `📑 ${a.path || ''} yaratilmoqda${mark}`;
-    case 'create_image': return `🎨 ${a.path || ''} chizilmoqda${mark}`;
-    case 'generate_image': return `🖼 AI rasm yaratilmoqda${mark}`;
-    default: return `🔧 ${tool}${mark}`;
+    case 'list_dir': return `${a.path || '.'} papkasi ko‘rilmoqda${mark}`;
+    case 'read_file': return `${a.path || ''} o‘qilmoqda${mark}`;
+    case 'write_file': return `${a.path || ''} yozilmoqda${mark}`;
+    case 'edit_file': return `${a.path || ''} tahrirlanmoqda${mark}`;
+    case 'search_files': return `“${String(a.pattern || '').slice(0, 40)}” qidirilmoqda${mark}`;
+    case 'run_command': return `${String(a.command || '').slice(0, 50)}${mark}`;
+    case 'extract_file': return `${a.path || ''} matni ajratilmoqda${mark}`;
+    case 'create_document': return `${a.path || ''} yaratilmoqda${mark}`;
+    case 'create_image': return `${a.path || ''} chizilmoqda${mark}`;
+    case 'generate_image': return `AI rasm yaratilmoqda${mark}`;
+    default: return `${tool}${mark}`;
   }
 }
 function activityLine(icon, text) {
-  els.statusLine.textContent = `${icon} ${text}${usageLine()}`;
+  els.statusLine.textContent = `${icon ? icon + ' ' : ''}${text}${usageLine()}`;
 }
 
 /* ---------------- tepadagi agent ko'rsatkichi ---------------- */
-function setCurrentAgent(icon, name, role) {
-  currentAgent = { icon: icon || '🤖', name: name || 'YANG AI', role: role || '' };
+// Avatar — brend belgisi (hexagon). Agent nomi/roli yonidagi matnda ko'rinadi.
+const HEX_AVATAR = '<svg class="ico ico-hex"><use href="#i-hex"></use></svg>';
+function setCurrentAgent(icon, name, role) {    currentAgent = { icon: icon || '', name: name || 'YANG AI', role: role || '' };
   if (!els.agentAvatar) return;
-  els.agentAvatar.textContent = currentAgent.icon;
+  els.agentAvatar.innerHTML = HEX_AVATAR;
   els.agentNameNow.textContent = currentAgent.name;
   els.agentRoleNow.textContent = currentAgent.role || 'ishlamoqda…';
   els.agentNow.classList.add('working');
@@ -268,7 +269,7 @@ function setCurrentAgent(icon, name, role) {
 function resetCurrentAgent() {
   if (!els.agentAvatar) return;
   const prov = (cfg && cfg.providers && cfg.providers[cfg.config.provider]) || {};
-  els.agentAvatar.textContent = '⬡';
+  els.agentAvatar.innerHTML = HEX_AVATAR;
   els.agentNameNow.textContent = 'YANG AI';
   els.agentRoleNow.textContent = prov.name ? `${prov.name} · tayyor` : 'tayyor';
   els.agentNow.classList.remove('working');
@@ -350,7 +351,7 @@ function dockAgentUpsert(name, { icon, role, model, state } = {}) {
   if (!row) {
     row = document.createElement('div');
     row.className = 'dock-agent';
-    row.innerHTML = `<span class="da-icon">🤖</span><span class="da-name"></span><span class="da-model"></span><span class="da-state">⏳</span>`;
+    row.innerHTML = `<span class="da-icon"></span><span class="da-name"></span><span class="da-model"></span><span class="da-state">…</span>`;
     row.querySelector('.da-name').textContent = name;
     dockAgents.set(name, row);
     els.dockAgents.appendChild(row);
@@ -387,8 +388,7 @@ function agentStreamAppend(agent, text) {
   agentStreams.set(name, buf);
   const lastLine = buf.split('\n').map((l) => l.trim()).filter(Boolean).slice(-1)[0] || '…';
   dockPush({
-    id: `agent_stream_${name}`,
-    icon: agentIcons.get(name) || '🤖',
+    id: `agent_stream_${name}`,      icon: agentIcons.get(name) || '',
     title: `${name} yozmoqda…`,
     sub: lastLine.slice(0, 180),
     agent: name,
@@ -448,7 +448,11 @@ function finalizeAssistant(text, agent) {
       liveNode.querySelector('.who').innerHTML = agentBadge(agent);
       liveNode.dataset.agentSet = '1';
     }
-    liveNode.querySelector('.md').innerHTML = mdToHtml(finalText || '(javob bo‘sh)');
+    // Diqqat: mdToHtml() HTML'ni ekranlaydi (escape) — shuning uchun bo'sh javob
+    // o'rni belgisini unga uzatmaymiz, to'g'ridan-to'g'ri qo'yamiz.
+    liveNode.querySelector('.md').innerHTML = finalText
+      ? mdToHtml(finalText)
+      : '<span class="dim">javob kutilmadi</span>';
   } else {
     const div = document.createElement('div');
     div.className = 'msg msg-assistant';
@@ -467,12 +471,12 @@ function finalizeAssistant(text, agent) {
         const name = String(p).split(/[\\/]/).pop();
         const b1 = document.createElement('button');
         b1.className = 'btn btn-ghost small';
-        b1.textContent = '📂 ' + name;
+        b1.textContent = name;
         b1.title = 'Faylni ochish';
         b1.addEventListener('click', () => api.openPath(abs));
         const b2 = document.createElement('button');
         b2.className = 'btn btn-ghost small';
-        b2.textContent = '📁';
+        b2.innerHTML = '<svg class="ico"><use href="#i-folder"></use></svg>';
         b2.title = 'Papkada ko\'rsatish';
         b2.addEventListener('click', () => api.showItem(abs));
         row.appendChild(b1);
@@ -521,12 +525,12 @@ function fileButtons(host, paths, { preview = false, token = null } = {}) {
     const name = String(p).split(/[\\/]/).pop();
     const b1 = document.createElement('button');
     b1.className = 'btn btn-ghost small';
-    b1.textContent = '📂 ' + name;
+    b1.textContent = name;
     b1.title = 'Faylni ochish';
     b1.addEventListener('click', () => api.openPath(abs));
     const b2 = document.createElement('button');
     b2.className = 'btn btn-ghost small';
-    b2.textContent = '📁'; b2.title = 'Papkada ko‘rsatish';
+    b2.innerHTML = '<svg class="ico"><use href="#i-folder"></use></svg>'; b2.title = 'Papkada ko‘rsatish';
     b2.addEventListener('click', () => api.showItem(abs));
     row.appendChild(b1); row.appendChild(b2);
     if (preview && IMAGE_EXT.test(name)) appendImagePreview(host, abs, name, token);
@@ -534,7 +538,7 @@ function fileButtons(host, paths, { preview = false, token = null } = {}) {
   if (row.children.length) host.appendChild(row);
 }
 
-// Rasm natijasini to'g'ridan-to'g'ri ochib ko'rsatish (🐍/🖼 natijasi).
+// Rasm natijasini to'g'ridan-to'g'ri ochib ko'rsatish (Python/rasm natijasi).
 // token: karta qayta chizilgan bo'lsa (async o'qish kechiksa) ikkinchi nusxa qo'shilmasin.
 async function appendImagePreview(host, abs, name, token = null) {
   try {
@@ -559,14 +563,14 @@ async function appendImagePreview(host, abs, name, token = null) {
   } catch {}
 }
 
-// 🌐 Mini brauzer: internetdan ma'lumot olishda nima qidirayotgani ko'rinadi.
+// Mini brauzer: internetdan ma'lumot olishda nima qidirayotgani ko'rinadi.
 function miniBrowser({ url, query, results, text, loading, title }) {
   const box = document.createElement('div');
   box.className = 'mini-browser';
   const bar = document.createElement('div');
   bar.className = 'mb-bar';
   bar.innerHTML = `<span class="mb-dots"><i></i><i></i><i></i></span><span class="mb-url"></span><span class="mb-loading"></span>`;
-  bar.querySelector('.mb-url').textContent = query ? `🔎 ${query}` : (url || 'about:blank');
+  bar.querySelector('.mb-url').textContent = query ? String(query) : (url || 'about:blank');
   bar.querySelector('.mb-url').title = url || query || '';
   if (loading) bar.querySelector('.mb-loading').textContent = 'yuklanmoqda…';
   box.appendChild(bar);
@@ -611,22 +615,24 @@ function parseSearchResults(result) {
 }
 function parseFetchedPage(result) {
   const s = String(result || '');
-  const title = (s.match(/^📄\s*(.*)$/m) || [])[1] || '';
-  const url = (s.match(/^🔗\s*(\S+)\s*$/m) || [])[1] || '';
+  // Belgili sarlavha (eski format) yoki oddiy "Title:"/"Source:" — ikkisi ham qabul qilinadi,
+  // shunda vosita chiqishi emoji'siz bo'lsa ham karta to'g'ri to'ladi.
+  const title = (s.match(/^(?:📄|Title:)\s*(.*)$/m) || [])[1] || '';
+  const url = (s.match(/^(?:🔗|Source:)\s*(\S+)\s*$/m) || [])[1] || '';
   const text = s.split(/^---$/m)[1] || '';
   return { title, url, text: text.trim() };
 }
 
-/* ---------------- 💭 Thinking kartasi (2-bosqich) ---------------- */
+/* ---------------- Thinking kartasi (2-bosqich) ---------------- */
 let thinkingCard = null;
 function startThinkingCard({ label, agent, at }) {
   closeThinkingCard();
-  if (!UI.stepsInChat) { dockPush({ id: 'thinking_live', icon: '💭', title: label || 'Fikrlayapman…', sub: '', agent, state: 'run' }); return; }
+  if (!UI.stepsInChat) { dockPush({ id: 'thinking_live', icon: '', title: label || 'Fikrlayapman…', sub: '', agent, state: 'run' }); return; }
   const card = document.createElement('div');
   card.className = 'step-card';
   card.innerHTML = `
     <div class="step-head">
-      <span class="sc-ico">💭</span>
+      <span class="sc-ico"></span>
       <span class="sc-label">Thinking</span>
       <span class="sc-sub"></span>
       ${agent ? agentBadge(agent) : ''}
@@ -663,7 +669,7 @@ function makeToolCard({ id, tool, args, status, agent, at }) {
       <span class="t-sum">${escapeHtml(toolSummary(tool, args) || '')}</span>
       ${agent ? agentBadge(agent) : ''}
       <span class="t-ms"></span>
-      <span class="t-status ${status === 'ok' ? 'ok' : status === 'bad' ? 'bad' : 'run'}">${status === 'ok' ? '✓' : status === 'bad' ? '✖' : status === 'approval' ? '⏳ ruxsat' : '…'}</span>
+      <span class="t-status ${status === 'ok' ? 'ok' : status === 'bad' ? 'bad' : 'run'}">${status === 'ok' ? '✓' : status === 'bad' ? '✖' : status === 'approval' ? '… ruxsat' : '…'}</span>
     </div>
     <div class="tool-body"></div>`;
   card.querySelector('.tool-head').addEventListener('click', () => card.classList.toggle('open'));
@@ -688,7 +694,7 @@ function fillToolBody(card, args, result, opts = {}) {
     addLbl('So‘rov');
     addPre(JSON.stringify(args, null, 2).slice(0, 6000));
   }
-  // Fayl/rasm natijasini ochib ko'rsatish (🐍 python, 🖼 rasm, ✍️ yozish).
+  // Fayl/rasm natijasini ochib ko'rsatish (python, rasm, yozish).
   const madeFiles = Array.isArray(opts.files) ? opts.files.filter(Boolean) : [];
   const pathArg = args && args.path ? [String(args.path)] : [];
   const revealFiles = [...new Set([...madeFiles, ...(madeFiles.length ? [] : pathArg)])];
@@ -724,7 +730,7 @@ function updateToolCard({ id, tool, args, result, ok, denied, agent, ms, files }
   if (!card) card = makeToolCard({ id, tool, args, status: ok ? 'ok' : 'bad', agent });
   fillToolBody(card, args, result, { files });
   const st = card.querySelector('.t-status');
-  if (denied) { st.textContent = '🚫 rad etildi'; st.className = 't-status bad'; }
+  if (denied) { st.textContent = 'rad etildi'; st.className = 't-status bad'; }
   else if (ok) { st.textContent = '✓'; st.className = 't-status ok'; }
   else { st.textContent = '✖ xato'; st.className = 't-status bad'; }
   if (ms != null) card.querySelector('.t-ms').textContent = `${ms} ms`;
@@ -758,14 +764,14 @@ function addPlanCard({ steps, text, task }) {
   const actions = div.querySelector('.plan-actions');
   const buildBtn = document.createElement('button');
   buildBtn.className = 'btn btn-primary';
-  buildBtn.textContent = '🚀 Qurishni boshlash';
+  buildBtn.textContent = 'Qurishni boshlash';
   buildBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     startBuild(list ? list.map((s, i) => `${i + 1}. ${s}`).join('\n') : String(text || ''), task);
   });
   const editBtn = document.createElement('button');
   editBtn.className = 'btn btn-ghost';
-  editBtn.textContent = '✏️ Rejani tahrirlash uchun nusxalash';
+  editBtn.textContent = 'Rejani tahrirlash uchun nusxalash';
   editBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     els.input.value = list ? list.map((s, i) => `${i + 1}. ${s}`).join('\n') : String(text || '');
@@ -806,7 +812,7 @@ function addApprovalCard({ approvalId, tool, args, agent }) {
   });
   no.addEventListener('click', async () => {
     actions.remove();
-    const st = card.querySelector('.t-status'); st.textContent = '🚫 rad etildi'; st.className = 't-status bad';
+    const st = card.querySelector('.t-status'); st.textContent = 'rad etildi'; st.className = 't-status bad';
     await api.approve(approvalId, false);
   });
   actions.appendChild(yes); actions.appendChild(no);
@@ -818,7 +824,7 @@ function addApprovalCard({ approvalId, tool, args, agent }) {
 function addTeamPlanCard(agents, task) {
   const div = document.createElement('div');
   div.className = 'team-card';
-  div.innerHTML = `<div class="team-head">🤝 Agentlar jamoasi <span class="dim">parallel · ${(agents || []).length} agent</span></div>
+  div.innerHTML = `<div class="team-head">Agentlar jamoasi <span class="dim">parallel · ${(agents || []).length} agent</span></div>
     <div class="team-task">${escapeHtml(String(task || '').slice(0, 140))}</div>
     <div class="team-agents"></div>`;
   const wrap = div.querySelector('.team-agents');
@@ -826,7 +832,7 @@ function addTeamPlanCard(agents, task) {
   for (const a of agents || []) {
     const row = document.createElement('div');
     row.className = 'team-agent';
-    row.innerHTML = `<span class="ta-icon">${a.icon || '🤖'}</span><span class="ta-name">${escapeHtml(a.name)}</span><span class="ta-role">${escapeHtml(a.role || '')}</span><span class="ta-model"></span><span class="ta-status">⏳</span>`;
+    row.innerHTML = `<span class="ta-icon">${a.icon || ''}</span><span class="ta-name">${escapeHtml(a.name)}</span><span class="ta-role">${escapeHtml(a.role || '')}</span><span class="ta-model"></span><span class="ta-status">…</span>`;
     map.set(a.name, row);
     wrap.appendChild(row);
   }
@@ -848,7 +854,7 @@ function setTeamAgentActive(name, model) {
   const row = teamPipeline.map.get(name);
   if (row) {
     row.classList.add('active');
-    row.querySelector('.ta-status').textContent = '⚙ ishlayapti';
+    row.querySelector('.ta-status').textContent = 'ishlayapti';
     if (model) row.querySelector('.ta-model').textContent = model;
   }
   const divider = document.createElement('div');
@@ -895,7 +901,7 @@ async function refreshChatList() {
   for (const c of chats) {
     const item = document.createElement('div');
     item.className = 'chat-item' + (currentChat && currentChat.id === c.id ? ' active' : '');
-    item.innerHTML = `<span>💬</span><span class="t"></span><button class="del" title="O‘chirish">🗑</button>`;
+    item.innerHTML = `<svg class="ico ci"><use href="#i-chat"></use></svg><span class="t"></span><button class="del" title="O‘chirish"><svg class="ico"><use href="#i-trash"></use></svg></button>`;
     item.querySelector('.t').textContent = c.title;
     item.addEventListener('click', async () => {
       if (running) return;
@@ -944,7 +950,8 @@ function renderAttachRow() {
   pendingAttachments.forEach((a, i) => {
     const chip = document.createElement('div');
     chip.className = 'attach-chip' + (a.kind === 'error' ? ' err' : '');
-    chip.innerHTML = `${a.kind === 'image' ? '🖼' : a.kind === 'error' ? '⚠' : '📄'} <span>${escapeHtml(a.name)}</span><button class="rm">✕</button>`;
+    const chipIco = a.kind === 'image' ? '#i-image' : a.kind === 'error' ? '' : '#i-doc';
+    chip.innerHTML = `${a.kind === 'error' ? '⚠' : `<svg class="ico"><use href="${chipIco}"></use></svg>`}<span>${escapeHtml(a.name)}</span><button class="rm">✕</button>`;
     chip.querySelector('.rm').addEventListener('click', () => {
       pendingAttachments.splice(i, 1);
       renderAttachRow();
@@ -1010,8 +1017,8 @@ function setRunningUI(on) {
   els.stopBtn.classList.toggle('hidden', !on);
   els.planBtn.disabled = on;
   els.buildBtn.disabled = on;
-  els.statusLine.textContent = on ? (teamMode ? '🤝 Jamoa ishlayapti…' : (planMode ? '📋 Reja tuzilmoqda…' : 'Agent ishlayapti…')) : '';
-  dockLive(on ? (planMode ? '📋 reja tuzilmoqda…' : '⚙ ishlayapti…') : 'tayyor', on);
+  els.statusLine.textContent = on ? (teamMode ? 'Jamoa ishlayapti…' : (planMode ? 'Reja tuzilmoqda…' : 'Agent ishlayapti…')) : '';
+  dockLive(on ? (planMode ? 'reja tuzilmoqda…' : 'ishlayapti…') : 'tayyor', on);
   if (!on) {
     document.querySelectorAll('.tool-head .t-status.run, .step-card .sc-state').forEach((el) => {
       if (el.textContent === '…' || el.textContent === 'fikrlayapti…') el.textContent = '✓';
@@ -1035,7 +1042,7 @@ async function send(opts = {}) {
   const approvedPlan = opts.planText || null;
   // doc attachments appended to the message text
   for (const d of docs) {
-    text += `\n\n📎 Biriktirilgan fayl: ${d.name}\n--- fayl mazmuni boshlanishi ---\n${d.text}\n--- fayl mazmuni tugashi ---`;
+    text += `\n\nBiriktirilgan fayl: ${d.name}\n--- fayl mazmuni boshlanishi ---\n${d.text}\n--- fayl mazmuni tugashi ---`;
   }
   if (!text) text = images.length ? 'Rasmni tahlil qilib, nima ekanini va unda nima yozilganini batafsil tushuntir.' : '';
   const useTeam = teamMode && !usePlan;
@@ -1050,8 +1057,8 @@ async function send(opts = {}) {
     agentStreams.clear();
     agentIcons.clear();
   }
-  setCurrentAgent(usePlan ? '📋' : (useTeam ? '🤝' : '💭'), usePlan ? 'Planner' : (useTeam ? 'Jamoa' : 'YANG AI'), usePlan ? 'reja tuzmoqda' : 'ishlamoqda');
-  dockPush({ id: `task_${Date.now()}`, icon: usePlan ? '📋' : (useTeam ? '🤝' : '▶️'), title: displayName.slice(0, 160), sub: usePlan ? 'reja rejimi' : (useTeam ? 'jamoa rejimi' : 'agent'), state: 'run' });
+  setCurrentAgent(usePlan ? '' : (useTeam ? '' : ''), usePlan ? 'Planner' : (useTeam ? 'Jamoa' : 'YANG AI'), usePlan ? 'reja tuzmoqda' : 'ishlamoqda');
+  dockPush({ id: `task_${Date.now()}`, icon: usePlan ? '' : (useTeam ? '' : ''), title: displayName.slice(0, 160), sub: usePlan ? 'reja rejimi' : (useTeam ? 'jamoa rejimi' : 'agent'), state: 'run' });
   addUserBubble(displayName, images);
   els.input.value = '';
   autosize();
@@ -1112,12 +1119,12 @@ window.api.onEvent(({ chatId, event }) => {
       break;
     case 'notice':
       addNotice(event.text);
-      activityLine('⚡', String(event.text).slice(0, 70));
-      dockPush({ id: `notice_${++dockSeq}`, icon: 'ℹ️', title: String(event.text).slice(0, 180), agent: event.agent });
+      activityLine('', String(event.text).slice(0, 70));
+      dockPush({ id: `notice_${++dockSeq}`, icon: '', title: String(event.text).slice(0, 180), agent: event.agent });
       break;
     case 'provider_used':
-      activityLine('🧠', `${event.provider} · ${event.model}`);
-      dockPush({ id: `prov_${++dockSeq}`, icon: '🧠', title: `${event.provider} · ${event.model}`, sub: 'provayder tanlandi', state: 'ok' });
+      activityLine('', `${event.provider} · ${event.model}`);
+      dockPush({ id: `prov_${++dockSeq}`, icon: '', title: `${event.provider} · ${event.model}`, sub: 'provayder tanlandi', state: 'ok' });
       break;
     case 'quota': updateQuotaChip(event); break;
     case 'usage': addUsage(event); break;
@@ -1125,7 +1132,7 @@ window.api.onEvent(({ chatId, event }) => {
       closeThinkingCard();
       if (teamActive && event.agent && event.agent !== 'Lead') {
         agentStreamDone(event.agent, (event.text || '').length);
-        dockPush({ id: `agent_msg_${event.agent}_${++dockSeq}`, icon: agentIcons.get(event.agent) || '🤖', title: `${event.agent} javobini yozdi`, sub: String(event.text || '').slice(0, 200), agent: event.agent, state: 'ok' });
+        dockPush({ id: `agent_msg_${event.agent}_${++dockSeq}`, icon: agentIcons.get(event.agent) || '', title: `${event.agent} javobini yozdi`, sub: String(event.text || '').slice(0, 200), agent: event.agent, state: 'ok' });
         break;
       }
       finalizeAssistant(event.text, event.agent);
@@ -1136,7 +1143,7 @@ window.api.onEvent(({ chatId, event }) => {
       break;
     case 'plan':
       addPlanCard({ steps: event.steps, text: event.text, task: event.task });
-      dockPush({ id: `plan_${++dockSeq}`, icon: '📋', title: `Reja tayyor — ${(event.steps || []).length} qadam`, sub: 'Qurishni boshlash tugmasi reja ostida', state: 'ok' });
+      dockPush({ id: `plan_${++dockSeq}`, icon: '', title: `Reja tayyor — ${(event.steps || []).length} qadam`, sub: 'Qurishni boshlash tugmasi reja ostida', state: 'ok' });
       break;
     case 'team_plan':
       addTeamPlanCard(event.agents, event.task);
@@ -1144,7 +1151,7 @@ window.api.onEvent(({ chatId, event }) => {
       for (const a of event.agents || []) {
         if (a && a.name) {
           if (a.icon) agentIcons.set(a.name, a.icon);
-          dockAgentUpsert(a.name, { icon: a.icon, role: a.role, state: '⏳' });
+          dockAgentUpsert(a.name, { icon: a.icon, role: a.role, state: '…' });
         }
       }
       break;
@@ -1155,21 +1162,21 @@ window.api.onEvent(({ chatId, event }) => {
     case 'agent_begin':
       dropLiveIfEmpty();
       setTeamAgentActive(event.name, event.model);
-      setCurrentAgent(event.icon || agentIcons.get(event.name) || '🤖', event.name, 'ishlayapti…');
+      setCurrentAgent(event.icon || agentIcons.get(event.name) || '', event.name, 'ishlayapti…');
       dockAgentState(event.name, '⚙');
       dockAgentUpsert(event.name, { icon: event.icon, model: event.model });
-      dockLive(`🤝 ${event.name} ishlayapti…`, true);
-      els.statusLine.textContent = `🤝 ${event.name} ishlayapti…`;
+      dockLive(`${event.name} ishlayapti…`, true);
+      els.statusLine.textContent = `${event.name} ishlayapti…`;
       break;
     case 'agent_end':
       setTeamAgentDone(event.name, event.summary);
       dockAgentState(event.name, '✓');
-      dockPush({ id: `agent_end_${event.name}_${++dockSeq}`, icon: event.icon || agentIcons.get(event.name) || '✅', title: `${event.name} tugaldi`, sub: String(event.summary || '').replace(/\s+/g, ' ').slice(0, 180), agent: event.name, state: 'ok' });
+      dockPush({ id: `agent_end_${event.name}_${++dockSeq}`, icon: event.icon || agentIcons.get(event.name) || '', title: `${event.name} tugaldi`, sub: String(event.summary || '').replace(/\s+/g, ' ').slice(0, 180), agent: event.name, state: 'ok' });
       break;
     case 'tool_start': {
       const card = makeToolCard({ id: event.id, tool: event.tool, args: event.args, status: 'run', agent: event.agent, at: event.at });
       toolCards.set(event.id, card);
-      activityLine(teamMode || teamActive ? '🤝' : '🔧', toolActivity(event.tool, event.args));
+      activityLine(teamMode || teamActive ? '' : '', toolActivity(event.tool, event.args));
       dockPush({
         id: `tool_${event.id}`,
         icon: toolIcon(event.tool, event.args),
@@ -1182,17 +1189,17 @@ window.api.onEvent(({ chatId, event }) => {
     }
     case 'tool': {
       updateToolCard({ id: event.id, tool: event.tool, args: event.args, result: event.result, ok: event.ok, denied: event.denied, agent: event.agent, ms: event.ms, files: event.files });
-      activityLine(teamMode || teamActive ? '🤝' : '🔧', toolActivity(event.tool, event.args, event.ok));
+      activityLine(teamMode || teamActive ? '' : '', toolActivity(event.tool, event.args, event.ok));
       dockUpdate(`tool_${event.id}`, {
         state: event.denied ? 'bad' : event.ok ? 'ok' : 'bad',
         ms: event.ms,
         sub: event.denied ? 'rad etildi' : String(event.result || '').replace(/\s+/g, ' ').slice(0, 160),
       });
-      // 🐍/🖼 natijasi panelda ham alohida ko'rinib turadi (yaratilgan fayllar bilan).
+      // Python/rasm natijasi panelda ham alohida ko'rinib turadi (yaratilgan fayllar bilan).
       if (Array.isArray(event.files) && event.files.length) {
         dockPush({
           id: `files_${event.id}`,
-          icon: IMAGE_EXT.test(event.files[0]) ? '🖼️' : '📄',
+          icon: IMAGE_EXT.test(event.files[0]) ? '' : '',
           title: `Natija: ${event.files.slice(0, 3).join(', ')}`,
           sub: 'ochish uchun tool kartasini bosing',
           agent: event.agent,
@@ -1217,9 +1224,9 @@ window.api.onEvent(({ chatId, event }) => {
       // Yakuniy javobni 1 AI (Lead) yozadi — uning xulosasi chatda qoladi.
       teamActive = false;
       dockAgentState('Lead', '✓');
-      dockAgentUpsert('Lead', { icon: '🧠', role: 'jamoa rahbari', state: '✓' });
+      dockAgentUpsert('Lead', { icon: '', role: 'jamoa rahbari', state: '✓' });
       if (liveNode) finalizeAssistant(event.summary || '', 'Lead');
-      dockPush({ id: `team_done_${++dockSeq}`, icon: '✅', title: 'Jamoa ishi tugadi — yakuniy javob yozildi', state: 'ok' });
+      dockPush({ id: `team_done_${++dockSeq}`, icon: '', title: 'Jamoa ishi tugadi — yakuniy javob yozildi', state: 'ok' });
       break;
     case 'run_finished':
       running = false;
@@ -1246,7 +1253,7 @@ function addUsage(u) {
   if (!u) return;
   sessionUsage.input += u.input || 0;
   sessionUsage.output += u.output || 0;
-  els.statusLine.textContent = (running ? (teamActive ? '🤝 jamoa ishlayapti…' : 'agent ishlayapti…') : 'tayyor') + usageLine();
+  els.statusLine.textContent = (running ? (teamActive ? 'jamoa ishlayapti…' : 'agent ishlayapti…') : 'tayyor') + usageLine();
   // Tepadagi aylanada sessiya tokenlari (limit foizi ma'lum bo'lmasa) ko'rsatiladi.
   if (!lastQuota || lastQuota.percent == null) {
     setQuotaRing({ text: fmtTokens(sessionUsage.input + sessionUsage.output), title: `Sessiya: ${sessionUsage.input} kirish + ${sessionUsage.output} chiqish token` });
@@ -1284,7 +1291,7 @@ function checkMyAnswer(rc) {
   // Bloklangan bo'lsa — qat'iy eslatma
   if (Array.isArray(rc.blocked) && rc.blocked.includes(myId)) {
     const old = document.getElementById('rcBlocked');
-    if (!old) makeBanner('rcBlocked', 'rc-notice', '⛔ <b>Ilova administrator tomonidan bloklangan.</b> Murojaat uchun: Sozlamalar → Qo‘llab-quvvatlash.');
+    if (!old) makeBanner('rcBlocked', 'rc-notice', '<b>Ilova administrator tomonidan bloklangan.</b> Murojaat uchun: Sozlamalar → Qo‘llab-quvvatlash.');
     return;
   }
   const oldB = document.getElementById('rcBlocked');
@@ -1294,7 +1301,7 @@ function checkMyAnswer(rc) {
   const key = `yang_answer_${ans.at}`;
   if (localStorage.getItem(key)) return;
   localStorage.setItem(key, '1');
-  makeBanner('rcAnswer', 'rc-notice', `📩 <b>Admin javobi:</b> ${String(ans.text).slice(0, 400)}`, true);
+  makeBanner('rcAnswer', 'rc-notice', `<b>Admin javobi:</b> ${String(ans.text).slice(0, 400)}`, true);
 }
 
 function verLt(a, b) {
@@ -1510,7 +1517,7 @@ function maybeShowWizard() {
   };
   ov.innerHTML = `
     <div class="rc-wizard-card">
-      <h2>⚡ YANG AI ga xush kelibsiz!</h2>
+      <h2>YANG AI ga xush kelibsiz!</h2>
       <p>Ishlashi uchun <b>bitta bepul API kalit</b> yetarli (karta shart emas, ~2 daqiqa):</p>
       <ol>
         <li><b>Groq</b> (tavsiya) — <a href="#" data-url="https://console.groq.com/keys">console.groq.com/keys</a> → kalit nusxalash</li>
@@ -1523,7 +1530,7 @@ function maybeShowWizard() {
   btnRow.className = 'rc-wizard-btns';
   const openBtn = document.createElement('button');
   openBtn.className = 'primary';
-  openBtn.textContent = '🔑 Sozlamalarni ochish';
+  openBtn.textContent = 'Sozlamalarni ochish';
   openBtn.addEventListener('click', () => { done(); openSettings(); });
   const skipBtn = document.createElement('button');
   skipBtn.textContent = 'Kalitsiz boshlash';
@@ -1591,19 +1598,19 @@ function imgStudioInit() {
     const status = $('imgStudioStatus');
     if (!prompt) { status.textContent = '⚠ Prompt bo‘sh'; return; }
     $('imgStudioGo').disabled = true;
-    status.textContent = '⏳ tarjima + generatsiya… bir necha daqiqa olishi mumkin';
+    status.textContent = '… tarjima + generatsiya… bir necha daqiqa olishi mumkin';
     const r = await api.imageStudio(prompt, imgStudioQ);
     $('imgStudioGo').disabled = false;
     if (r.error) {
       status.textContent = '⚠ ' + r.error + (r.promptEn ? '\n(natija prompti: ' + r.promptEn + ')' : '');
       return;
     }
-    status.innerHTML = `✅ rasm tayyor: ${r.path}\nProvayder: ${r.via} · ${r.size}\n(natija prompti: ${r.promptEn})`;
+    status.innerHTML = `rasm tayyor: ${r.path}\nProvayder: ${r.via} · ${r.size}\n(natija prompti: ${r.promptEn})`;
     // chatga ham yo'llab qo'yamiz (foydalanuvchi ko'rsin)
     try {
       const msg = document.createElement('div');
       msg.className = 'msg';
-      msg.innerHTML = '🎨 Rasm yaratildi — <b>fayl:</b> ';
+      msg.innerHTML = 'Rasm yaratildi — <b>fayl:</b> ';
       const b = document.createElement('button');
       b.className = 'btn btn-ghost small';
       b.textContent = r.path.split(/[\\/]/).pop();
@@ -1643,7 +1650,7 @@ async function ideRefreshTree() {
   for (const it of (r.entries || [])) {
     const row = document.createElement('div');
     row.className = 'ide-tree-row';
-    row.textContent = (it.dir ? '📁 ' : '📄 ') + it.path;
+    row.textContent = it.path;
     row.style.paddingLeft = (String(it.path).split('/').length - 1) * 12 + 6 + 'px';
     if (!it.dir) {
       row.addEventListener('click', () => ideOpenFile(it.path, it.size));
@@ -1699,7 +1706,7 @@ async function ideFileSave() {
   ide.currentFile.saved = content;
   ideFileSetDirty(false);
   ide.els.fileModalContent.textContent = content;
-  ideFeedLine('💾', `saved ${r.saved}`);
+  ideFeedLine('', `saved ${r.saved}`);
   ideRefreshTree();
 }
 
@@ -1735,10 +1742,8 @@ document.getElementById('ideFileEditArea')?.addEventListener('keydown', (e) => {
 async function ideRunTerm() {
   const cmd = (ide.els.termIn.value || '').trim();
   if (!cmd) return;
-  ide.els.termIn.value = '';
-  ide.els.termOut.innerHTML += `<div class="ide-line ">⌨ <b>${cmd.replace(/</g, '&lt;')}</b></div>`;
-  ide.els.termOut.scrollTop = ide.els.termOut.scrollHeight;
-  ideFeedLine('⌨', `terminal: ${cmd.slice(0, 120)}`);
+  ide.els.termIn.value = '';    ide.els.termOut.innerHTML += `<div class="ide-line "><b>${cmd.replace(/</g, '&lt;')}</b></div>`;
+  ide.els.termOut.scrollTop = ide.els.termOut.scrollHeight;    ideFeedLine('', `terminal: ${cmd.slice(0, 120)}`);
   const r = await api.ideRunCommand(cmd, '.');
   const out = r.error ? '⚠ ' + r.error : r.output || '(bo‘sh)';
   const div = document.createElement('div');
@@ -1756,19 +1761,19 @@ function ideOnAgentEvent(event) {
   if (event.type === 'tool_start') {
     const t = event.tool;
     const args = event.args || {};
-    if (t === 'read_file') ideFeedLine('📂', `opened ${args.path || ''}`);
-    else if (t === 'write_file') ideFeedLine('📝', `creating ${args.path || ''}`);
-    else if (t === 'edit_file') ideFeedLine('✏️', `editing ${args.path || ''}`);
-    else if (t === 'run_command') ideFeedLine('⌨️', `terminal: ${String(args.command || '').slice(0, 120)}`);
-    else if (t === 'list_dir') ideFeedLine('🗂', `listing ${args.path || '.'}`);
-    else if (t === 'search_files') ideFeedLine('🔍', `searching ${args.pattern || args.query || ''}`);
-    else if (t === 'create_image' || t === 'generate_image') ideFeedLine('🎨', `drawing ${args.path || ''}`);
-    else if (t === 'create_document') ideFeedLine('📄', `document ${args.path || ''}`);
-    else ideFeedLine('🔧', `${t} ${JSON.stringify(args).slice(0, 90)}`);
+    if (t === 'read_file') ideFeedLine('', `opened ${args.path || ''}`);
+    else if (t === 'write_file') ideFeedLine('', `creating ${args.path || ''}`);
+    else if (t === 'edit_file') ideFeedLine('', `editing ${args.path || ''}`);
+    else if (t === 'run_command') ideFeedLine('', `terminal: ${String(args.command || '').slice(0, 120)}`);
+    else if (t === 'list_dir') ideFeedLine('', `listing ${args.path || '.'}`);
+    else if (t === 'search_files') ideFeedLine('', `searching ${args.pattern || args.query || ''}`);
+    else if (t === 'create_image' || t === 'generate_image') ideFeedLine('', `drawing ${args.path || ''}`);
+    else if (t === 'create_document') ideFeedLine('', `document ${args.path || ''}`);
+    else ideFeedLine('', `${t} ${JSON.stringify(args).slice(0, 90)}`);
     ideLiveSet('ishlayapti…');
   } else if (event.type === 'tool') {
     if (Array.isArray(event.files) && event.files.length) {
-      for (const f of event.files.slice(0, 5)) ideFeedLine(IMAGE_EXT.test(f) ? '🖼️' : '✅', `${f} — tugatildi`);
+      for (const f of event.files.slice(0, 5)) ideFeedLine('', `${f} — tugatildi`);
     }
     ideLiveSet('tayyor');
     if (ide.open) ideRefreshTree();
@@ -1796,7 +1801,7 @@ async function renderPresets() {
     const chip = document.createElement('button');
     chip.className = 'preset-chip';
     chip.title = `${p.hint}${p.keyUrl ? '\nKalit: ' + p.keyUrl : ''}`;
-    chip.innerHTML = `${p.local ? '💻' : '☁️'} ${p.name}`;
+    chip.innerHTML = p.name;
     chip.addEventListener('click', () => {
       els.npName.value = p.name;
       els.npBase.value = p.base;
@@ -1807,7 +1812,7 @@ async function renderPresets() {
   }
   scanBtn = document.createElement('button');
   scanBtn.className = 'preset-chip scan';
-  scanBtn.innerHTML = '🔍 Lokal skan';
+  scanBtn.innerHTML = 'Lokal skan';
   scanBtn.title = 'Kompyuterdagi Ollama / LM Studio serverlarini avtomatik topadi';
   scanBtn.addEventListener('click', fetchLocalIntoForm);
   els.presetRow.appendChild(scanBtn);
@@ -1815,9 +1820,9 @@ async function renderPresets() {
 
 async function fetchLocalIntoForm() {
   if (!scanBtn) return;
-  scanBtn.textContent = '⏳ skan…';
+  scanBtn.textContent = '… skan…';
   const found = await api.scanLocal();
-  scanBtn.textContent = '🔍 Lokal skan';
+  scanBtn.textContent = 'Lokal skan';
   if (!found.length) {
     els.importResult.textContent = '⚠ Lokal server topilmadi (Ollama: ollama serve / LM Studio: serverni yoqing)';
     return;
@@ -1839,7 +1844,7 @@ els.npFetch.addEventListener('click', async () => {
     els.importResult.textContent = '⚠ Avval Base URL yozing';
     return;
   }
-  els.npFetch.textContent = '⏳';
+  els.npFetch.textContent = '…';
   const r = await api.fetchProviderModels(base, els.npKey.value.trim());
   els.npFetch.textContent = '⤓ Modellar';
   if (r.error) {
@@ -1890,7 +1895,7 @@ function openSetTab(name) {
   document.querySelectorAll('.set-pane').forEach((p) => p.classList.toggle('hidden', p.dataset.pane !== currentSetTab));
 }
 
-/* 📋 Plan / ⚡ Build (4-bosqich) */
+/* Plan / Build (4-bosqich) */
 async function sendPlan() {
   if (running) return;
   if (!els.input.value.trim() && !pendingAttachments.length) {
@@ -1930,7 +1935,7 @@ async function setModel(model, providerId) {
   if (els.modelInput) els.modelInput.value = model;
   const prov = cfg.providers[providerId || cfg.config.provider] || {};
   switchFx(`${prov.name || cfg.config.provider}`, model);
-  dockPush({ id: `switch_${Date.now()}`, icon: '🔀', title: `Model almashtirildi: ${model}`, sub: prov.name || cfg.config.provider, state: 'ok' });
+  dockPush({ id: `switch_${Date.now()}`, icon: '', title: `Model almashtirildi: ${model}`, sub: prov.name || cfg.config.provider, state: 'ok' });
 }
 function renderQuickModels(models) {
   if (!els.quickModels) return;
@@ -1977,7 +1982,7 @@ async function toggleModelPop() {
   for (const p of usable) {
     const h = document.createElement('div');
     h.className = 'mp-head';
-    h.textContent = `${p.id === 'localmini' ? '💻' : '☁️'} ${p.name}`;
+    h.textContent = p.name;
     els.modelPop.appendChild(h);
     const models = [...(p.models || []), ...(p.visionModels || [])];
     if (!models.length) {
@@ -1991,7 +1996,7 @@ async function toggleModelPop() {
       const active = cfg.config.provider === p.id && cfg.config.model === m;
       const item = document.createElement('div');
       item.className = 'mp-item' + (active ? ' active' : '');
-      item.innerHTML = `<span>${(p.visionModels || []).includes(m) ? '👁' : '🤖'}</span><span class="mp-name"></span><span class="mp-check">${active ? '✓' : ''}</span>`;
+      item.innerHTML = `<span></span><span class="mp-name"></span><span class="mp-check">${active ? '✓' : ''}</span>`;
       item.querySelector('.mp-name').textContent = m;
       item.addEventListener('click', async () => { closeModelPop(); await setModel(m, p.id); });
       els.modelPop.appendChild(item);
@@ -2020,10 +2025,10 @@ function renderKeyFields() {
     const row = document.createElement('div');
     row.className = 'key-row';
     const has = p.custom ? true : !!cfg.config.keys[p.id];
-    const visionMark = (p.visionModels && p.visionModels.length) ? ' <span class="vision-mark">👁 vision</span>' : '';
+    const visionMark = (p.visionModels && p.visionModels.length) ? '<span class="vision-mark">vision</span>' : '';
     const val = p.custom ? '' : cfg.config.keys[p.id] || '';
     row.innerHTML = `<span class="k-name">${p.name}${visionMark}</span>
-      <input type="password" data-key="${p.id}" placeholder="${p.custom ? 'kalit provayder ichida saqlangan 🔑' : 'API kalit'}" ${p.custom ? 'disabled' : ''} style="flex:1" value="${escapeHtml(val)}" />
+      <input type="password" data-key="${p.id}" placeholder="${p.custom ? 'kalit provayder ichida saqlangan' : 'API kalit'}" ${p.custom ? 'disabled' : ''} style="flex:1" value="${escapeHtml(val)}" />
       <span class="k-state ${has ? 'ok' : 'missing'}">${has ? '✓' : '—'}</span>`;
     if (!p.custom) {
       row.querySelector('input').addEventListener('input', (ev) => {
@@ -2045,7 +2050,7 @@ function renderCustomProviders() {
   for (const c of customs) {
     const row = document.createElement('div');
     row.className = 'custom-prov-row';
-    row.innerHTML = `<span class="cp-name">${escapeHtml(c.name)}</span><span class="cp-models">${escapeHtml((c.models || []).join(', '))}</span>${c.vision ? '<span class="vision-mark">👁</span>' : ''}<button class="btn btn-danger small">✕</button>`;
+    row.innerHTML = `<span class="cp-name">${escapeHtml(c.name)}</span><span class="cp-models">${escapeHtml((c.models || []).join(', '))}</span>${c.vision ? '<span class="vision-mark"></span>' : ''}<button class="btn btn-danger small">✕</button>`;
     row.querySelector('button').addEventListener('click', async () => {
       cfg.config.customProviders = (cfg.config.customProviders || []).filter((x) => x.id !== c.id);
       await api.saveConfig({ customProviders: cfg.config.customProviders });
@@ -2128,7 +2133,7 @@ els.modelFetchBtn?.addEventListener('click', async () => {
     return;
   }
   const key = (cfg.config.keys && cfg.config.keys[id]) || '';
-  els.modelFetchResult.textContent = '⏳ Modellar olinmoqda…';
+  els.modelFetchResult.textContent = '… Modellar olinmoqda…';
   try {
     const r = await api.fetchProviderModels(p.base, key);
     const list = (r && r.models) || [];
@@ -2193,7 +2198,7 @@ els.connectTestBtn.addEventListener('click', async () => {
   const key = keyInp && !keyInp.disabled ? keyInp.value.trim() : ((cfg.config.keys && cfg.config.keys[id]) || '');
   const base = providerBase(id);
   if (!base) { els.connectResult.textContent = '⚠ Bu provayder uchun Base URL yo‘q (maxsus provayderni qo‘shing).'; return; }
-  els.connectResult.textContent = '⏳ Ulanmoqda… model ro‘yxati olinmoqda…';
+  els.connectResult.textContent = '… Ulanmoqda… model ro‘yxati olinmoqda…';
   const r = await api.fetchProviderModels(base, key);
   const list = (r && r.models) || [];
   if (!list.length) {
@@ -2212,7 +2217,7 @@ els.connectTestBtn.addEventListener('click', async () => {
   els.modelList.innerHTML = list.map((m) => `<option value="${escapeHtml(m)}"></option>`).join('');
   renderQuickModels(list);
   switchFx(`✓ ${p.name || id}`, `${list.length} model · ${list[0]}`);
-  dockPush({ id: `connect_${Date.now()}`, icon: '🔌', title: `${p.name || id} ulandi`, sub: `${list.length} model topildi`, state: 'ok' });
+  dockPush({ id: `connect_${Date.now()}`, icon: '', title: `${p.name || id} ulandi`, sub: `${list.length} model topildi`, state: 'ok' });
 });
 els.connectSaveBtn.addEventListener('click', async () => {
   const id = els.providerSelect.value;
@@ -2244,7 +2249,7 @@ async function saveTranslate() {
 }
 els.transStatusBtn.addEventListener('click', async () => {
   await saveTranslate();
-  els.transResult.textContent = '⏳ Tekshirilmoqda…';
+  els.transResult.textContent = '… Tekshirilmoqda…';
   try {
     const s = await api.translateStatus();
     els.transResult.textContent = s.up
@@ -2256,7 +2261,7 @@ els.transStatusBtn.addEventListener('click', async () => {
 });
 els.transTestBtn.addEventListener('click', async () => {
   await saveTranslate();
-  els.transResult.textContent = '⏳ Sinov tarjimasi…';
+  els.transResult.textContent = '… Sinov tarjimasi…';
   try {
     const r = await api.translateTest('Bugun havo juda yaxshi, loyihani boshlaymiz.');
     els.transResult.textContent = r.ok ? `✓ ${r.ms} ms · “${String(r.text).slice(0, 180)}”` : '⚠ Tarjima bo‘lmadi (tarjimon hali ko‘tarilmagan bo‘lishi mumkin).';
@@ -2449,7 +2454,7 @@ els.updateInstallBtn.addEventListener('click', () => api.updateInstall());
 window.api.onUpdateEvent((u) => {
   if (u.state === 'available') {
     els.updateStatus.textContent = `yangi versiya ${u.version} mavjud (Sozlamalar → Yangilanishlar)`;
-    makeBanner('rcUpdate', 'rc-notice', `🆕 <b>YANG AI v${u.version} chiqdi!</b> Yangilash: Sozlamalar → Yangilanishlar → Yuklab olish`, true);
+    makeBanner('rcUpdate', 'rc-notice', `<b>YANG AI v${u.version} chiqdi!</b> Yangilash: Sozlamalar → Yangilanishlar → Yuklab olish`, true);
   }
   else if (u.state === 'downloading') els.updateStatus.textContent = `yuklanmoqda… ${u.percent}%`;
   else if (u.state === 'downloaded') {

@@ -1,0 +1,262 @@
+/* YANG IDE — premium, skromni va quyuq mavzu. Tashqi resurs yo'q (offline). */
+:root {
+  --bg: #0b0d12;
+  --bg-2: #0f1218;
+  --bg-3: #141822;
+  --bg-4: #1a1f2b;
+  --border: #1d2330;
+  --border-2: #28303f;
+  --text: #e6e9ef;
+  --text-dim: #97a1b2;
+  --text-mute: #667085;
+  --accent: #6c8cff;
+  --accent-soft: rgba(108, 140, 255, 0.14);
+  --ok: #4ec9a0;
+  --warn: #dfae54;
+  --danger: #f07070;
+  --ui: -apple-system, 'Montserrat', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+  /* Muharrir geometriyasi — app.js shu qiymatlarga suyanadi (13px × 1.55). */
+  --lh: 1.55;
+  --gutter-w: 58px;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 12.5px/1.5 var(--ui);
+  -webkit-font-smoothing: antialiased;
+}
+#app { display: flex; flex-direction: column; height: 100vh; }
+.spacer { flex: 1; }
+.hidden { display: none !important; }
+
+/* ------------------------------------------------------------ scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #232a38; border-radius: 6px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #333d50; background-clip: content-box; }
+
+/* --------------------------------------------------------------- buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 26px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--border-2); background: var(--bg-3); color: var(--text-dim);
+  font: 12px/1 var(--ui); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { background: var(--bg-4); color: var(--text); border-color: #354054; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent-soft); border-color: rgba(108, 140, 255, 0.45); color: #cdd8ff; }
+.btn-primary:hover { background: rgba(108, 140, 255, 0.22); }
+.btn-icon { width: 26px; padding: 0; }
+
+input, select, textarea {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font: 12px/1.4 var(--ui); padding: 5px 8px; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+::placeholder { color: var(--text-mute); }
+
+/* -------------------------------------------------------------- titlebar */
+#titlebar {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px;
+  border-bottom: 1px solid var(--border); background: var(--bg-2); flex: 0 0 auto;
+  position: relative;
+}
+/* Brend belgisi — nafis, kichik, shovqin qilmaydi. */
+#titlebar::before {
+  content: '◆'; color: var(--accent); font-size: 11px; margin-right: 2px;
+  filter: drop-shadow(0 0 6px rgba(108, 140, 255, 0.45));
+}
+#wsName { color: var(--text-dim); font-size: 12px; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 10px; border-left: 1px solid var(--border-2); margin-left: 2px; line-height: 16px; }
+#titlebar .btn { height: 28px; border-radius: 9px; }
+#openFolderBtn, #runBtn, #saveBtn { border-color: var(--border); background: transparent; }
+#openFolderBtn:hover, #runBtn:hover, #saveBtn:hover { background: var(--bg-3); }
+
+/* ------------------------------------------------------------------ body */
+#body { flex: 1; display: flex; min-height: 0; }
+
+/* --------------------------------------------------------------- sidebar */
+#sidebar { width: 252px; flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); background: var(--bg-2); }
+#sidebarTabs { display: flex; gap: 2px; padding: 8px 8px 0; }
+#sidebarTabs button {
+  flex: 1; height: 27px; border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: var(--text-mute); font: 12px var(--ui); cursor: pointer; letter-spacing: 0.02em;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+#sidebarTabs button:hover { color: var(--text-dim); }
+#sidebarTabs button.active { background: var(--bg-3); border-color: var(--border-2); color: var(--text); }
+#filesView, #searchView { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.side-pad { padding: 8px; }
+.side-pad input { width: 100%; }
+.tree { flex: 1; overflow: auto; padding: 4px 6px 10px; }
+.tree-row {
+  display: flex; align-items: center; height: 23px; padding: 0 6px; border-radius: 6px;
+  color: var(--text-dim); font-size: 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tree-row:hover { background: var(--bg-3); color: var(--text); }
+.tree-row.dir { color: var(--text); font-weight: 500; }
+.tree-row.sel { background: var(--accent-soft); color: #cdd8ff; }
+#searchResults { flex: 1; overflow: auto; padding: 4px 6px 10px; }
+
+/* ------------------------------------------------------------ editor area */
+#editorWrap { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+#tabs { display: flex; align-items: end; gap: 2px; height: 36px; padding: 0 6px; overflow-x: auto; overflow-y: hidden; background: var(--bg-2); border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+#tabs::-webkit-scrollbar { height: 0; }
+.tab {
+  display: flex; align-items: center; gap: 7px; padding: 0 11px; height: 30px; max-width: 220px;
+  border-radius: 8px 8px 0 0; background: transparent; color: var(--text-mute); font-size: 12px;
+  cursor: pointer; white-space: nowrap; border: 1px solid transparent; border-bottom: 0;
+}
+.tab:hover { color: var(--text-dim); background: var(--bg-3); }
+.tab.active { background: var(--bg); color: var(--text); border-color: var(--border); box-shadow: inset 0 2px 0 var(--accent); }
+.tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; box-shadow: 0 0 6px rgba(108, 140, 255, 0.6); }
+
+#editorHost { flex: 1; position: relative; min-height: 0; }
+#emptyState { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.empty-card { text-align: center; }
+.empty-title { font-size: 17px; letter-spacing: 0.22em; color: var(--text); text-transform: uppercase; }
+.empty-sub { margin-top: 10px; font-size: 12px; color: var(--text-mute); max-width: 380px; line-height: 1.7; }
+.empty-card { padding: 28px 34px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg-2); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
+
+#editorPane { position: absolute; inset: 0; }
+#gutter {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--gutter-w); overflow: hidden;
+  padding: 10px 10px 0 0; text-align: right; font: 13px/var(--lh) var(--mono);
+  color: var(--text-mute); user-select: none; pointer-events: none; z-index: 3;
+  border-right: 1px solid var(--border); background: var(--bg);
+}
+.gutter-cur { color: #cdd8ff; font-weight: 600; }
+
+/* Qatlamli muharrir: <pre> bo'yaladi, <textarea> shaffof matn bilan ustida turadi.
+   Ikkalasi ham bir xil shrift metrikasi va padding'ga ega bo'lishi SHART —
+   aks holda kursor bilan bo'yalgan matn surilib ketadi. */
+.editor-hl, #editorArea {
+  position: absolute; left: var(--gutter-w); top: 0; right: 0; bottom: 0; margin: 0;
+  padding: 10px 16px 60px; border: 0; border-radius: 0; font: 13px/var(--lh) var(--mono);
+  white-space: pre; overflow: auto; tab-size: 4; overflow-wrap: normal;
+}
+.editor-hl { color: var(--text); pointer-events: none; z-index: 1; background: transparent; overflow: hidden; }
+/* Qator raqamlari: app.js #gutterLines ichida .gline'lar yasaydi va scroll bilan suradi. */
+#gutterLines { will-change: transform; }
+.gline { height: calc(13px * 1.55); }
+
+/* Yordamchi sinflar (app.js ishlatadi) */
+.dim { color: var(--text-mute); font-size: 12px; padding: 8px 10px; }
+.sep { height: 1px; margin: 4px 2px; background: var(--border-2); }
+.problem-row.sel { background: var(--accent-soft); color: #cdd8ff; }
+#findCount { align-self: center; color: var(--text-mute); font-size: 11.5px; padding: 0 4px; }
+#ctxMenu .ctx-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-dim); font: 12px var(--ui); cursor: pointer; }
+#ctxMenu .ctx-item:hover { background: var(--accent-soft); color: #cdd8ff; }
+#editorArea {
+  background: transparent; color: transparent; caret-color: var(--accent);
+  resize: none; outline: none; z-index: 2;
+}
+#editorArea::selection { background: rgba(108, 140, 255, 0.32); }
+
+/* sintaksis tokenlari (app.js <span> bilan chizadi) */
+.tk-kw { color: #c792ea; }
+.tk-str { color: #a6e3a1; }
+.tk-num { color: #fab387; }
+.tk-com { color: #5f6b7c; font-style: italic; }
+.tk-fn { color: #82aaff; }
+.tk-op { color: #89ddff; }
+.tk-prop { color: #ffd479; }
+.tk-tag { color: #f07178; }
+.tk-attr { color: #ffd479; }
+
+#autocomplete {
+  position: absolute; z-index: 5; min-width: 190px; max-height: 190px; overflow: auto;
+  background: var(--bg-3); border: 1px solid var(--border-2); border-radius: 8px; padding: 4px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.ac-item { padding: 4px 8px; border-radius: 6px; font: 12px var(--mono); color: var(--text-dim); cursor: pointer; }
+.ac-item:hover, .ac-item.sel { background: var(--accent-soft); color: #cdd8ff; }
+
+#findBar {
+  position: absolute; top: 8px; right: 14px; z-index: 6; display: flex; gap: 6px;
+  padding: 6px; background: var(--bg-3); border: 1px solid var(--border-2); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+#findBar input { width: 150px; }
+
+/* --------------------------------------------------------- bottom panel */
+#bottomPanel { flex: 0 0 auto; height: 228px; display: flex; flex-direction: column; border-top: 1px solid var(--border); background: var(--bg-2); min-height: 0; }
+#panelTabs { display: flex; align-items: center; gap: 2px; padding: 0 8px; height: 32px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+#panelTabs button {
+  height: 24px; padding: 0 9px; border: 1px solid transparent; border-radius: 7px;
+  background: transparent; color: var(--text-mute); font: 12px var(--ui); cursor: pointer;
+}
+#panelTabs button:hover { color: var(--text-dim); background: var(--bg-3); }
+#panelTabs button.active { background: var(--bg-3); border-color: var(--border-2); color: var(--text); }
+#problemsCount { display: inline-block; min-width: 16px; padding: 0 4px; margin-left: 4px; border-radius: 6px; background: var(--bg-4); color: var(--text-dim); font-size: 11px; text-align: center; }
+.panel-body { flex: 1; min-height: 0; overflow: auto; padding: 8px 10px; }
+#terminalPanel { display: flex; flex-direction: column; padding: 0; }
+#termOut { flex: 1; min-height: 0; overflow: auto; padding: 8px 12px; font: 12px/1.45 var(--mono); color: #c8ceda; }
+.term-line { white-space: pre-wrap; word-break: break-word; }
+.term-input-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--border); background: var(--bg-3); }
+.term-prompt { color: var(--accent); font: 12px var(--mono); }
+.term-input-row input { flex: 1; background: transparent; border: 0; padding: 2px 0; font: 12px var(--mono); }
+.term-input-row input:focus { border: 0; }
+
+.problem-row {
+  display: flex; gap: 10px; align-items: baseline; padding: 5px 8px; border-radius: 7px;
+  font-size: 12px; color: var(--text-dim); cursor: pointer;
+}
+.problem-row:hover { background: var(--bg-3); }
+.problem-row .p-line { color: var(--text-mute); font: 11px var(--mono); flex: 0 0 auto; }
+.problem-row.error .p-line { color: var(--danger); }
+
+.act-line { display: flex; gap: 8px; padding: 3px 8px; font: 12px var(--mono); color: var(--text-dim); border-radius: 6px; }
+.act-line:hover { background: var(--bg-3); }
+.act-line.ok { color: var(--ok); }
+.act-line.bad { color: var(--danger); }
+.act-time { color: var(--text-mute); flex: 0 0 auto; }
+
+/* -------------------------------------------------------------- AI panel */
+#aiPanel { width: 372px; flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--border); background: var(--bg-2); }
+#aiHead { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.ai-title { font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); }
+#aiModelSelect { flex: 1; min-width: 0; }
+.ai-team { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--text-mute); white-space: nowrap; }
+#aiLog { flex: 1; min-height: 0; overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.ai-msg { padding: 8px 10px; border-radius: 9px; font-size: 12px; line-height: 1.55; background: var(--bg-3); border: 1px solid var(--border); white-space: pre-wrap; word-break: break-word; }
+.ai-msg.user { background: var(--accent-soft); border-color: rgba(108, 140, 255, 0.32); color: #dbe3ff; }
+.ai-msg.tool { font: 11.5px var(--mono); color: var(--text-mute); }
+.ai-msg.err { border-color: rgba(240, 112, 112, 0.4); color: #ffc9c9; }
+#aiInput { margin: 0 10px; height: 72px; resize: none; }
+#aiActions { display: flex; gap: 6px; padding: 8px 10px; }
+#aiActions .btn { flex: 1; }
+
+/* ----------------------------------------------------------- status bar */
+#statusBar { display: flex; align-items: center; gap: 16px; height: 26px; padding: 0 14px; border-top: 1px solid var(--border); background: var(--bg-2); color: var(--text-mute); font-size: 11.5px; flex: 0 0 auto; }
+#cursorPos, #langLabel { font-variant-numeric: tabular-nums; }
+#dirtyLabel:not(:empty)::before { content: '● '; font-size: 9px; }
+#dirtyLabel { color: var(--warn); }
+
+/* ---------------------------------------------------------------- toast */
+.toast {
+  position: fixed; left: 50%; bottom: 42px; transform: translate(-50%, 10px);
+  max-width: 60vw; padding: 9px 14px; border-radius: 9px;
+  background: var(--bg-4); border: 1px solid var(--border-2); color: var(--text); font-size: 12px;
+  opacity: 0; pointer-events: none; transition: opacity 0.16s ease, transform 0.16s ease; z-index: 40;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* -------------------------------------------------------------- dialog */
+.dlg { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(6, 8, 12, 0.6); }
+.dlg-box { width: 380px; padding: 14px; background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+.dlg-title { font-size: 12.5px; color: var(--text-dim); margin-bottom: 8px; }
+.dlg-box input { width: 100%; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* ------------------------------------------------------------- ctx menu */
+#ctxMenu {
+  position: fixed; z-index: 60; min-width: 190px; padding: 4px;
+  background: var(--bg-3); border: 1px solid var(--border-2); border-radius: 9px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+#ctxMenu button {
+  display: block; width: 100%; text-align: left; padding: 6px 10px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--text-dim); font: 12px var(--ui); cursor: pointer;
+}
+#ctxMenu button:hover { background: var(--accent-soft); color: #cdd8ff; }

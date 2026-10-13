@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>YANG IDE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ------------------------------------------------ yuqori panel -->
+    <header id="titlebar">
+      <button id="openFolderBtn" class="btn">Papka ochish</button>
+      <span id="wsName" title="">—</span>
+      <div class="spacer"></div>
+      <button id="runBtn" class="btn">Ishga tushirish</button>
+      <button id="saveBtn" class="btn">Saqlash</button>
+      <button id="aiToggleBtn" class="btn">AI</button>
+      <button id="termToggleBtn" class="btn">Terminal</button>
+    </header>
+
+    <div id="body">
+      <!-- ---------------------------------------------- chap panel -->
+      <aside id="sidebar">
+        <div id="sidebarTabs">
+          <button data-view="files" class="active">Fayllar</button>
+          <button data-view="search">Qidiruv</button>
+        </div>
+
+        <div id="filesView">
+          <div class="side-pad"><input id="fileFilter" placeholder="Fayl filtri"></div>
+          <div id="fileTree" class="tree"></div>
+        </div>
+
+        <div id="searchView" class="hidden">
+          <div class="side-pad"><input id="searchInput" placeholder="Qidiruv (Enter)"></div>
+          <div id="searchResults"></div>
+        </div>
+      </aside>
+
+      <!-- ------------------------------------------------ muharrir -->
+      <main id="editorWrap">
+        <div id="tabs"></div>
+
+        <div id="editorHost">
+          <div id="emptyState">
+            <div class="empty-card">
+              <div class="empty-title">YANG IDE</div>
+              <div class="empty-sub">Fayl tanlanmagan — chapdan fayl oching yoki Ctrl+P bilan tez oching</div>
+            </div>
+          </div>
+
+          <div id="editorPane" class="hidden">
+            <div id="gutter"></div>
+            <pre id="highlight" class="editor-hl" aria-hidden="true"></pre>
+            <textarea id="editorArea" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off"></textarea>
+            <div id="autocomplete" class="hidden"></div>
+          </div>
+
+          <div id="findBar" class="hidden">
+            <input id="findInput" placeholder="Topish">
+            <input id="replaceInput" placeholder="Almashtirish">
+            <button id="findPrev" class="btn btn-icon" title="Oldingi">↑</button>
+            <button id="findNext" class="btn btn-icon" title="Keyingi">↓</button>
+            <button id="replaceOne" class="btn">Almashtirish</button>
+            <button id="replaceAll" class="btn">Hammasi</button>
+            <button id="findClose" class="btn btn-icon" title="Yopish">✕</button>
+          </div>
+        </div>
+
+        <!-- ------------------------------------------ pastki panel -->
+        <div id="bottomPanel">
+          <div id="panelTabs">
+            <button data-panel="terminal" class="active">Terminal</button>
+            <button data-panel="problems">Muammolar <span id="problemsCount">0</span></button>
+            <button data-panel="activity">Faoliyat</button>
+            <div class="spacer"></div>
+            <button id="panelClose" class="btn btn-icon" title="Panelni yopish">▾</button>
+          </div>
+
+          <div id="terminalPanel" class="panel-body">
+            <div id="termOut"></div>
+            <div class="term-input-row">
+              <span class="term-prompt">$</span>
+              <input id="termInput" placeholder="Buyruq… (Enter)" spellcheck="false">
+            </div>
+          </div>
+
+          <div id="problemsPanel" class="panel-body hidden"></div>
+          <div id="activityPanel" class="panel-body hidden"></div>
+        </div>
+      </main>
+
+      <!-- -------------------------------------------------- AI panel -->
+      <aside id="aiPanel" class="hidden">
+        <div id="aiHead">
+          <span class="ai-title">IDE AI</span>
+          <select id="aiModelSelect"></select>
+          <label class="ai-team"><input type="checkbox" id="aiTeamCheck"> jamoa</label>
+          <button id="aiClose" class="btn btn-icon" title="Yopish">✕</button>
+        </div>
+        <div id="aiLog"></div>
+        <textarea id="aiInput" placeholder="AI ga vazifa bering…" spellcheck="false"></textarea>
+        <div id="aiActions">
+          <button id="aiSend" class="btn btn-primary">Yuborish</button>
+          <button id="aiStop" class="btn">To'xtatish</button>
+          <button id="aiFix" class="btn">Xatoni tuzat</button>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ------------------------------------------------ holat qatori -->
+    <footer id="statusBar">
+      <span id="statusLeft">tayyor</span>
+      <div class="spacer"></div>
+      <span id="cursorPos">1:1</span>
+      <span id="langLabel">—</span>
+      <span id="dirtyLabel"></span>
+    </footer>
+  </div>
+
+  <!-- --------------------------------------------------- yordamchi UI -->
+  <div id="toast" class="toast"></div>
+
+  <div id="dlgModal" class="dlg hidden">
+    <div class="dlg-box">
+      <div id="dlgTitle" class="dlg-title">Nom</div>
+      <input id="dlgInput" spellcheck="false">
+      <div class="dlg-actions">
+        <button id="dlgCancel" class="btn">Bekor</button>
+        <button id="dlgOk" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ctxMenu" class="hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

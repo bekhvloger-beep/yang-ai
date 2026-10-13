@@ -7,6 +7,37 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Ikona to‘plami: emoji o‘rniga monoxrom chizma ikonalar (premium ko‘rinish).
+       Sahifaning o‘zida bir marta e’lon qilinadi, keyin <svg class="ico"><use href="#i-…"/></svg>. -->
+  <svg id="iconSprite" width="0" height="0" aria-hidden="true" focusable="false">
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l2 2.2h7.8A2.5 2.5 0 0 1 21 9.7v7.8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="M20 11.5 12.6 19a4.6 4.6 0 0 1-6.5-6.5l7.6-7.6a3.2 3.2 0 0 1 4.5 4.5l-7.4 7.4a1.8 1.8 0 0 1-2.6-2.6l6.6-6.6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.4a3 3 0 0 1 0 5.9"/><path d="M17 19.5c0-2-.7-3.6-1.8-4.8 3.1-.3 5.3 1.6 5.3 4.8"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="M4 20s.8-3.4 3-4.6c1.3-.7 2.7-.3 3.4.6.7 1 .3 2.4-.7 3.1-1.6 1.2-5.7.9-5.7.9z"/><path d="M10.5 15.5 19 7a2.5 2.5 0 0 0-3.5-3.5L7 12"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6.5h12M8 12h12M8 17.5h12"/><path d="M4 6.5h.01M4 12h.01M4 17.5h.01"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.5 3 6 13h5l-1 8 7.5-10h-5z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.8"/><path d="M12 3.5v2.2M12 18.3v2.2M4.6 7.8l1.9 1.1M17.5 15.1l1.9 1.1M4.6 16.2l1.9-1.1M17.5 8.9l1.9-1.1"/></symbol>
+    <symbol id="i-screen" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7"/><path d="M6.5 7l.8 11.2A2 2 0 0 0 9.3 20h5.4a2 2 0 0 0 2-1.8L17.5 7"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 12.5c0 3.6-3.6 6.5-8 6.5-1 0-2-.2-2.9-.5L5 20l1.2-3.2A6.4 6.4 0 0 1 4 12.5C4 8.9 7.6 6 12 6s8 2.9 8 6.5z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4.5V10h-5.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10"/><path d="M8 10.5 12 14.5l4-4"/><path d="M5 19h14"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4h9L20 8.5v10A1.5 1.5 0 0 1 18.5 20h-12A1.5 1.5 0 0 1 5 18.5z"/><path d="M8.5 4v5h6"/><path d="M8.5 20v-5h7v5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 5.5 18.5 9.5"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/></symbol>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 3.5v2M14 3.5v2M10 18.5v2M14 18.5v2M3.5 10h2M3.5 14h2M18.5 10h2M18.5 14h2"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 19 4M16 4h3v3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.4 2.6 2.4 13.4 0 16-2.4-2.6-2.4-13.4 0-16z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.6c0 1.7-2.5 2-2.5 3.6"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M4 10v4l11 5V5z"/><path d="M15 7.5A3.5 3.5 0 0 1 15 16"/><path d="M7 14v4.5h3V15.5"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-2.6-6.4z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 3.5h6l-.8 5.2 3 3.3H6.8l3-3.3z"/><path d="M12 12v8.5"/></symbol>
+    <symbol id="i-hex" viewBox="0 0 32 32"><path d="M16 2.5 27.7 9.25v13.5L16 29.5 4.3 22.75V9.25z"/><path d="M16 8.4 22.6 12.2v7.6L16 23.6 9.4 19.8v-7.6z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4.5 17.5 10 12.5l3.5 3 3-2.5 3.5 3.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3.5h8L19 8.5v12H6z"/><path d="M13.5 3.5V9H19"/><path d="M9 13h6M9 16.5h6"/></symbol>
+  </svg>
+
   <div id="app">
     <aside id="sidebar">
       <div class="logo">
@@ -26,10 +57,10 @@
         <span class="logo-word">YANG<span class="logo-ai"> AI</span></span>
         <a class="logo-domain" id="siteLink" href="#" title="Rasmiy saytni ochish">aicomp.uz</a>
       </div>
-      <button id="newChatBtn" class="btn btn-primary new-chat">＋ Yangi chat</button>
+      <button id="newChatBtn" class="btn btn-primary new-chat">Yangi chat</button>
       <div id="chatList" class="chat-list"></div>
       <div class="sidebar-footer">
-        <button id="settingsBtn" class="btn btn-ghost">⚙ Sozlamalar</button>
+        <button id="settingsBtn" class="btn btn-ghost"><svg class="ico"><use href="#i-gear" /></svg> Sozlamalar</button>
         <div class="version" id="appVersion">v3.0 · desktop</div>
       </div>
     </aside>
@@ -37,10 +68,10 @@
     <main id="main">
       <div id="mainSplit">
       <header id="topbar">
-        <button id="wsChip" class="chip" title="Ish papkasini almashtirish">📁 <span id="wsName">…</span></button>
+        <button id="wsChip" class="chip" title="Ish papkasini almashtirish"><svg class="ico"><use href="#i-folder" /></svg> <span id="wsName">…</span></button>
         <div class="spacer"></div>
         <div class="agent-now" id="agentNow" title="Hozir ishlayotgan agent">
-          <span class="agent-avatar" id="agentAvatar">⬡</span>
+          <span class="agent-avatar" id="agentAvatar"><svg class="ico ico-hex"><use href="#i-hex" /></svg></span>
           <span class="agent-now-txt"><b id="agentNameNow">YANG AI</b><small id="agentRoleNow">tayyor</small></span>
         </div>
         <div class="quota-ring" id="quotaRing" title="Limit holati">
@@ -51,8 +82,8 @@
           <span id="ringText" class="ring-text">—</span>
         </div>
         <button id="dockToggle" class="icon-btn" title="Faoliyat panelini yig‘ish/ochish">▥</button>
-        <button id="ideToggle" class="icon-btn" title="IDE panelni ochish/yopish (v5)">🖥</button>
-        <button id="modelChip" class="chip" title="Model va provayder">🤖 <span id="modelName">…</span></button>
+        <button id="ideToggle" class="icon-btn" title="IDE panelni ochish/yopish (v5)"><svg class="ico"><use href="#i-screen" /></svg></button>
+        <button id="modelChip" class="chip" title="Model va provayder"><svg class="ico"><use href="#i-cpu" /></svg> <span id="modelName">…</span></button>
       </header>
 
       <div id="chatWrap">
@@ -67,12 +98,12 @@
             </div>
             <h1>YANG AI</h1>
             <p class="empty-sub">aicomp.uz — professional agentic yordamchi</p>
-            <p>Kod yozadi, hujjat yaratadi (PDF/DOCX/XLSX), rasm tahlil qiladi, buyruq bajaradi.<br />Katta loyihalar uchun 🤝 parallel agentlar jamoasi.</p>
+            <p>Kod yozadi, hujjat yaratadi (PDF/DOCX/XLSX), rasm tahlil qiladi, buyruq bajaradi.<br />Katta loyihalar uchun parallel agentlar jamoasi.</p>
             <div class="suggestions">
               <button class="suggestion" data-text="Bu papkadagi loyihani o'rganib chiq va tuzilishini qisqacha tushuntir">Loyihani o'rganib chiq</button>
               <button class="suggestion" data-text="Men uchun hisobot.docx hujjatini yarat: loyiha tuzilishi haqida 5 bo'limli professional hujjat. So'ng hisobot.pdf ga ham aylantir">DOCX/PDF hujjat yarat</button>
               <button class="suggestion" data-text="sotuv.xlsx fayl yarat: 3 varaq — 'Sotuv' (12 qatorli jadval), 'Xulosa', 'Grafik ma'lumot'. So'ng grafik.png rasm ham chiz">Excel + diagramma</button>
-              <button class="suggestion" data-text="Kichik 'Todo App' web loyihasini noldan yarat: HTML+CSS+JS, chiroyli dizayn, localStorage bilan. Jamoa rejimida bajar" data-team="1">🤝 Jamoa bilan loyiha</button>
+              <button class="suggestion" data-text="Kichik 'Todo App' web loyihasini noldan yarat: HTML+CSS+JS, chiroyli dizayn, localStorage bilan. Jamoa rejimida bajar" data-team="1">Jamoa bilan loyiha</button>
             </div>
           </div>
           <div id="messages"></div>
@@ -80,7 +111,7 @@
 
         <aside id="dock" class="dock">
           <div class="dock-head">
-            <span class="dock-title">⚡ Faoliyat</span>
+            <span class="dock-title">Faoliyat</span>
             <span class="dock-live" id="dockLive">tayyor</span>
             <button id="dockClose" class="icon-btn" title="Panelni yig‘ish">›</button>
           </div>
@@ -92,18 +123,18 @@
         </aside>
       </div>
 
-      <div id="dragOverlay" class="hidden"><div class="drag-box">📎 Fayllarni shu yerga tashlang</div></div>
+      <div id="dragOverlay" class="hidden"><div class="drag-box"><svg class="ico"><use href="#i-clip" /></svg> Fayllarni shu yerga tashlang</div></div>
 
       <footer id="composer">
         <div class="input-wrap">
           <div id="attachRow" class="attach-row hidden"></div>
           <textarea id="input" rows="1" placeholder="Vazifani yozing… rasm/Telegram skrinshot ham tashlashingiz mumkin (Enter — yuborish)"></textarea>
           <div class="composer-bar">
-            <button id="attachBtn" class="icon-btn" title="Fayl biriktirish (PDF, DOCX, XLSX, rasm...)">📎</button>
-            <button id="teamBtn" class="icon-btn" title="Agentlar jamoasi rejimi — katta loyihalar uchun">🤝</button>
-            <button id="imgStudioBtn" class="icon-btn" title="Rasm studiyasi (v5) — o‘zbekcha prompt bilan rasm chizish">🎨</button>
-            <button id="planBtn" class="mode-btn" title="Avval reja tuzadi — tasdiqlagach quradi">📋 Plan</button>
-            <button id="buildBtn" class="mode-btn" title="So‘rovni darhol bajaradi (qurish)">⚡ Build</button>
+            <button id="attachBtn" class="icon-btn" title="Fayl biriktirish (PDF, DOCX, XLSX, rasm...)"><svg class="ico"><use href="#i-clip" /></svg></button>
+            <button id="teamBtn" class="icon-btn" title="Agentlar jamoasi rejimi — katta loyihalar uchun"><svg class="ico"><use href="#i-users" /></svg></button>
+            <button id="imgStudioBtn" class="icon-btn" title="Rasm studiyasi (v5) — o‘zbekcha prompt bilan rasm chizish"><svg class="ico"><use href="#i-brush" /></svg></button>
+            <button id="planBtn" class="mode-btn" title="Avval reja tuzadi — tasdiqlagach quradi"><svg class="ico"><use href="#i-list" /></svg> Plan</button>
+            <button id="buildBtn" class="mode-btn" title="So‘rovni darhol bajaradi (qurish)"><svg class="ico"><use href="#i-bolt" /></svg> Build</button>
             <span id="statusLine" class="status-line"></span>
             <div class="spacer"></div>
             <button id="stopBtn" class="btn btn-danger hidden">■ To‘xtatish</button>
@@ -111,8 +142,8 @@
           </div>
           <div class="bottom-bar">
             <button id="bbModel" class="bb-chip" title="Modelni almashtirish"><span class="bb-dot"></span> <span id="bbModelName">…</span> <span class="bb-caret">▾</span></button>
-            <button id="bbTeam" class="bb-chip" title="Jamoaviy rejim">🤝 <span>Jamoa</span></button>
-            <button id="bbMode" class="bb-chip" title="Reja rejimi">📋 <span>Reja</span></button>
+            <button id="bbTeam" class="bb-chip" title="Jamoaviy rejim"><svg class="ico"><use href="#i-users" /></svg> <span>Jamoa</span></button>
+            <button id="bbMode" class="bb-chip" title="Reja rejimi"><svg class="ico"><use href="#i-list" /></svg> <span>Reja</span></button>
             <div class="spacer"></div>
             <span class="bb-hint" id="bbHint">Enter — yuborish · Shift+Enter — yangi qator</span>
           </div>
@@ -126,18 +157,18 @@
   <!-- v5 IDE panel: desktopIDE mismoni — o'ng tomonda terminal va faoliyat jurnali -->
   <div id="idePanel" class="ide-panel hidden">
     <div class="ide-head">
-      <span class="ide-title">🖥 IDE</span>
+      <span class="ide-title"><svg class="ico"><use href="#i-screen" /></svg> IDE</span>
       <span class="ide-live" id="ideLive">tayyor</span>
       <div class="spacer"></div>
       <button id="ideClose" class="icon-btn" title="IDE panelni yopish">›</button>
     </div>
     <div class="ide-body">
       <div class="ide-col ide-col-files">
-        <div class="ide-col-head">📁 Fayllar</div>
+        <div class="ide-col-head">Fayllar</div>
         <div class="ide-tree" id="ideTree"></div>
       </div>
       <div class="ide-col ide-col-term">
-        <div class="ide-col-head">⌨ Terminal</div>
+        <div class="ide-col-head">Terminal</div>
         <div class="ide-term-out" id="ideTermOut"></div>
         <div class="ide-term-in">
           <input id="ideTermInput" placeholder="buyruq yozing va Enter…" spellcheck="false" />
@@ -145,7 +176,7 @@
         </div>
       </div>
       <div class="ide-col ide-col-feed">
-        <div class="ide-col-head">⚡ Faoliyat</div>
+        <div class="ide-col-head">Faoliyat</div>
         <div class="ide-feed" id="ideFeed"></div>
       </div>
     </div>
@@ -155,7 +186,7 @@
   <div id="imgStudioModal" class="modal hidden">
     <div class="modal-box img-studio-box">
       <div class="modal-head">
-        <h2>🎨 Rasm studiyasi</h2>
+        <h2>Rasm studiyasi</h2>
         <button id="imgStudioClose" class="btn btn-ghost">✕</button>
       </div>
       <div class="modal-body">
@@ -176,7 +207,7 @@
           <div id="imgStudioStatus" class="img-studio-pre">—</div>
         </div>
         <div class="modal-foot">
-          <button id="imgStudioGo" class="btn btn-primary">🎨 Chizish</button>
+          <button id="imgStudioGo" class="btn btn-primary">Chizish</button>
         </div>
       </div>
     </div>
@@ -187,9 +218,9 @@
     <div class="modal-box ide-file-box">
       <div class="modal-head">
         <h2 id="ideFileName">fayl<small id="ideFileDirty"></small></h2>
-        <button id="ideFileEdit" class="btn btn-ghost" title="Tahrirlash">✏️</button>
-        <button id="ideFileSave" class="btn btn-ghost hidden" title="Saqlash (Ctrl+S)">💾</button>
-        <button id="ideFileExt" class="btn btn-ghost" title="Tizim ilovasi bilan ochish">↗</button>
+        <button id="ideFileEdit" class="btn btn-ghost" title="Tahrirlash"><svg class="ico"><use href="#i-edit" /></svg></button>
+        <button id="ideFileSave" class="btn btn-ghost hidden" title="Saqlash (Ctrl+S)"><svg class="ico"><use href="#i-save" /></svg></button>
+        <button id="ideFileExt" class="btn btn-ghost" title="Tizim ilovasi bilan ochish"><svg class="ico"><use href="#i-external" /></svg></button>
         <button id="ideFileClose" class="btn btn-ghost">✕</button>
       </div>
       <div class="modal-body"><pre id="ideFileContent" class="ide-file-pre"></pre><textarea id="ideFileEditArea" class="ide-file-edit hidden" spellcheck="false"></textarea></div>
@@ -210,13 +241,13 @@
   <div id="settingsModal" class="modal hidden">
     <div class="modal-box settings-box">
       <div class="modal-head">
-        <h2>⚙ Sozlamalar</h2>
+        <h2>Sozlamalar</h2>
         <div class="set-tabs" id="setTabs">
-          <button class="set-tab active" data-tab="provider">🔌 Provayder</button>
-          <button class="set-tab" data-tab="model">🤖 Model</button>
-          <button class="set-tab" data-tab="translate">🌐 Tarjima</button>
-          <button class="set-tab" data-tab="ui">🎨 Interfeys</button>
-          <button class="set-tab" data-tab="system">🖥 Tizim</button>
+          <button class="set-tab active" data-tab="provider">Provayder</button>
+          <button class="set-tab" data-tab="model">Model</button>
+          <button class="set-tab" data-tab="translate">Tarjima</button>
+          <button class="set-tab" data-tab="ui">Interfeys</button>
+          <button class="set-tab" data-tab="system">Tizim</button>
         </div>
         <button id="settingsClose" class="btn btn-ghost">✕</button>
       </div>
@@ -236,16 +267,16 @@
               <span>API kalitlar</span>
               <div id="keyFields" class="key-fields"></div>
               <div class="key-actions">
-                <button id="importEnvBtn" class="btn btn-ghost small">⤓ .env dan import</button>
-                <button id="pickEnvBtn" class="btn btn-ghost small">📂 .env fayl tanlash</button>
-                <button id="clearKeysBtn" class="btn btn-ghost small" title="Barcha ulangan API kalitlarini o'chirish">🗑 Kalitlarni tozalash</button>
+                <button id="importEnvBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-download" /></svg> .env dan import</button>
+                <button id="pickEnvBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-folder" /></svg> .env fayl tanlash</button>
+                <button id="clearKeysBtn" class="btn btn-ghost small" title="Barcha ulangan API kalitlarini o'chirish"><svg class="ico"><use href="#i-trash" /></svg> Kalitlarni tozalash</button>
               </div>
             </div></div>
             <div class="cstep"><span class="cstep-n">3</span><div class="cstep-body">
               <span>Ulash va tekshirish</span>
               <div class="row-2">
-                <button id="connectTestBtn" class="btn btn-primary small">🔌 Ulash va tekshirish</button>
-                <button id="connectSaveBtn" class="btn btn-ghost small">💾 Provayderni saqlash</button>
+                <button id="connectTestBtn" class="btn btn-primary small">Ulash va tekshirish</button>
+                <button id="connectSaveBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-save" /></svg> Provayderni saqlash</button>
               </div>
               <div id="connectResult" class="import-result"></div>
             </div></div>
@@ -253,20 +284,20 @@
           <div class="field">
             <span>Provayderlar holati (limit)</span>
             <div id="quotaList" class="quota-list"><span class="dim">“Tekshirish”ni bosing</span></div>
-            <button id="quotaCheckBtn" class="btn btn-ghost small">🔄 Tekshirish</button>
+            <button id="quotaCheckBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-refresh" /></svg> Tekshirish</button>
           </div>
           <div class="field">
             <span>Maxsus provayderlar (istalgan OpenAI-mos API)</span>
             <div id="customProviderList" class="custom-prov-list"></div>
             <details class="add-prov">
-              <summary class="btn btn-ghost small">＋ Provayder qo‘shish</summary>
+              <summary class="btn btn-ghost small">Provayder qo‘shish</summary>
               <div class="add-prov-body">
                 <div class="preset-row" id="presetRow"></div>
                 <input id="npName" placeholder="Nomi (masalan: Cerebras, Z.ai, Ollama)" />
                 <input id="npBase" placeholder="Base URL (masalan: https://api.cerebras.ai/v1)" />
                 <div class="row-2">
                   <input id="npModels" placeholder="Modellar (vergul bilan)" />
-                  <button id="npFetch" class="btn btn-ghost small" title="Serverdan model ro‘yxatini olish">⤓ Modellar</button>
+                  <button id="npFetch" class="btn btn-ghost small" title="Serverdan model ro‘yxatini olish"><svg class="ico"><use href="#i-download" /></svg> Modellar</button>
                 </div>
                 <input id="npKey" type="password" placeholder="API kalit (lokal serverlar uchun bo‘sh qoldiring)" />
                 <label class="chk"><input type="checkbox" id="npVision" /> Rasm tahlili (vision) qo‘llaydi</label>
@@ -287,7 +318,7 @@
             <span>Model</span>
             <div class="row-2">
               <input id="modelInput" list="modelList" placeholder="model nomi" />
-              <button id="modelFetchBtn" class="btn btn-ghost small" title="Serverdan mavjud modellar ro‘yxatini olish — bosib tanlashingiz mumkin">⤓ Modellar</button>
+              <button id="modelFetchBtn" class="btn btn-ghost small" title="Serverdan mavjud modellar ro‘yxatini olish — bosib tanlashingiz mumkin"><svg class="ico"><use href="#i-download" /></svg> Modellar</button>
             </div>
             <datalist id="modelList"></datalist>
             <div id="modelFetchResult" class="dim" style="margin-top:4px"></div>
@@ -328,8 +359,8 @@
           <div class="field">
             <span>Holat va sinov</span>
             <div class="row-2">
-              <button id="transStatusBtn" class="btn btn-ghost small">🔄 Holatni tekshirish</button>
-              <button id="transTestBtn" class="btn btn-primary small">▶ Sinov tarjimasi</button>
+              <button id="transStatusBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-refresh" /></svg> Holatni tekshirish</button>
+              <button id="transTestBtn" class="btn btn-primary small">Sinov tarjimasi</button>
             </div>
             <div id="transResult" class="import-result"></div>
           </div>
@@ -367,8 +398,8 @@
             <span>Yangilanishlar</span>
             <div class="ws-row">
               <code id="updateStatus">—</code>
-              <button id="updateCheckBtn" class="btn btn-ghost small">🔄 Tekshirish</button>
-              <button id="updateInstallBtn" class="btn btn-primary small hidden">⬆ O‘rnatish</button>
+              <button id="updateCheckBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-refresh" /></svg> Tekshirish</button>
+              <button id="updateInstallBtn" class="btn btn-primary small hidden">O‘rnatish</button>
             </div>
             <div class="dim" style="margin-top:4px">Avtomatik tekshiruv: har ishga tushishda (GitHub Releases orqali)</div>
           </div>
@@ -376,15 +407,15 @@
             <span>Qo‘llab-quvvatlash</span>
             <div class="support-card">
               <div class="support-head">
-                <span class="support-icon">💬</span>
+                <span class="support-icon"><svg class="ico"><use href="#i-chat" /></svg></span>
                 <div class="support-head-txt">
                   <b>Savol va takliflar — Telegram bot</b>
                   <small>Botda yozing — admin tez orada shu chatga javob beradi. Reklama va hamkorlik alohida.</small>
                 </div>
               </div>
               <div class="support-actions">
-                <button id="tgQuestionBtn" class="btn btn-primary small">✈️ Botda savol berish</button>
-                <button id="tgAdBtn" class="btn btn-ghost small">📣 Reklama / hamkorlik</button>
+                <button id="tgQuestionBtn" class="btn btn-primary small">Botda savol berish</button>
+                <button id="tgAdBtn" class="btn btn-ghost small"><svg class="ico"><use href="#i-megaphone" /></svg> Reklama / hamkorlik</button>
               </div>
             </div>
           </div>

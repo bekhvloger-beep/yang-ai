@@ -39,7 +39,10 @@ code, .mono { font-family: var(--mono); }
 .bad { color: var(--danger); }
 .ok { color: var(--ok); }
 
-#app { display: flex; height: 100vh; }
+/* #app + #idePanel yonma-yon turishi kerak; ilgari #idePanel `#app` dan keyin oddiy
+   oqimda qolib, 100vh balandlikda ekrandan pastga chiqib ketardi. */
+body { display: flex; }
+#app { display: flex; flex: 1; min-width: 0; height: 100vh; }
 
 /* ---------- hexagon logo ---------- */
 .hex-out { fill: none; stroke: url(#hexGrad); stroke: var(--accent); stroke-width: 1.6; }
@@ -456,7 +459,9 @@ code, .mono { font-family: var(--mono); }
 @keyframes fxBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(280%); } }
 
 /* ---------- modal ---------- */
-.modal { position: fixed; inset: 0; background: rgba(5, 7, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+/* z-index 80: modal doim ogohlantirish banneri (60) ustida turishi kerak, aks holda
+   banner modal sarlavhasini to'sib qo'yadi. */
+.modal { position: fixed; inset: 0; background: rgba(5, 7, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 80; backdrop-filter: blur(2px); }
 .modal-box { width: 600px; max-width: 94vw; max-height: 88vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--border-2); border-radius: 14px; box-shadow: var(--shadow); }
 .settings-box { width: 720px; }
 .modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); z-index: 2; }
@@ -475,7 +480,11 @@ code, .mono { font-family: var(--mono); }
 .key-row .k-state { font-size: 11px; width: 16px; text-align: center; }
 .key-row .k-state.ok { color: var(--ok); }
 .key-row .k-state.missing { color: var(--muted); }
-.vision-mark { color: var(--ok); font-size: 9.5px; font-weight: 600; font-family: var(--mono); }
+.vision-mark {
+  color: var(--ok); font-size: 9.5px; font-weight: 600; font-family: var(--mono);
+  margin-left: 6px; padding: 1px 5px; border: 1px solid rgba(53, 195, 154, .35); border-radius: 4px;
+  vertical-align: 1px;
+}
 .key-actions { display: flex; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
 .import-result { font-size: 11.5px; color: var(--ok); min-height: 14px; font-family: var(--mono); white-space: pre-wrap; }
 
@@ -590,6 +599,61 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .rc-wizard-btns button.primary { background: linear-gradient(180deg, var(--accent), var(--accent-dim)); border-color: var(--accent-dim); color: #fff; font-weight: 600; }
 .rc-wizard-btns button.primary:hover { background: var(--accent); }
 
+/* ---------- v5.2: ikonalar (emoji o‘rniga monoxrom chizma) ----------
+   Emoji har platformada har xil rangda va o‘lchamda chiziladi — shuning uchun
+   interfeys qobig‘i (tugma, chip, panel sarlavhalari) SVG ikonalarga o‘tdi.
+   `.ico` — o‘lcham + stroke currentColor; rang tugma matnidan meros olinadi. */
+.ico {
+  width: 14px; height: 14px; flex: none;
+  stroke: currentColor; fill: none; stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round;
+  vertical-align: -2px; pointer-events: none;
+}
+.ico-hex { width: 17px; height: 17px; stroke-width: 1.5; }
+.btn > .ico, .chip > .ico, .mode-btn > .ico, .bb-chip > .ico { margin-right: 5px; }
+.btn > .ico:last-child, .chip > .ico:last-child { margin-right: 0; }
+.chip, .mode-btn { display: inline-flex; align-items: center; }
+.chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 28px; padding: 0; font-size: 13px; line-height: 1;
+}
+.chat-item > svg.ci { width: 13px; height: 13px; color: var(--muted); }
+.chat-item.active > svg.ci { color: var(--accent); }
+.chat-item .del > .ico { width: 12px; height: 12px; }
+.chat-item .del { display: inline-flex; align-items: center; padding: 2px 3px; line-height: 1; }
+.drag-box { display: inline-flex; align-items: center; gap: 10px; }
+.support-icon .ico { width: 18px; height: 18px; }
+/* Bo‘sh ikonka o‘rni qolmasin: matn chapga suriladi. */
+.da-icon:empty, .ta-icon:empty { display: none; }
+
+/* ---------- v5.2: premium silliqlash ----------
+   Maqsad: “o‘yinchoq” ko‘rinishni yo‘qotish — kam gradient, bir xil radius,
+   sokin mikro-sarlavhalar, tugmalarda tekis aksent. Faqat uslub: hech bir
+   id/klass o‘zgarmaydi, mantiq (app.js) tegilmaydi. */
+body { font-size: 13px; }
+#topbar { background: var(--bg-2); padding: 7px 14px; }
+.dock { background: var(--bg-2); }
+.input-wrap { background: var(--panel); border-radius: 12px; padding: 10px 12px 8px; }
+.btn { border-radius: 8px; }
+.btn-primary { background: var(--accent); border-color: var(--accent); }
+.btn-primary:hover { background: #7d99ff; border-color: #7d99ff; box-shadow: none; }
+.chip { border-radius: 8px; padding: 5px 10px; }
+.mode-btn { border-radius: 8px; }
+.bb-chip { border-radius: 8px; }
+.dock-title { font-size: 11px; letter-spacing: .9px; text-transform: uppercase; color: var(--text-dim); }
+.dock-head { padding: 9px 12px; }
+.dock-item { border-radius: 8px; background: var(--panel); }
+.dock-foot { padding: 7px 10px; }
+.chat-item { border-radius: 7px; padding: 6px 9px; }
+.sidebar-footer .btn { justify-content: flex-start; }
+.empty-logo { filter: drop-shadow(0 0 14px rgba(108, 140, 255, .22)); }
+#emptyState h1 { font-size: 24px; letter-spacing: 4px; }
+.suggestion { border-radius: 9px; }
+.suggestion:hover { transform: none; box-shadow: none; border-color: var(--border-2); background: var(--panel-2); }
+.set-tabs { gap: 4px; }
+.set-tab { border-radius: 7px; }
+
 /* ---------- v5: premium font (Montserrat + Poppins fallback offline-safe) ---------- */
 @font-face {
   font-family: 'Montserrat';
@@ -598,9 +662,12 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 }
 :root { --sans: 'Montserrat', 'Mont', 'Manrope', 'Geist', 'Segoe UI', system-ui, sans-serif; }
 
-/* ---------- v5: mainSplit (IDE panel yonida) ---------- */
-#mainSplit { display: flex; flex: 1; min-height: 0; }
-#mainSplit > footer#composer { width: 100%; }
+/* ---------- v5: mainSplit — asosiy USTUN (topbar → chat → composer) ----------
+   Diqqat: `flex-direction: column` shart. Usiz topbar, chat va composer yonma-yon
+   ustunlarga aylanib, layout buziladi (o'lchandi: mainSplitDir=row → sidebar ekrandan
+   chiqib ketgan, composer o'ng tomonda, dock o'rtada qolgan). */
+#mainSplit { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#mainSplit > footer#composer { flex: none; }
 
 /* ---------- v5 IDE panel ---------- */
 .ide-panel {

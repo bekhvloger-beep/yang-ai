@@ -1,0 +1,1320 @@
+{
+  "summary": {
+    "generatedAt": "2026-10-12T21:51:36.480Z",
+    "host": {
+      "platform": "win32",
+      "arch": "x64",
+      "cpus": 6,
+      "totalRamMb": 12214.7
+    },
+    "ollama": "http://127.0.0.1:11434",
+    "tasks": [
+      {
+        "name": "factorial",
+        "file": "factorial.py",
+        "lang": "python"
+      },
+      {
+        "name": "slugify",
+        "file": "slugify.py",
+        "lang": "python"
+      },
+      {
+        "name": "fizzbuzz",
+        "file": "fizzbuzz.mjs",
+        "lang": "node"
+      },
+      {
+        "name": "median_bug",
+        "file": "median.py",
+        "lang": "python"
+      }
+    ],
+    "catalog": {
+      "qwen2.5:0.5b": {
+        "kind": "ollama",
+        "sizeBytes": 397821319,
+        "params": "494.03M",
+        "quant": "Q4_K_M",
+        "context": 32768
+      },
+      "deepseek-r1:8b": {
+        "kind": "ollama",
+        "sizeBytes": 5225376047,
+        "params": "8.2B",
+        "quant": "Q4_K_M",
+        "context": 131072
+      },
+      "qwen2.5-coder:7b": {
+        "kind": "ollama",
+        "sizeBytes": 4683087561,
+        "params": "7.6B",
+        "quant": "Q4_K_M",
+        "context": 32768
+      },
+      "qwen2.5:latest": {
+        "kind": "ollama",
+        "sizeBytes": 4683087332,
+        "params": "7.6B",
+        "quant": "Q4_K_M",
+        "context": 32768
+      },
+      "llama3:latest": {
+        "kind": "ollama",
+        "sizeBytes": 4661224676,
+        "params": "8.0B",
+        "quant": "Q4_0",
+        "context": 8192
+      },
+      "local:model-qwen3-4b-2507.gguf": {
+        "kind": "bundled",
+        "sizeBytes": 2497281120,
+        "params": "4B",
+        "quant": null,
+        "context": 8192
+      },
+      "local:model-1.7b.gguf": {
+        "kind": "bundled",
+        "sizeBytes": 1107409472,
+        "params": "1.7B",
+        "quant": null,
+        "context": 8192
+      }
+    },
+    "warmupSeconds": 5.4,
+    "modelStartupSeconds": {
+      "local:model-qwen3-4b-2507.gguf": 0,
+      "local:model-1.7b.gguf": 5
+    },
+    "models": {
+      "qwen2.5-coder:7b": {
+        "kind": "ollama",
+        "params": "7.6B",
+        "quant": "Q4_K_M",
+        "diskBytes": 4683087561,
+        "startupSeconds": null,
+        "context": 32768,
+        "oneShot": {
+          "pass": 2,
+          "total": 4,
+          "avgSeconds": 37
+        },
+        "ideLoop": {
+          "pass": 4,
+          "total": 4,
+          "avgSeconds": 75
+        },
+        "repairsUsed": 1,
+        "perTask": {
+          "factorial": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "slugify": {
+            "oneShot": false,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "fizzbuzz": {
+            "oneShot": false,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "median_bug": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          }
+        }
+      },
+      "qwen2.5:latest": {
+        "kind": "ollama",
+        "params": "7.6B",
+        "quant": "Q4_K_M",
+        "diskBytes": 4683087332,
+        "startupSeconds": null,
+        "context": 32768,
+        "oneShot": {
+          "pass": 4,
+          "total": 4,
+          "avgSeconds": 73.5
+        },
+        "ideLoop": {
+          "pass": 4,
+          "total": 4,
+          "avgSeconds": 70.8
+        },
+        "repairsUsed": 0,
+        "perTask": {
+          "factorial": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "slugify": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "fizzbuzz": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "median_bug": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          }
+        }
+      },
+      "llama3:latest": {
+        "kind": "ollama",
+        "params": "8.0B",
+        "quant": "Q4_0",
+        "diskBytes": 4661224676,
+        "startupSeconds": null,
+        "context": 8192,
+        "oneShot": {
+          "pass": 0,
+          "total": 4,
+          "avgSeconds": 0
+        },
+        "ideLoop": {
+          "pass": 0,
+          "total": 4,
+          "avgSeconds": 0.1
+        },
+        "repairsUsed": 8,
+        "perTask": {
+          "factorial": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-yrdkx6\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-yrdkx6\\\\factorial.py'"
+          },
+          "slugify": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-0hAjj6\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-0hAjj6\\\\slugify.py'"
+          },
+          "fizzbuzz": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "node:internal/modules/esm/resolve:272\r\n    throw new ERR_MODULE_NOT_FOUND(\r\n          ^\r\n\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-LW8c0J\\fizzbuzz.mjs' imported from C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-LW8c0J\\check_fizzbuzz.mjs\r\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\r\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\r\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\r\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\r\n    at #r"
+          },
+          "median_bug": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-wn4MMU\\check_median_bug.py\", line 6, in <module>\r\n    assert m.median([1, 2, 3, 4]) == 2.5, 'median([1,2,3,4]) = %r, kutilgan 2.5' % (m.median([1, 2, 3, 4]),)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: median([1,2,3,4]) = 3, kutilgan 2.5"
+          }
+        }
+      },
+      "qwen2.5:0.5b": {
+        "kind": "ollama",
+        "params": "494.03M",
+        "quant": "Q4_K_M",
+        "diskBytes": 397821319,
+        "startupSeconds": null,
+        "context": 32768,
+        "oneShot": {
+          "pass": 0,
+          "total": 4,
+          "avgSeconds": 3.4
+        },
+        "ideLoop": {
+          "pass": 0,
+          "total": 4,
+          "avgSeconds": 26.6
+        },
+        "repairsUsed": 8,
+        "perTask": {
+          "factorial": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-rqefYL\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-rqefYL\\\\factorial.py'"
+          },
+          "slugify": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-7eZCLH\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-7eZCLH\\\\slugify.py'"
+          },
+          "fizzbuzz": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-oJVdm6/check_fizzbuzz.mjs:3\r\nif (got !== '1 2 Fizz 4 Buzz') throw new Error('fizzbuzz(5) = ' + JSON.stringify(got));\r\n                                     ^\r\n\r\nError: fizzbuzz(5) = \"5\"\r\n    at file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-oJVdm6/check_fizzbuzz.mjs:3:38\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.20.0"
+          },
+          "median_bug": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-AUR6NG\\check_median_bug.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1133, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1063, in source_to_code\r\n  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-AUR6NG\\median.py\", line 1\r\n    def check_"
+          }
+        }
+      },
+      "local:model-qwen3-4b-2507.gguf": {
+        "kind": "bundled",
+        "params": "4B",
+        "quant": null,
+        "diskBytes": 2497281120,
+        "startupSeconds": 0,
+        "context": 8192,
+        "oneShot": {
+          "pass": 2,
+          "total": 4,
+          "avgSeconds": 80.3
+        },
+        "ideLoop": {
+          "pass": 3,
+          "total": 4,
+          "avgSeconds": 132.7
+        },
+        "repairsUsed": 2,
+        "perTask": {
+          "factorial": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "slugify": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-xAn5HP\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-xAn5HP\\\\slugify.py'"
+          },
+          "fizzbuzz": {
+            "oneShot": false,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "median_bug": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          }
+        }
+      },
+      "local:model-1.7b.gguf": {
+        "kind": "bundled",
+        "params": "1.7B",
+        "quant": null,
+        "diskBytes": 1107409472,
+        "startupSeconds": 5,
+        "context": 8192,
+        "oneShot": {
+          "pass": 2,
+          "total": 4,
+          "avgSeconds": 41.6
+        },
+        "ideLoop": {
+          "pass": 3,
+          "total": 4,
+          "avgSeconds": 91.4
+        },
+        "repairsUsed": 3,
+        "perTask": {
+          "factorial": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "slugify": {
+            "oneShot": true,
+            "ideLoop": true,
+            "checkOutput": null
+          },
+          "fizzbuzz": {
+            "oneShot": false,
+            "ideLoop": false,
+            "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-tsrVEq/check_fizzbuzz.mjs:1\r\nimport { fizzbuzz } from './fizzbuzz.mjs';\r\n         ^^^^^^^^\r\nSyntaxError: The requested module './fizzbuzz.mjs' does not provide an export named 'fizzbuzz'\r\n    at #asyncInstantiate (node:internal/modules/esm/module_job:455:21)\r\n    at async ModuleJob.run (node:internal/modules/esm/module_job:553:5)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.20.0"
+          },
+          "median_bug": {
+            "oneShot": false,
+            "ideLoop": true,
+            "checkOutput": null
+          }
+        }
+      }
+    },
+    "acceptance": "PASS = tekshiruv skripti nol kod bilan tugadi (fayl mazmuni emas, HAQIQIY ishga tushirish natijasi).",
+    "wallSeconds": 2722.4
+  },
+  "rows": [
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 27,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    if n == 0:\n        return 1\n    result = 1\n    for i in range(1, n + 1):\n        result *= i\n    return result"
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 25.4,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        result *= i\n    return result\n"
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 38.9,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "slugify.py"
+      ],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-EsyEVq\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1133, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1063, in source_to_code\r\n  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-EsyEVq\\slugify.py\", line 1\r\n    import re\\ndef slu",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "import re\\ndef slugify(text):\\n    return re.sub(r'[^a-zA-Z0-9]+', '-', text).strip('-').lower()\\n"
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 96.6,
+      "rounds": 2,
+      "errors": [],
+      "toolCalls": [
+        "write_file",
+        "write_file"
+      ],
+      "wroteFiles": [
+        "slugify.py",
+        "slugify.py"
+      ],
+      "checkOutput": "salom-dunyo-2026\r\nhello-world-test\r\nai\r\nOK",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "import re\ndef slugify(text):\n    text = text.lower()\n    text = re.sub(r'[^a-z0-9]+', '-', text)\n    text = text.strip('-')\n    return text\n\n# Example usage\nprint(slugify(\"Salom Dunyo! 2026\"))  # Output: \"salom-dunyo-2026\"\nprint(slugify(\"Hello,  World--Test\"))  # Output: \"hello-world-test\"\nprint(slugify(\"  AI  \"))  # Output: \"ai\""
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 25.8,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "node:internal/modules/esm/resolve:272\r\n    throw new ERR_MODULE_NOT_FOUND(\r\n          ^\r\n\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-GYk7ZE\\fizzbuzz.mjs' imported from C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-GYk7ZE\\check_fizzbuzz.mjs\r\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\r\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\r\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\r\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\r\n    at #r",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 88.2,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) {\n  return Array.from({ length: n }, (_, i) => {\n    const num = i + 1;\n    if (num % 15 === 0) return 'FizzBuzz';\n    if (num % 3 === 0) return 'Fizz';\n    if (num % 5 === 0) return 'Buzz';\n    return num;\n  }).join(' ');\n}\n"
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 56.2,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file",
+        "run_command",
+        "write_file",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "median.py",
+        "check_median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "__pycache__",
+        "check_median.py",
+        "median.py"
+      ],
+      "artifact": "def median(numbers):\n    numbers.sort()\n    n = len(numbers)\n    if n % 2 == 1:\n        return numbers[n // 2]\n    else:\n        return (numbers[n // 2 - 1] + numbers[n // 2]) / 2\n"
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "write_file",
+        "run_command",
+        "write_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "median.py",
+        "check_median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "__pycache__",
+        "check_median.py",
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    sorted_values = sorted(values)\n    n = len(sorted_values)\n    if n % 2 == 0:\n        mid1 = sorted_values[n // 2 - 1]\n        mid2 = sorted_values[n // 2]\n        return (mid1 + mid2) / 2\n    else:\n        return sorted_values[n // 2]"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 53.7,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    acc = 1\n    for i in range(1, n + 1):\n        acc *= i\n    return acc\n"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 53,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    acc = 1\n    for i in range(1, n + 1):\n        acc *= i\n    return acc\n"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "slugify.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "def slugify(text):\n    import re\n    return re.sub(r'[^\\w]+', '-', text.lower()).strip('-')"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 84.9,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "slugify.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "def slugify(text):\n    import re\n    return re.sub(r'[^\\w]+', '-', text.lower()).strip('-')\n"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 60.4,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) {\n  return Array.from({ length: n }, (_, i) => i + 1).map(i => (i % 3 === 0 && i % 5 === 0 ? 'FizzBuzz' : i % 3 === 0 ? 'Fizz' : i % 5 === 0 ? 'Buzz' : i.toString())).join(' ');\n}"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 55.4,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) {\n  return Array.from({ length: n }, (_, i) => i + 1).map(i => (i % 15 === 0 ? 'FizzBuzz' : i % 5 === 0 ? 'Buzz' : i % 3 === 0 ? 'Fizz' : i.toString())).join(' ');\n}"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "run_command",
+        "web_search",
+        "write_file",
+        "run_command",
+        "write_file",
+        "run_command",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "median.py",
+        "median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(lst):\n    lst.sort()\n    n = len(lst)\n    if n % 2 == 0:\n        return (lst[n//2 - 1] + lst[n//2]) / 2\n    else:\n        return lst[n//2]"
+    },
+    {
+      "model": "qwen2.5:latest",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "run_command",
+        "write_file",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "run_command",
+        "list_dir"
+      ],
+      "wroteFiles": [
+        "median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    n = len(values)\n    values.sort()\n    if n % 2 == 1:\n        return values[n // 2]\n    else:\n        return (values[n // 2 - 1] + values[n // 2]) / 2"
+    },
+    {
+      "model": "llama3:latest",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-A3RB8S\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-A3RB8S\\\\factorial.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-yrdkx6\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-yrdkx6\\\\factorial.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-ZSCFoI\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-ZSCFoI\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-0hAjj6\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-0hAjj6\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "node:internal/modules/esm/resolve:272\r\n    throw new ERR_MODULE_NOT_FOUND(\r\n          ^\r\n\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-4wx477\\fizzbuzz.mjs' imported from C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-4wx477\\check_fizzbuzz.mjs\r\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\r\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\r\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\r\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\r\n    at #r",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 0.1,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "node:internal/modules/esm/resolve:272\r\n    throw new ERR_MODULE_NOT_FOUND(\r\n          ^\r\n\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-LW8c0J\\fizzbuzz.mjs' imported from C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-LW8c0J\\check_fizzbuzz.mjs\r\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\r\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\r\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\r\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\r\n    at #r",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "llama3:latest",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 0,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-UUAHp5\\check_median_bug.py\", line 6, in <module>\r\n    assert m.median([1, 2, 3, 4]) == 2.5, 'median([1,2,3,4]) = %r, kutilgan 2.5' % (m.median([1, 2, 3, 4]),)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: median([1,2,3,4]) = 3, kutilgan 2.5",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    mid = n // 2\n    return s[mid]\n"
+    },
+    {
+      "model": "llama3:latest",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 0.1,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools",
+        "Barcha provayderlar ishlamadi:\nBench lokal · llama3:latest: HTTP 400: registry.ollama.ai/library/llama3:latest does not support tools"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-wn4MMU\\check_median_bug.py\", line 6, in <module>\r\n    assert m.median([1, 2, 3, 4]) == 2.5, 'median([1,2,3,4]) = %r, kutilgan 2.5' % (m.median([1, 2, 3, 4]),)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: median([1,2,3,4]) = 3, kutilgan 2.5",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    mid = n // 2\n    return s[mid]\n"
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 3,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · qwen2.5:0.5b: model bo‘sh javob qaytardi"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-UsrFKH\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-UsrFKH\\\\factorial.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 22.5,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · qwen2.5:0.5b: model bo‘sh javob qaytardi"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-factorial-rqefYL\\check_factorial.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-factorial-rqefYL\\\\factorial.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 2.9,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · qwen2.5:0.5b: model bo‘sh javob qaytardi"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-VS2Ere\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-VS2Ere\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 43.8,
+      "rounds": 3,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · qwen2.5:0.5b: model bo‘sh javob qaytardi"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-7eZCLH\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-7eZCLH\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 4.1,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-GNdU8M/check_fizzbuzz.mjs:1\r\nimport { fizzbuzz } from './fizzbuzz.mjs';\r\n         ^^^^^^^^\r\nSyntaxError: The requested module './fizzbuzz.mjs' does not provide an export named 'fizzbuzz'\r\n    at #asyncInstantiate (node:internal/modules/esm/module_job:455:21)\r\n    at async ModuleJob.run (node:internal/modules/esm/module_job:553:5)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.20.0",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "function fizzbuzz(n) {  return n.join(' ')}"
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 20.2,
+      "rounds": 3,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-oJVdm6/check_fizzbuzz.mjs:3\r\nif (got !== '1 2 Fizz 4 Buzz') throw new Error('fizzbuzz(5) = ' + JSON.stringify(got));\r\n                                     ^\r\n\r\nError: fizzbuzz(5) = \"5\"\r\n    at file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-oJVdm6/check_fizzbuzz.mjs:3:38\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.20.0",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) { return n.toString().split(' ').join(' ')}"
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 3.5,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · qwen2.5:0.5b: model bo‘sh javob qaytardi"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-V8ykac\\check_median_bug.py\", line 6, in <module>\r\n    assert m.median([1, 2, 3, 4]) == 2.5, 'median([1,2,3,4]) = %r, kutilgan 2.5' % (m.median([1, 2, 3, 4]),)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: median([1,2,3,4]) = 3, kutilgan 2.5",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    mid = n // 2\n    return s[mid]\n"
+    },
+    {
+      "model": "qwen2.5:0.5b",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 20.1,
+      "rounds": 3,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "median.py"
+      ],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-AUR6NG\\check_median_bug.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1133, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1063, in source_to_code\r\n  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-AUR6NG\\median.py\", line 1\r\n    def check_",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def check_median(numbers): return median(numbers) def median(numbers): return sum(numbers) / len(numbers) if len(numbers) % 2 == 0: return median(numbers) else: return median(numbers[0: len(numbers) // 2])"
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 83.1,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        result *= i\n    return result"
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 80.5,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        result *= i\n    return result"
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-eN1nit\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-eN1nit\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 270.1,
+      "rounds": 3,
+      "errors": [
+        "task timeout 90000ms",
+        "task timeout 90000ms",
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-slugify-xAn5HP\\check_slugify.py\", line 4, in <module>\r\n    spec.loader.exec_module(m)\r\n  File \"<frozen importlib._bootstrap_external>\", line 995, in exec_module\r\n  File \"<frozen importlib._bootstrap_external>\", line 1132, in get_code\r\n  File \"<frozen importlib._bootstrap_external>\", line 1190, in get_data\r\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\behru\\\\AppData\\\\Local\\\\Temp\\\\yang-idebench-slugify-xAn5HP\\\\slugify.py'",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 58.1,
+      "rounds": 1,
+      "errors": [
+        "Barcha provayderlar ishlamadi:\nBench lokal · local:model-qwen3-4b-2507.gguf: terminated"
+      ],
+      "toolCalls": [],
+      "wroteFiles": [],
+      "checkOutput": "node:internal/modules/esm/resolve:272\r\n    throw new ERR_MODULE_NOT_FOUND(\r\n          ^\r\n\r\nError [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-z8cn4N\\fizzbuzz.mjs' imported from C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-fizzbuzz-z8cn4N\\check_fizzbuzz.mjs\r\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\r\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\r\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\r\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\r\n    at #r",
+      "workspaceFiles": [],
+      "artifact": null
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) {\n  let result = [];\n  for (let i = 1; i <= n; i++) {\n    if (i % 3 === 0 && i % 5 === 0) {\n      result.push(\"FizzBuzz\");\n    } else if (i % 3 === 0) {\n      result.push(\"Fizz\");\n    } else if (i % 5 === 0) {\n      result.push(\"Buzz\");\n    } else {\n      result.push(i.toString());\n    }\n  }\n  return result.join(' ');\n}"
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "list_dir",
+        "read_file",
+        "write_file",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    if n % 2 == 1:\n        return s[n // 2]\n    else:\n        return (s[n // 2 - 1] + s[n // 2]) / 2\n"
+    },
+    {
+      "model": "local:model-qwen3-4b-2507.gguf",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 90,
+      "rounds": 1,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "list_dir",
+        "read_file",
+        "write_file",
+        "run_command",
+        "list_dir"
+      ],
+      "wroteFiles": [
+        "median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    if n % 2 == 1:\n        return s[n // 2]\n    else:\n        return (s[n // 2 - 1] + s[n // 2]) / 2\n"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "factorial",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 35.6,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    if n < 0:\n        raise ValueError(\"negative numbers not allowed\")\n    result = 1\n    for i in range(1, n+1):\n        result *= i\n    return result"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "factorial",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 35,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "factorial.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "factorial.py"
+      ],
+      "artifact": "def factorial(n):\n    if n < 0:\n        raise ValueError(\"negative numbers not allowed\")\n    result = 1\n    for i in range(1, n+1):\n        result *= i\n    return result"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "slugify",
+      "mode": "one-shot",
+      "ok": true,
+      "seconds": 47.6,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "slugify.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "import re\n\ndef slugify(text):\n    text = text.lower()\n    text = re.sub(r'\\W+', '-', text)\n    text = text.strip('-')\n    return text"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "slugify",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 52.2,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file",
+        "run_command"
+      ],
+      "wroteFiles": [
+        "slugify.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "slugify.py"
+      ],
+      "artifact": "import re\n\ndef slugify(text):\n    text = text.lower()\n    text = re.sub(r'\\W+', '-', text)\n    text = text.strip('-')\n    return text"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "fizzbuzz",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 47.4,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "write_file"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-XaqELR/fizzbuzz.mjs:8\r\n      str = 'Fizz';\r\n          ^\r\n\r\nTypeError: Assignment to constant variable.\r\n    at fizzbuzz (file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-XaqELR/fizzbuzz.mjs:8:11)\r\n    at file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-XaqELR/check_fizzbuzz.mjs:2:13\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "export function fizzbuzz(n) {\n  const result = [];\n  for (let i = 1; i <= n; i++) {\n    const str = i;\n    if (i % 3 === 0 && i % 5 === 0) {\n      str = 'FizzBuzz';\n    } else if (i % 3 === 0) {\n      str = 'Fizz';\n    } else if (i % 5 === 0) {\n      str = 'Buzz';\n    }\n    result.push(str);\n  }\n  return result.join(' ');\n}\n"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "fizzbuzz",
+      "mode": "ide-loop",
+      "ok": false,
+      "seconds": 155.9,
+      "rounds": 3,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "write_file",
+        "write_file",
+        "web_search",
+        "fetch_url"
+      ],
+      "wroteFiles": [
+        "fizzbuzz.mjs",
+        "fizzbuzz.mjs"
+      ],
+      "checkOutput": "file:///C:/Users/behru/AppData/Local/Temp/yang-idebench-fizzbuzz-tsrVEq/check_fizzbuzz.mjs:1\r\nimport { fizzbuzz } from './fizzbuzz.mjs';\r\n         ^^^^^^^^\r\nSyntaxError: The requested module './fizzbuzz.mjs' does not provide an export named 'fizzbuzz'\r\n    at #asyncInstantiate (node:internal/modules/esm/module_job:455:21)\r\n    at async ModuleJob.run (node:internal/modules/esm/module_job:553:5)\r\n    at async node:internal/modules/esm/loader:647:26\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\r\n\r\nNode.js v24.20.0",
+      "workspaceFiles": [
+        "fizzbuzz.mjs"
+      ],
+      "artifact": "const fizz = 'Fizz';\nconst buzz = 'Buzz';\n\nfunction fizzbuzz(n) {\n  if (n % 3 === 0 && n % 5 === 0) {\n    return fizz + buzz;\n  } else if (n % 3 === 0) {\n    return fizz;\n  } else if (n % 5 === 0) {\n    return buzz;\n  } else {\n    return n;\n  }\n}\n\n// Example usage\nconsole.log(fizzbuzz(15)); // FizzBuzz\nconsole.log(fizzbuzz(2)); // 2\nconsole.log(fizzbuzz(3)); // Fizz\nconsole.log(fizzbuzz(5)); // Buzz\nconsole.log(fizzbuzz(7)); // 7"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "median_bug",
+      "mode": "one-shot",
+      "ok": false,
+      "seconds": 35.9,
+      "rounds": 1,
+      "errors": [],
+      "toolCalls": [
+        "list_dir",
+        "read_file",
+        "run_command",
+        "write_file"
+      ],
+      "wroteFiles": [
+        "median.py"
+      ],
+      "checkOutput": "Traceback (most recent call last):\r\n  File \"C:\\Users\\behru\\AppData\\Local\\Temp\\yang-idebench-median_bug-fd91lV\\check_median_bug.py\", line 6, in <module>\r\n    assert m.median([1, 2, 3, 4]) == 2.5, 'median([1,2,3,4]) = %r, kutilgan 2.5' % (m.median([1, 2, 3, 4]),)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: median([1,2,3,4]) = 3, kutilgan 2.5",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(values):\n    s = sorted(values)\n    n = len(s)\n    mid = n // 2\n    return s[mid]"
+    },
+    {
+      "model": "local:model-1.7b.gguf",
+      "task": "median_bug",
+      "mode": "ide-loop",
+      "ok": true,
+      "seconds": 122.5,
+      "rounds": 2,
+      "errors": [
+        "task timeout 90000ms"
+      ],
+      "toolCalls": [
+        "list_dir",
+        "read_file",
+        "run_command",
+        "write_file",
+        "run_command",
+        "run_command",
+        "write_file"
+      ],
+      "wroteFiles": [
+        "median.py",
+        "median.py"
+      ],
+      "checkOutput": "OK",
+      "workspaceFiles": [
+        "median.py"
+      ],
+      "artifact": "def median(lst):\n    lst.sort()\n    n = len(lst)\n    if n % 2 == 1:\n        return lst[n // 2]\n    else:\n        return (lst[n // 2 - 1] + lst[n // 2]) / 2"
+    }
+  ]
+}
