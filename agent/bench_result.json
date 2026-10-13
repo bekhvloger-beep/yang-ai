@@ -1,0 +1,26 @@
+[
+  {
+    "level": "L1 — oddiy",
+    "ok": true,
+    "dt": 2.195,
+    "steps": 1,
+    "tokens": 3724,
+    "detail": "15 ta element"
+  },
+  {
+    "level": "L2 — o‘rta (multi-fayl loyiha)",
+    "ok": true,
+    "dt": 81.007,
+    "steps": 5,
+    "tokens": 14005,
+    "detail": "TEST_PASS "
+  },
+  {
+    "level": "L3 — murakkab (algoritm + stress)",
+    "ok": false,
+    "dt": 136.24,
+    "steps": 4,
+    "tokens": 18682,
+    "detail": "5/12 PASS"
+  }
+]

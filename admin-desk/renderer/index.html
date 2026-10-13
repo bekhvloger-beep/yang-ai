@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" />
+  <title>YANG Admin Desk</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="logo">
+        <span class="logo-hex">⬡</span>
+        <span class="logo-word">YANG<span class="logo-ai"> Admin Desk</span></span>
+        <span class="logo-domain">aicomp.uz</span>
+      </div>
+      <nav id="nav">
+        <button class="nav-btn active" data-tab="inbox">📥 Savollar</button>
+        <button class="nav-btn" data-tab="content">📣 Reklama / E'lon</button>
+        <button class="nav-btn" data-tab="stats">📊 Statistika</button>
+        <button class="nav-btn" data-tab="setup">⚙ Sozlash</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="version" id="deskVersion">v1.1 · faqat admin uchun</div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <!-- Inbox -->
+      <section id="tab-inbox" class="tab active">
+        <div class="tab-head">
+          <h2>📥 Foydalanuvchi savollari</h2>
+          <div class="row">
+            <button id="pollBtn" class="btn btn-primary">🔄 Yangilash</button>
+            <span id="pollStatus" class="dim"></span>
+          </div>
+        </div>
+        <div id="inboxList" class="inbox-list"><div class="dim empty-hint">«Yangilash»ni bosing — Telegram bot xabarlari shu yerda chiqadi.</div></div>
+
+        <div id="answerBox" class="answer-box hidden">
+          <h3 id="answerTo">Javob:</h3>
+          <textarea id="answerText" rows="4" placeholder="Javobingizni yozing — foydalanuvchi ilova ichida ko'radi (va Telegram bildirishnomasi oladi)"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button id="answerSendBtn" class="btn btn-primary">📩 Javobni yuborish</button>
+            <button id="answerCancelBtn" class="btn btn-ghost">Bekor</button>
+            <span id="answerStatus" class="dim"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content / ads -->
+      <section id="tab-content" class="tab">
+        <div class="tab-head">
+          <h2>📣 Reklama, e'lon va sozlamalar</h2>
+          <div class="row">
+            <button id="pullCfgBtn" class="btn btn-ghost">⤓ GitHub'dan olish</button>
+            <button id="pushCfgBtn" class="btn btn-primary">⬆ Nashr qilish</button>
+          </div>
+        </div>
+        <p class="dim">Bu bo'lim <b>app-config.json</b> (hamma ilova 30 daqiqada o'qiydigan fayl) ni boshqaradi. «Nashr qilish» — GitHub'ga yuklaydi.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>📢 Reklama banneri (o'ng pastki burchak)</h3>
+            <label class="chk"><input type="checkbox" id="adEnabled" /> Yoqish</label>
+            <label class="field"><span>Sarlavha</span><input id="adTitle" placeholder="Sizning reklamaniz" /></label>
+            <label class="field"><span>Matn</span><input id="adBody" placeholder="Qisqa izoh" /></label>
+            <label class="field"><span>Havola (https://…)</span><input id="adLink" placeholder="https://aicomp.uz" /></label>
+            <label class="field"><span>Rasm — fayldan yuklash (GitHub'ga joylanadi)</span>
+              <div class="row">
+                <input type="file" id="adImageFile" accept="image/png,image/jpeg,image/webp" style="flex:1" />
+                <button id="adImageUploadBtn" class="btn btn-ghost small">⤓ Yuklash</button>
+              </div>
+            </label>
+            <label class="field"><span>Rasm URL (yuklasangiz avtomatik to'ladi)</span><input id="adImage" placeholder="https://…/banner.png" /></label>
+          </div>
+          <div class="card">
+            <h3>🔔 Bir martalik e'lon (yuqorida chiqadi)</h3>
+            <label class="chk"><input type="checkbox" id="noticeEnabled" /> Yoqish</label>
+            <label class="field"><span>E'lon matni</span><textarea id="noticeText" rows="3"></textarea></label>
+            <label class="field"><span>ID (matn o'zgarsa yangi ID yozing, masalan: news-2)</span><input id="noticeId" placeholder="news-1" /></label>
+            <label class="field"><span>Havola (ixtiyoriy)</span><input id="noticeLink" placeholder="https://…" /></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🔒 Bloklangan foydalanuvchilar</h3>
+          <p class="dim">Inbox'dagi savoldan «⛔ Bloklash» orqali qo'shiladi. Bu yerda IDni qo'lda ham yozish/o'chirish mumkin.</p>
+          <div class="row">
+            <input id="blockInput" placeholder="yang_xxx (installatsiya ID)" style="flex:1" />
+            <button id="blockAddBtn" class="btn btn-danger">＋ Bloklash</button>
+          </div>
+          <div id="blockedList" class="blocked-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>🆕 Majburiy yangilash eslatmasi</h3>
+          <p class="dim">minVersion = eski versiyalarga «yangilang» banneri chiqadi.</p>
+          <div class="row">
+            <input id="minVerInput" placeholder="masalan: 3.7.1 (bo'sh = o'chiqli)" style="max-width:220px" />
+            <span class="dim">Download URL: GitHub Releases latest</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>💬 Onlayn yordam kanali</h3>
+          <p class="dim">Ilovalar savollarni shu kanal orqali yuboradi. Bot tokeni <b>ochiq repo'ga qo'yilmaydi</b> — base64 maydonida saqlanadi (yoki relay URL). Sozlash bo'limida bot token/chatId kiritiladi.</p>
+          <div class="row">
+            <button id="publishSupportBtn" class="btn btn-primary">💬 Onlayn yordamni yoqish / yangilash</button>
+            <input id="relayUrlInput" placeholder="yoki Google Apps Script relay URL (tavsiya, https)" style="flex:1" />
+            <button id="publishRelayBtn" class="btn btn-ghost">Relay orqali yoqish</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section id="tab-stats" class="tab">
+        <div class="tab-head">
+          <h2>📊 Statistika</h2>
+          <button id="statsBtn" class="btn btn-primary">🔄 Yangilash</button>
+        </div>
+        <div class="grid-3">
+          <div class="stat-card"><div class="stat-num" id="stInstalls">—</div><div class="stat-label">Faol o'rnatma (24soz ping)</div></div>
+          <div class="stat-card"><div class="stat-num" id="stQuestions">—</div><div class="stat-label">Kelgan savollar</div></div>
+          <div class="stat-card"><div class="stat-num" id="stUnanswered">—</div><div class="stat-label">Javobsiz savollar</div></div>
+        </div>
+        <div class="card">
+          <h3>Versiyalar bo'yicha</h3>
+          <div id="stVersions" class="dim">—</div>
+        </div>
+        <div class="card">
+          <h3>🚀 GitHub release holati</h3>
+          <div class="row">
+            <button id="releaseStatusBtn" class="btn btn-ghost">🔄 Tekshirish</button>
+            <code id="releaseStatus" class="dim">—</code>
+          </div>
+          <div id="releaseAssets" class="dim" style="margin-top:6px"></div>
+        </div>
+      </section>
+
+      <!-- Setup -->
+      <section id="tab-setup" class="tab">
+        <div class="tab-head"><h2>⚙ Sozlash (bir marta)</h2></div>
+        <div class="card">
+          <h3>🤖 Telegram bot</h3>
+          <p class="dim">@BotFather → /newbot → token. Keyin botga o'zingizdan xabar yozing va «Chat ID aniqlash»ni bosing.</p>
+          <label class="field"><span>Bot token</span><input id="botToken" type="password" placeholder="123456:ABC-..." /></label>
+          <label class="field"><span>Admin Chat ID</span><input id="adminChatId" placeholder="-100... yoki 12345..." /></label>
+          <div class="row">
+            <button id="discoverChatBtn" class="btn btn-ghost">🔍 Chat ID aniqlash</button>
+            <span id="discoverStatus" class="dim"></span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>🐙 GitHub</h3>
+          <p class="dim">app-config.json'ni yozish uchun PAT (repo scope). .env'dagi GH_TOKEN ishlatilishi mumkin.</p>
+          <label class="field"><span>GitHub token (classic, repo scope)</span><input id="ghToken" type="password" placeholder="ghp_..." /></label>
+          <div class="grid-3">
+            <label class="field"><span>Owner</span><input id="ghOwner" placeholder="bekhvloger-beep" /></label>
+            <label class="field"><span>Repo</span><input id="ghRepo" placeholder="yang-ai" /></label>
+            <label class="field"><span>Branch</span><input id="ghBranch" placeholder="main" /></label>
+          </div>
+        </div>
+        <button id="saveSetupBtn" class="btn btn-primary">💾 Saqlash</button>
+        <span id="setupStatus" class="dim"></span>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

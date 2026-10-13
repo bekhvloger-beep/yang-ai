@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-10-11T11:58:13.371Z",
+  "benchmark": "2 identical deterministic Python coding tasks covering arithmetic, conditionals, boolean logic, calendar/classification rules and loops; each passes only if a successful write_file targeted the requested file, that is the only workspace artifact, and a restricted-AST Python harness validates and executes every expected behavior case.",
+  "caseSelection": [
+    "twice",
+    "factorial"
+  ],
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpuCount": 6,
+    "totalSystemRamMb": 12214.7,
+    "gpuMemoryMeasured": false,
+    "ollamaServicePids": [
+      8184
+    ],
+    "notes": [
+      "Models were run sequentially and warmed before timed tasks.",
+      "Peak process-tree RSS and minimum available host RAM are sampled when Python psutil is installed; GPU VRAM is not measured.",
+      "Ollama service stays running; if its model was already loaded it is unloaded temporarily before the bundled model and is loaded again for its benchmark."
+    ],
+    "bundledStartupSeconds": 5.61,
+    "ollamaLoadedAfterBenchmark": {
+      "name": "qwen2.5-coder:7b",
+      "sizeBytes": 4740716952,
+      "vramBytes": 4740716952
+    }
+  },
+  "models": [
+    {
+      "model": "Qwen3-1.7B (bundled GGUF)",
+      "pass": 2,
+      "total": 2,
+      "passRate": 1,
+      "meanSeconds": 30.88,
+      "medianSeconds": 33.81,
+      "warmupSeconds": 0.4,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 33.81,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 67,
+            "peakProcessTreeRssMb": 2730.7,
+            "minSystemAvailableRamMb": 4245.2
+          },
+          "error": null
+        },
+        {
+          "case": "factorial",
+          "file": "factorial.py",
+          "pass": true,
+          "seconds": 27.94,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS factorial 4 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 55,
+            "peakProcessTreeRssMb": 3019.6,
+            "minSystemAvailableRamMb": 3916.8
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "pass": 1,
+      "total": 2,
+      "passRate": 0.5,
+      "meanSeconds": 35.7,
+      "medianSeconds": 47.85,
+      "warmupSeconds": 27.93,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 23.55,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 46,
+            "peakProcessTreeRssMb": 4987.8,
+            "minSystemAvailableRamMb": 2033.6
+          },
+          "error": null
+        },
+        {
+          "case": "factorial",
+          "file": "factorial.py",
+          "pass": false,
+          "seconds": 47.85,
+          "timedOut": false,
+          "toolCalls": 2,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": false,
+            "output": "expected one top-level function and no other statements"
+          },
+          "resources": {
+            "available": true,
+            "samples": 94,
+            "peakProcessTreeRssMb": 5111.9,
+            "minSystemAvailableRamMb": 1906.4
+          },
+          "error": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "2 deterministic, small Python tasks are still a synthetic sample, not a broad coding-quality estimate.",
+    "Warm inference latency is reported separately from each model warm-up.",
+    "Memory sampling does not measure dedicated GPU VRAM."
+  ]
+}

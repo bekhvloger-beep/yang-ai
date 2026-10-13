@@ -1,0 +1,38 @@
+{
+  "name": "yang-admin-desk",
+  "productName": "YANG Admin Desk",
+  "version": "1.1.0",
+  "description": "YANG AI admin boshqaruv paneli — savollar, javoblar, bloklash, reklama, statistika",
+  "type": "module",
+  "main": "main.js",
+  "author": "AICOMP.UZ",
+  "devDependencies": {
+    "electron": "34.0.0"
+  },
+  "build": {
+    "appId": "uz.aicomp.yang.admin",
+    "productName": "YANG Admin Desk",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.cjs",
+      "renderer/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "shortcutName": "YANG Admin Desk",
+      "uninstallDisplayName": "YANG Admin Desk (AICOMP.UZ)"
+    }
+  }
+}

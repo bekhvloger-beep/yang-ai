@@ -1,0 +1,105 @@
+{
+  "generatedAt": "2026-10-11T12:11:20.089Z",
+  "benchmark": "1 selected deterministic Python coding tasks (see caseSelection); each passes only if a successful write_file targeted the requested file, that is the only workspace artifact, and a restricted-AST Python harness validates and executes every expected behavior case.",
+  "caseSelection": [
+    "twice"
+  ],
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpuCount": 6,
+    "totalSystemRamMb": 12214.7,
+    "gpuMemoryMeasured": false,
+    "ollamaServicePids": [
+      8184
+    ],
+    "notes": [
+      "Models were run sequentially and warmed before timed tasks.",
+      "Peak process-tree RSS and minimum available host RAM are sampled when Python psutil is installed; GPU VRAM is not measured.",
+      "Ollama service stays running; if its model was already loaded it is unloaded temporarily before the bundled model and is loaded again for its benchmark."
+    ],
+    "bundledStartupSeconds": 4.57,
+    "ollamaLoadedAfterBenchmark": {
+      "name": "qwen2.5-coder:7b",
+      "sizeBytes": 4740716952,
+      "vramBytes": 4740716952
+    }
+  },
+  "models": [
+    {
+      "model": "Qwen3-1.7B (bundled GGUF)",
+      "pass": 1,
+      "total": 1,
+      "passRate": 1,
+      "meanSeconds": 24.05,
+      "medianSeconds": 24.05,
+      "warmupSeconds": 0.3,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 24.05,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 47,
+            "peakProcessTreeRssMb": 2730.9,
+            "minSystemAvailableRamMb": 4196.3
+          },
+          "error": null
+        }
+      ]
+    },
+    {
+      "model": "qwen2.5-coder:7b",
+      "pass": 1,
+      "total": 1,
+      "passRate": 1,
+      "meanSeconds": 24.81,
+      "medianSeconds": 24.81,
+      "warmupSeconds": 24.24,
+      "rows": [
+        {
+          "case": "twice",
+          "file": "twice.py",
+          "pass": true,
+          "seconds": 24.81,
+          "timedOut": false,
+          "toolCalls": 1,
+          "successfulWrites": 1,
+          "exactRequestedPathWritten": true,
+          "onlyExpectedFile": true,
+          "outputTokens": null,
+          "inputTokens": null,
+          "verification": {
+            "ok": true,
+            "output": "PASS twice 3 cases"
+          },
+          "resources": {
+            "available": true,
+            "samples": 49,
+            "peakProcessTreeRssMb": 4988,
+            "minSystemAvailableRamMb": 2019.9
+          },
+          "error": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "1 deterministic, small Python tasks are still a synthetic sample, not a broad coding-quality estimate.",
+    "Warm inference latency is reported separately from each model warm-up.",
+    "Memory sampling does not measure dedicated GPU VRAM."
+  ]
+}

@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.uv-cache/
+
+# IDEs
+.idea/
+.vscode/
+frontend/.vscode/
+
+# OS
+.DS_Store
+
+# Environment
+.env
+
+# Project Specific
+logs/
+_shots/
+node_modules/
+data/
+temp/
+WareHouse/
+
+# Build natijalari va og'ir binarlar — ular repo ichida emas, GitHub reliziga yuklanadi.
+# (Bu qatorlar bo'lmasa `git add .` 5 GB paketlarni commit qilib yuborishi mumkin.)
+dist/
+dist-ide/
+admin-desk/dist/
+translator/model/
+translator/runtime/
+translator/__pycache__/
+local-ai/*.gguf
+local-ai/lc/
+

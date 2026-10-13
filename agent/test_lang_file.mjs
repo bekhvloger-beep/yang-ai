@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { AgentEngine } from './engine.js';
+const config = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'yang-ai', 'config.json'), 'utf8'));
+config.disabledProviders = config.disabledProviders || ['deepseek', 'vercel', 'sambanova'];
+const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'lang-test-'));
+const eng = new AgentEngine({ config, workspace: ws, translateOutput: true, translateInput: true, maxSteps: 8 });
+eng.on('event', (e) => { if (e.type === 'notice') console.log('ℹ', e.text); if (e.type === 'tool') console.log('tool:', e.tool, e.args?.path || ''); });
+const res = await eng.run({ events: [], userText: 'loyiha.md faylini yarat — ichida «YANG AI haqida» sarlavha bilan 2-3 paragrafli o\'zbekcha tanishtiruv matni bo\'lsin' });
+console.log('--- FAYL MAZMUNI ---');
+console.log(fs.readFileSync(path.join(ws, 'loyiha.md'), 'utf8').slice(0, 500));
+console.log('--- JAVOB ---');
+console.log(String(res.content).slice(0, 200));
+process.exit(0);
