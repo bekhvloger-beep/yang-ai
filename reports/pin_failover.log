@@ -1,0 +1,2 @@
+SKIP: lokal server (8082) ishlayapti. Test sovuq holat talab qiladi — llama-server ni to‘xtatib, qayta urinib ko‘ring.
+EXIT=2

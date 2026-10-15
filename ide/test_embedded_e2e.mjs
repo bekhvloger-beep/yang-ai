@@ -44,10 +44,15 @@ const ELECTRON_BIN = useExe ? EXE : (await import('electron')).default;
 const UD = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-ide-e2e-'));
 const WS = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-ide-ws-'));
 const cfgPath = path.join(UD, 'config.json');
+// v5.5 ko‘p ildizli workspace: qo‘shimcha papka ilova ichida papka tanlash oynasi orqali
+// qo‘shiladi; oynani avtomatlashtirib bo‘lmagani uchun ro‘yxat sozlamaga oldindan yoziladi.
+const EXTRA = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-ide-extra-'));
+fs.writeFileSync(path.join(EXTRA, 'qoshimcha.js'), 'export const qiymat = 42;\n', 'utf8');
 
 fs.writeFileSync(cfgPath, JSON.stringify({
   provider: 'groq', model: '', keys: {}, autoApprove: true, pinMode: false,
-  // Tarjimon (NLLB/python) va lokal model sinov uchun shart emas — fon ishlarini o'chiramiz.
+  extraRoots: [EXTRA],
+  // Tarjimon (NLLB/python) va lokal model sinov uchun shart emas — fon ishlarini o‘chiramiz.
   translate: { enabled: false, url: 'http://127.0.0.1:8788', target: 'uzn_Latn' },
 }, null, 2), 'utf8');
 
@@ -362,6 +367,34 @@ try {
     `diskda=${(bigDisk / 1048576).toFixed(2)} MB · o‘qildi=${((bigRead && bigRead.text) || '').length} belgi (truncated=${bigRead && bigRead.truncated}) · `
     + `muharrirda=${bigInEditor} belgi · saqlangandan keyin=${(afterBig / 1048576).toFixed(2)} MB`);
 
+  // 13b. KO‘P ILDIZLI WORKSPACE (v5.5): qo‘shimcha papka yon panelda ko‘rinadi, daraxtdan
+  //      bosib ichidagi fayl ochiladi va saqlanadi. Bu IPC darajasidagi sinov emas — UI
+  //      HAQIQATAN ishlaydimi, o‘sha o‘lchanadi (chip → daraxt → muharrir → disk).
+  const extraName = path.basename(EXTRA);
+  const extraUi = await ide.ev(`(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    await wait(600);
+    const chips = [...document.querySelectorAll('#ideRoots .root-chip')].map((c) => c.textContent.trim());
+    const rootRow = [...document.querySelectorAll('#fileTree .tree-row')].find((r) => r.textContent.includes(${JSON.stringify(extraName)}));
+    if (!rootRow) return { chips, opened: false };
+    rootRow.click();
+    await wait(1200);
+    const fileRow = [...document.querySelectorAll('#fileTree .tree-row')].find((r) => r.textContent.includes('qoshimcha.js'));
+    if (!fileRow) return { chips, opened: false };
+    fileRow.click();
+    await wait(1000);
+    return { chips, opened: true, editor: document.getElementById('editorArea').value };
+  })()`);
+  const writtenExtra = 'export const qiymat = 43;\n';
+  const extraWrite = await ide.ev(`window.ide.writeFile(${JSON.stringify(path.join(EXTRA, 'qoshimcha.js'))}, ${JSON.stringify(writtenExtra)})`);
+  const extraOnDisk = fs.readFileSync(path.join(EXTRA, 'qoshimcha.js'), 'utf8');
+  check('13b. Ko‘p ildizli workspace: qo‘shimcha papka chip sifatida ko‘rinadi, daraxtdan ochiladi va saqlanadi',
+    Array.isArray(extraUi.chips) && extraUi.chips.some((c) => c.includes(extraName))
+    && !!extraUi.opened && /qiymat = 42/.test(String(extraUi.editor || ''))
+    && !!(extraWrite && !extraWrite.error) && extraOnDisk === writtenExtra,
+    `papkalar=[${(extraUi.chips || []).join(', ')}] · daraxtdan ochildi=${extraUi.opened}; muharrirda=${/qiymat = 42/.test(String(extraUi.editor || '')) ? 'fayl matni' : 'YO‘Q'}; `
+    + `saqlash=${extraWrite && extraWrite.error ? `xato: ${extraWrite.error}` : 'ishladi'} · diskda="${extraOnDisk.trim()}"`);
+
   // 14. IDE oynasi yopilganda asosiy ilova yashab qoladi.
   try { await ide.send('Target.closeTarget', { targetId: ide.target.id }); } catch {}
   await sleep(2000);
@@ -419,6 +452,7 @@ try {
   }
   if (!hadLlama) spawnSync('taskkill', ['/F', '/IM', 'llama-server.exe'], { stdio: 'ignore' });
   try { fs.rmSync(UD, { recursive: true, force: true }); } catch {}
+  try { fs.rmSync(EXTRA, { recursive: true, force: true }); } catch {}
   try { fs.rmSync(WS, { recursive: true, force: true }); } catch {}
 }
 

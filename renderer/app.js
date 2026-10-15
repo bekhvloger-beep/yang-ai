@@ -1553,6 +1553,10 @@ const ide = {
   termHistory: [],
   // v5.4: yon panelning HAQIQIY terminali (xterm + PTY). `mode` — 'pty' yoki 'pipe'.
   term: { mode: 'pipe', x: null, id: null, fit: null, ro: null, wired: false, opening: false, _rt: null },
+  // v5.5 ko'p ildizli workspace: daraxt holati (ochilgan papkalar + ularning keshi).
+  treeData: null,                 // asosiy papka daraxti + ruxsat etilgan ildizlar ro'yxati
+  expanded: new Set(),            // ochilgan papkalar (yo'l bo'yicha)
+  dirCache: new Map(),            // ochilgan papkalar ichi (qayta so'ramaslik uchun)
 };
 
 function ideInit() {
@@ -1560,6 +1564,7 @@ function ideInit() {
     panel: $('idePanel'), toggle: $('ideToggle'), close: $('ideClose'),
     tree: $('ideTree'), termOut: $('ideTermOut'), termIn: $('ideTermInput'), termRun: $('ideTermRun'),
     feed: $('ideFeed'), live: $('ideLive'),
+    roots: $('ideRoots'), rootAdd: $('ideRootAdd'),
     termHost: $('ideXtermHost'), termMode: $('ideTermMode'), termNote: $('ideTermNote'),
     fileModal: $('ideFileModal'), fileModalName: $('ideFileName'), fileModalContent: $('ideFileContent'), fileModalClose: $('ideFileClose'),
     fileEdit: $('ideFileEdit'), fileSave: $('ideFileSave'), fileExt: $('ideFileExt'), fileDirty: $('ideFileDirty'), fileEditArea: $('ideFileEditArea'),
@@ -1569,6 +1574,8 @@ function ideInit() {
   if (ide.els.termRun) ide.els.termRun.addEventListener('click', () => ideRunTerm());
   if (ide.els.termIn) ide.els.termIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ideRunTerm(); } });
   if (ide.els.termMode) ide.els.termMode.addEventListener('click', () => ideTermSwitch());
+  // v5.5 ko'p ildizli workspace: «+ papka» tugmasi.
+  if (ide.els.rootAdd) ide.els.rootAdd.addEventListener('click', () => ideRootsAdd());
   if (ide.els.fileModalClose) ide.els.fileModalClose.addEventListener('click', () => ideFileCloseModal());
   if (ide.els.fileEdit) ide.els.fileEdit.addEventListener('click', () => ideFileToggleEdit(true));
   if (ide.els.fileSave) ide.els.fileSave.addEventListener('click', () => ideFileSave());
@@ -1766,21 +1773,134 @@ function ideFeedLine(icon, text, { kind = '' } = {}) {
 
 function ideLiveSet(text) { if (ide.els.live) ide.els.live.textContent = text; }
 
+/* ---------- v5.5: ko'p ildizli workspace (qo'shimcha papkalar) ----------
+   Ish papkasi bitta bo'lishi shart emas: asosiy papkadan tashqari qo'shimcha
+   papkalar ham qo'shiladi (masalan umumiy kutubxona yoki yonidagi repo).
+   Qamoq O'ZGARMAYDI: har bir yo'l main jarayonda realpath bo'yicha ruxsat
+   etilgan ildizlar ichida ekani tekshiriladi — bu yerda faqat ko'rsatish bor. */
+function idePrimaryRoot() {
+  const roots = (ide.treeData && ide.treeData.roots) || [];
+  return roots.find((r) => r.primary) || roots[0] || null;
+}
+
+// Ko'rsatiladigan nom: asosiy papkada nisbiy yo'l, qo'shimcha papkada «papka/fayl».
+function ideDisplayPath(it) {
+  if (!it) return '';
+  const baseName = (p) => String(p || '').split(/[\\/]/).filter(Boolean).pop() || String(p || '');
+  if (it.external) return `${it.name || baseName(it.path)}/`;
+  const primary = idePrimaryRoot();
+  const inPrimary = !primary || !it.root || String(it.root).toLowerCase() === String(primary.path).toLowerCase();
+  if (inPrimary) return it.path;
+  const rel = it.rel != null && it.rel !== '' ? it.rel : String(it.path).slice(String(it.root).length).replace(/^[\\/]+/, '');
+  return `${baseName(it.root)}/${rel}`;
+}
+
+function ideRootsRender(roots) {
+  const host = ide.els.roots;
+  if (!host) return;
+  host.innerHTML = '';
+  host.classList.toggle('hidden', !roots || roots.length === 0);
+  for (const root of roots || []) {
+    const chip = document.createElement('span');
+    chip.className = 'ide-root-chip' + (root.primary ? ' primary' : '');
+    chip.title = root.path;
+    const name = document.createElement('span');
+    name.className = 'ide-root-name';
+    name.textContent = root.name || root.path;
+    chip.appendChild(name);
+    if (root.primary) {
+      const badge = document.createElement('span');
+      badge.className = 'ide-root-badge';
+      badge.textContent = 'asosiy';
+      chip.appendChild(badge);
+    } else {
+      const x = document.createElement('button');
+      x.className = 'ide-root-x';
+      x.title = 'Ro‘yxatdan olib tashlash (papka diskdan o‘chirilmaydi)';
+      x.textContent = '✕';
+      x.addEventListener('click', (e) => { e.stopPropagation(); ideRootsRemove(root.path); });
+      chip.appendChild(x);
+    }
+    host.appendChild(chip);
+  }
+}
+
+async function ideRootsAdd() {
+  const r = await api.ideRootsAdd();
+  if (r && r.error) { ideFeedLine('✖', `papka qo‘shilmadi: ${r.error}`, { kind: 'bad' }); return; }
+  if (r && r.canceled) return;
+  const extras = ((r && r.roots) || []).filter((x) => !x.primary).map((x) => x.name);
+  ideFeedLine('', `qo‘shimcha papkalar: ${extras.length ? extras.join(', ') : 'yo‘q'}`);
+  ide.expanded.clear();
+  ide.dirCache.clear();
+  await ideRefreshTree();
+}
+
+async function ideRootsRemove(rootPath) {
+  const r = await api.ideRootsRemove(rootPath);
+  if (r && r.error) { ideFeedLine('✖', `olib tashlanmadi: ${r.error}`, { kind: 'bad' }); return; }
+  const baseName = String(rootPath || '').split(/[\\/]/).filter(Boolean).pop();
+  ideFeedLine('', `papka ro‘yxatdan olib tashlandi: ${baseName}`);
+  // Faqat o'sha papkaga tegishli ochilgan yo'llarni unutamiz (asosiy papka tegilmaydi).
+  for (const p of [...ide.expanded]) if (String(p).toLowerCase().startsWith(String(rootPath).toLowerCase())) ide.expanded.delete(p);
+  ide.dirCache.clear();
+  await ideRefreshTree();
+}
+
 async function ideRefreshTree() {
   if (!ide.els.tree) return;
   const r = await api.ideListTree('.', 2);
-  ide.els.tree.innerHTML = '';
-  if (r.error) { ide.els.tree.innerHTML = `<div class="dim">${r.error}</div>`; return; }
-  for (const it of (r.entries || [])) {
-    const row = document.createElement('div');
-    row.className = 'ide-tree-row';
-    row.textContent = it.path;
-    row.style.paddingLeft = (String(it.path).split('/').length - 1) * 12 + 6 + 'px';
-    if (!it.dir) {
-      row.addEventListener('click', () => ideOpenFile(it.path, it.size));
-    }
-    ide.els.tree.appendChild(row);
+  if (r.error) {
+    ide.treeData = null;
+    ide.els.tree.innerHTML = `<div class="dim">${r.error}</div>`;
+    ideRootsRender([]);
+    return;
   }
+  ide.treeData = r;
+  // Ochiq papkalar ichini yangilaymiz (fayl yaratilgan/o'chirilgan bo'lishi mumkin).
+  for (const p of [...ide.expanded]) {
+    const d = await api.ideListTree(p, 1);
+    if (!d.error) ide.dirCache.set(p, d.entries || []);
+    else { ide.expanded.delete(p); ide.dirCache.delete(p); }
+  }
+  ideRenderTree();
+  ideRootsRender(r.roots || []);
+}
+
+function ideRenderTree() {
+  const host = ide.els.tree;
+  if (!host) return;
+  host.innerHTML = '';
+  const entries = (ide.treeData && ide.treeData.entries) || [];
+  const draw = (list, depth) => {
+    for (const it of list) {
+      const open = !!it.dir && ide.expanded.has(it.path);
+      const row = document.createElement('div');
+      row.className = 'ide-tree-row' + (it.dir ? ' dir' : '') + (it.external ? ' ext' : '');
+      row.textContent = `${it.dir ? (open ? '▾ ' : '▸ ') : '· '}${ideDisplayPath(it)}`;
+      row.title = it.path;
+      row.style.paddingLeft = 6 + depth * 12 + 'px';
+      if (it.dir) {
+        row.addEventListener('click', async () => {
+          if (ide.expanded.has(it.path)) {
+            ide.expanded.delete(it.path);
+            ide.dirCache.delete(it.path);
+          } else {
+            ide.expanded.add(it.path);
+            const d = await api.ideListTree(it.path, 1);
+            ide.dirCache.set(it.path, d.error ? [] : (d.entries || []));
+            if (d.error) ideFeedLine('✖', `papka ochilmadi: ${d.error}`, { kind: 'bad' });
+          }
+          ideRenderTree();
+        });
+      } else {
+        row.addEventListener('click', () => ideOpenFile(it.path, it.size));
+      }
+      host.appendChild(row);
+      if (open && depth < 8) draw(ide.dirCache.get(it.path) || [], depth + 1);
+    }
+  };
+  draw(entries, 0);
 }
 
 async function ideOpenFile(relPath, size = 0) {
@@ -2609,6 +2729,393 @@ window.api.onUpdateEvent((u) => {
     if (b) b.remove();
   }
 });
+
+/* =====================================================================================
+   LOKAL AI MENEJERI (v5.6) — asosiy oynada ham IDE dagi bilan bir xil imkoniyat.
+   Maqsad: «qaysi modelni yuklay olaman, qanchasi kuchli, mening kompyuterimda ishlaydimi,
+   va bu modelni o‘lchab ko‘rsat» — savoliga bitta oynada javob. Mantiq ALLAQACHON tayyor
+   va IDE bilan UMUMIY: `ide/ide_models.js` (apparat profili, moslik bahosi, yuklab olish,
+   o‘lchash) + `agent/local_sd.js` (lokal rasm). Asosiy jarayon ularni allaqachon
+   ro‘yxatga olgan (`main.js` → `registerIdeIpc()` → `registerModelsIpc`), shuning uchun
+   bu yerda faqat ko‘rsatish va tugmalar bor.
+
+   O‘LCHANGAN CHEKLOV (nima uchun so‘rov): yadro progress hodisalarini (`yide:model-progress`,
+   `yide:model-bench`) IDE oynasiga yuboradi (`ide/ide_host.js` dagi `send`), asosiy
+   oynaga emas. Shuning uchun holat so‘rov bilan yangilanadi: `modelsCatalog()` har bir
+   modelda `progress` maydonini, `modelsBenchState()` esa o‘lchov holatini beradi.
+   ===================================================================================== */
+const modelsMgr = { open: false, tab: 'text', data: null, external: null, poll: null, bench: null, active: new Set() };
+const mEl = (id) => document.getElementById(id);
+const modelsStars = (n) => '★'.repeat(Math.max(0, Math.min(5, Number(n) || 0))) + '☆'.repeat(5 - Math.max(0, Math.min(5, Number(n) || 0)));
+function modelsFmtSize(bytes) {
+  const b = Number(bytes) || 0;
+  if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(1)} GB`;
+  if (b >= 1024 ** 2) return `${Math.round(b / 1048576)} MB`;
+  return `${Math.round(b / 1024)} KB`;
+}
+
+async function openModels(tab) {
+  if (tab) modelsMgr.tab = tab;
+  const modal = mEl('modelsModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modelsMgr.open = true;
+  updateImgEstimate();
+  syncModelTabs();
+  await refreshModels();
+}
+function closeModels() {
+  modelsMgr.open = false;
+  stopModelsPoll();
+  mEl('modelsModal')?.classList.add('hidden');
+}
+function syncModelTabs() {
+  const box = mEl('modelsTabs');
+  if (!box) return;
+  for (const b of box.querySelectorAll('button')) b.classList.toggle('active', b.dataset.tab === modelsMgr.tab);
+}
+
+async function refreshModels(hard = false) {
+  if (hard) modelsMgr.external = null;
+  const body = mEl('modelsBody');
+  if (body) body.innerHTML = '<div class="mdl-note dim">O‘qilmoqda…</div>';
+  const data = await api.modelsCatalog().catch((e) => ({ error: String(e && e.message || e) }));
+  if (!data || (data.error === undefined && !data.items) || !data.items) {
+    if (body) body.innerHTML = '<div class="mdl-note bad">Katalog o‘qilmadi — `local-ai/catalog.json` paketda bormi?</div>';
+    return;
+  }
+  modelsMgr.data = data;
+  if (modelsMgr.tab === 'installed') modelsMgr.external = await api.modelsExternal().catch(() => null);
+  renderModels();
+}
+
+function renderHwProfile() {
+  const hw = modelsMgr.data && modelsMgr.data.hardware;
+  const box = mEl('hwProfile');
+  if (!box) return;
+  if (!hw) { box.textContent = '—'; return; }
+  const item = (k, v, title = '') => `<span class="hw-item"${title ? ` title="${escapeHtml(title)}"` : ''}><span class="hw-key">${escapeHtml(k)}</span><span class="hw-val">${escapeHtml(v)}</span></span>`;
+  box.innerHTML = [
+    item('CPU', `${hw.cpu} · ${hw.cores} yadro`),
+    item('RAM', `${hw.ramGb} GB (bo‘sh ${hw.ramFreeGb} GB)`),
+    item('Video', `${hw.gpu || 'aniqlanmadi'} · ${hw.vramGb} GB VRAM`, hw.gpuNote || ''),
+    item('Disk', hw.diskFreeGb != null ? `${hw.diskFreeGb} GB bo‘sh` : '—'),
+    '<span class="hw-level">' +
+      `<span class="hw-item"><span class="hw-key">Matn darajasi</span><span class="hw-stars">${modelsStars(hw.textLevel)}</span></span>` +
+      `<span class="hw-item"><span class="hw-key">Rasm darajasi</span><span class="hw-stars">${modelsStars(hw.imageLevel)}</span></span>` +
+    '</span>',
+  ].join('');
+}
+
+function modelRow(it) {
+  const p = it.progress;
+  const active = p && (p.state === 'downloading' || p.state === 'extracting');
+  const cls = ['mdl-row', it.installed ? 'installed' : '', it.verdict.state === 'blocked' ? 'blocked' : ''].filter(Boolean).join(' ');
+  const badge = it.installed
+    ? '<span class="mdl-badge on">o‘rnatilgan</span>'
+    : `<span class="mdl-badge ${escapeHtml(it.verdict.state)}">${escapeHtml(it.verdict.fit)}</span>`;
+  const meta = [
+    `Hajm: ${modelsFmtSize(it.bytes)}`,
+    `min RAM: ${it.min.ramGb || 1} GB`,
+    it.min.vramGb ? `min VRAM: ${it.min.vramGb} GB` : '',
+    `kerak joy: ${it.min.diskGb || 1} GB`,
+    it.measured ? `o‘lchandi: ${it.measured.idePass}/${it.measured.tasks} · ${it.measured.avgSeconds}s · ball ${it.measured.score}` : 'o‘lchanmagan',
+    it.backend,
+  ].filter(Boolean).map((x) => `<span>${escapeHtml(x)}</span>`).join('');
+
+  let actions = '';
+  if (active) {
+    actions = `<div class="mdl-actions" data-bar="${escapeHtml(it.id)}">` +
+      '<div class="mdl-bar"><div class="mdl-bar-fill" style="width:' + (p.percent || 0) + '%"></div></div>' +
+      `<span class="mdl-pct">${p.state === 'extracting' ? 'arxiv ochilmoqda…' : `${p.percent || 0}%`}</span>` +
+      `<button class="btn btn-ghost" data-act="cancel" data-id="${escapeHtml(it.id)}">Bekor</button></div>`;
+  } else if (it.installed) {
+    actions = '<div class="mdl-actions">' +
+      `<button class="btn btn-ghost" data-act="reveal" data-id="${escapeHtml(it.id)}">Papkada ko‘rsatish</button>` +
+      // «O‘lchash»: reyting taxmin emas — model 4 HAQIQIY vazifani bajaradi va ball o‘lchanadi.
+      (it.kind === 'text'
+        ? `<button class="btn btn-primary" data-act="measure" data-id="${escapeHtml(it.id)}">${it.measured ? 'Qayta o‘lchash' : 'O‘lchash (4 vazifa)'}</button>`
+        : '') +
+      (it.readonly ? '<span class="dim">ilova ichida kelgan nusxa — o‘chirilmaydi</span>' : `<button class="btn btn-ghost" data-act="remove" data-id="${escapeHtml(it.id)}">O‘chirish</button>`) + '</div>';
+  } else if (it.kind === 'text') {
+    actions = '<div class="mdl-actions">' +
+      (it.bundled ? '<span class="dim">Ilova ichida bor — yuklab olish shart emas</span>' : `<button class="btn btn-primary" data-act="download" data-id="${escapeHtml(it.id)}">Yuklab olish</button>`) +
+      `<button class="btn btn-ghost" data-act="use" data-id="${escapeHtml(it.id)}">Ishlatish</button></div>`;
+  } else {
+    actions = '<div class="mdl-actions">' +
+      `<button class="btn btn-primary" data-act="download" data-id="${escapeHtml(it.id)}">O‘rnatish</button></div>`;
+  }
+
+  const reasons = (it.verdict.reasons || []).map((r) => `<span>• ${escapeHtml(r)}</span>`).join('');
+  return `<div class="${cls}">` +
+    `<div class="mdl-top"><span class="mdl-name">${escapeHtml(it.name)}</span>` +
+    `<span class="mdl-stars" title="Modelning o‘z kuchi (o‘lchovga asoslangan)">${modelsStars(it.stars)}</span>` +
+    `<span class="mdl-stars" title="SHU kompyuteringizda kutiladigan natija">→ ${modelsStars(it.machineStars)}</span>` +
+    badge + '</div>' +
+    `<div class="mdl-meta">${meta}</div>` +
+    `<div class="mdl-note">${escapeHtml(it.notes)}</div>` +
+    `<div class="mdl-reasons">${reasons}</div>` +
+    actions + '</div>';
+}
+
+function externalRow(name, bytes, sub, providerToUse, modelToUse) {
+  const use = providerToUse
+    ? `<button class="btn btn-primary" data-act="use" data-provider="${escapeHtml(providerToUse)}" data-model="${escapeHtml(modelToUse)}">Ishlatish</button>`
+    : '';
+  return '<div class="mdl-row installed">' +
+    `<div class="mdl-top"><span class="mdl-name">${escapeHtml(name)}</span><span class="mdl-badge on">bor</span></div>` +
+    `<div class="mdl-meta"><span>${escapeHtml(sub)}</span>${bytes ? `<span>${modelsFmtSize(bytes)}</span>` : ''}</div>` +
+    (use ? `<div class="mdl-actions">${use}</div>` : '') + '</div>';
+}
+
+function renderModels() {
+  if (!modelsMgr.data) return;
+  renderHwProfile();
+  const sd = modelsMgr.data.sd || {};
+  const sdEl = mEl('modelsSd');
+  if (sdEl) sdEl.textContent = sd.available ? `rasm dvigateli tayyor (${sd.backend})` : 'rasm dvigateli o‘rnatilmagan';
+  const body = mEl('modelsBody');
+  if (!body) return;
+  const imgBox = mEl('modelsImage');
+  if (imgBox) imgBox.classList.toggle('hidden', modelsMgr.tab !== 'image');
+  if (modelsMgr.tab === 'installed') return renderModelsInstalled(body);
+
+  const kind = modelsMgr.tab;
+  const items = (modelsMgr.data.items || []).filter((x) => x.kind === kind);
+  items.sort((a, b) => (Number(b.installed) - Number(a.installed)) || (b.machineStars - a.machineStars) || (a.bytes - b.bytes));
+  if (!items.length) {
+    body.innerHTML = '<div class="mdl-note dim">Bu turkumda model yo‘q — `local-ai/catalog.json` ni tekshiring.</div>';
+    return;
+  }
+  const head = modelsMgr.tab === 'image'
+    ? '<div class="mdl-note dim" style="margin-bottom:6px">Rasm modellari <b>stable-diffusion.cpp</b> orqali ishlaydi — avval «Rasm dvigateli» turkumidan dvigatelni o‘rnating, keyin modelni.</div>'
+    : modelsMgr.tab === 'voice'
+      ? '<div class="mdl-note dim" style="margin-bottom:6px">Ovoz modeli — mikrofon orqali o‘zbekcha buyruq uchun (rubaistt + whisper.cpp). Model yuklangandan keyin <code>whisper-cli.exe</code> ni <code>%APPDATA%/yang-ai/models/voice/</code> ga tashlang (yoki <code>YANG_WHISPER_EXE</code> bilan ko‘rsating).</div>'
+    : modelsMgr.tab === 'runtime'
+      ? '<div class="mdl-note dim" style="margin-bottom:6px">Bittasini o‘rnating. Vulkan — video karta orqali (tez), CPU — har qanday kompyuterda (sekin).</div>'
+      : '<div class="mdl-note dim" style="margin-bottom:6px">★ — modelning o‘z kuchi · → ★ — shu kompyuteringizda kutiladigan natija. «O‘lchash» 4 haqiqiy vazifa bilan ballni o‘lchaydi va reytingni yangilaydi.</div>';
+  body.innerHTML = head + items.map(modelRow).join('');
+}
+
+function renderModelsInstalled(body) {
+  const ex = modelsMgr.external;
+  if (!ex) { body.innerHTML = '<div class="mdl-note dim">Kompyuter skanerdan o‘tkazilmoqda…</div>'; return; }
+  const out = [];
+  out.push('<div class="mdl-note dim" style="margin-bottom:6px">Yuklab olish SHART EMAS: bu yerda kompyuteringizda allaqachon bor AI lar. «Ishlatish» ularni shu ilovaga ulaydi (yuklab olish yo‘q, kalit yo‘q).</div>');
+  if (ex.ollama && ex.ollama.installed) {
+    out.push(`<div class="mdl-note"><b>Ollama</b>${ex.ollama.exe ? ` — ${escapeHtml(ex.ollama.exe)}` : ''}</div>`);
+    if (!ex.ollama.models.length) out.push('<div class="mdl-reasons"><span>• server ishlamayapti — `ollama serve` ishga tushiring, keyin ↻ bosing</span></div>');
+    for (const m of ex.ollama.models) out.push(externalRow(m.name, m.bytes, `Ollama · ${m.params || '?'} · ${m.quant || ''}`, 'local', m.name));
+  } else {
+    out.push('<div class="mdl-note dim">Ollama topilmadi.</div>');
+  }
+  if (ex.lmstudio && ex.lmstudio.models.length) {
+    out.push('<div class="mdl-note"><b>LM Studio</b> (server ishlayapti)</div>');
+    for (const m of ex.lmstudio.models) out.push(externalRow(m.name, m.bytes, 'LM Studio', 'lmstudio', m.name));
+  }
+  if (ex.hf && ex.hf.length) {
+    out.push('<div class="mdl-note"><b>HuggingFace keshi</b> (Python/diffusers yuklagan modellar)</div>');
+    for (const h of ex.hf.slice(0, 14)) out.push(externalRow(h.repo, h.bytes, `kesh${h.approximate ? ' (taxminiy hajm)' : ''} · ${h.dir}`, '', ''));
+  }
+  if (ex.localDirs && ex.localDirs.length) {
+    out.push('<div class="mdl-note"><b>Ilovaning model papkalari</b></div>');
+    for (const l of ex.localDirs) out.push(externalRow(l.file, l.bytes, l.root, '', ''));
+  }
+  out.push(`<div class="mdl-note dim" style="margin-top:8px">Modellar papkasi: <code>${escapeHtml((modelsMgr.data.hardware && modelsMgr.data.hardware.modelsDir) || '')}</code></div>`);
+  body.innerHTML = out.join('');
+}
+
+/* Holat so‘rov bilan yangilanadi (hodisalar IDE oynasiga ketadi) — faqat modal ochiq
+   turganda va ish bo‘lganda: bekorga tarmoq/CPU sarflanmaydi. */
+function startModelsPoll() {
+  if (modelsMgr.poll) return;
+  modelsMgr.poll = setInterval(() => { tickModelsPoll().catch(() => {}); }, 900);
+}
+function stopModelsPoll() {
+  if (modelsMgr.poll) { clearInterval(modelsMgr.poll); modelsMgr.poll = null; }
+}
+async function tickModelsPoll() {
+  if (!modelsMgr.open) { stopModelsPoll(); return; }
+  const data = await api.modelsCatalog().catch(() => null);
+  if (data && data.items) {
+    const active = new Set();
+    for (const it of data.items) {
+      const p = it.progress;
+      if (p && (p.state === 'downloading' || p.state === 'extracting')) active.add(it.id);
+    }
+    const finished = [...modelsMgr.active].filter((id) => !active.has(id));
+    modelsMgr.data = data;
+    modelsMgr.active = active;
+    if (active.size || finished.length) renderModels();
+    for (const id of finished) {
+      const it = data.items.find((x) => x.id === id) || {};
+      if (it.installed) { activityLine('', `✅ Yuklab olindi va o‘rnatildi: ${it.name || id}`); }
+      else activityLine('', `⚠️ ${it.name || id}: yuklab olish tugamadi`);
+    }
+  }
+  const b = await api.modelsBenchState().catch(() => null);
+  if (b && b.running) {
+    modelsMgr.bench = b;
+    const note = mEl('modelsNote');
+    if (note) note.textContent = `⏱ O‘lchov: ${b.name} · ${b.percent || 0}% · ${b.seconds || 0}s — ${b.line || ''}`;
+  } else if (modelsMgr.bench && modelsMgr.bench.running) {
+    modelsMgr.bench = null;
+    const note = mEl('modelsNote');
+    if (note) note.textContent = '✅ O‘lchov tugadi — reyting o‘lchangan ball bilan yangilandi';
+    activityLine('', '📊 O‘lchov tugadi — kuch reytingi yangilandi');
+    await refreshModels();
+  }
+}
+
+async function onModelsClick(e) {
+  const btn = e.target && e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id || '';
+  if (act === 'download') {
+    btn.disabled = true;
+    const r = await api.modelsDownload(id).catch((err) => ({ error: String(err.message || err) }));
+    if (!r || r.error) { btn.disabled = false; activityLine('', `Yuklab olinmadi: ${(r && r.error) || 'xato'}`); return; }
+    modelsMgr.active.add(id);
+    startModelsPoll();
+    activityLine('', '⬇️ Yuklab olish boshlandi…');
+    await refreshModels();
+    return;
+  }
+  if (act === 'cancel') {
+    await api.modelsCancel(id).catch(() => {});
+    activityLine('', 'Yuklab olish bekor qilindi');
+    await refreshModels();
+    return;
+  }
+  if (act === 'remove') {
+    const r = await api.modelsRemove(id).catch((err) => ({ error: String(err.message || err) }));
+    if (r && r.error) { activityLine('', r.error); return; }
+    activityLine('', 'Model savatga yuborildi');
+    await refreshModels();
+    return;
+  }
+  if (act === 'reveal') {
+    const r = await api.modelsReveal(id).catch((err) => ({ error: String(err.message || err) }));
+    if (r && r.error) activityLine('', r.error);
+    return;
+  }
+  if (act === 'measure') {
+    btn.disabled = true;
+    const r = await api.modelsMeasure(id).catch((err) => ({ error: String(err.message || err) }));
+    if (!r || r.error) { btn.disabled = false; activityLine('', `O‘lchov boshlanmadi: ${(r && r.error) || 'xato'}`); return; }
+    const note = mEl('modelsNote');
+    if (note) note.textContent = `⏱ O‘lchov boshlandi: ${r.model || ''} — 4 haqiqiy vazifa (bir necha daqiqa)…`;
+    activityLine('', `⏱ O‘lchov boshlandi: ${r.model || id} (4 vazifa)`);
+    startModelsPoll();
+    return;
+  }
+  if (act === 'use') {
+    const provider = btn.dataset.provider || 'localmini';
+    const model = btn.dataset.model || 'qwen3-instruct';
+    const r = await api.modelsAttach(provider, model).catch((err) => ({ error: String(err.message || err) }));
+    if (!r || r.error) { activityLine('', `Ulanmadi: ${(r && r.error) || 'xato'}`); return; }
+    activityLine('', `✅ Ishlatiladi: ${model} (${provider})`);
+    try {
+      cfg = await api.getConfig();
+      updateChips(); updateBottomBar(); renderQuickModels();
+    } catch { /* sozlama yangilanmasa ham model tanlangan qoldi */ }
+    return;
+  }
+}
+
+/* ---- Lokal rasm (API emas — stable-diffusion.cpp) ---- */
+// Vaqt O‘LCHOVGA asoslangan (Radeon RX 580 / Vulkan): 256×256 → 0.78 s/qadam,
+// 512×512 → 7.4 s/qadam (4 GB VRAM to‘lgani uchun o‘sish chiziqli emas) — daraja 1.62.
+const SD_SEC_PER_STEP_256 = 0.78;
+function sdEstimateSeconds(w, h, steps) {
+  return Math.round(SD_SEC_PER_STEP_256 * Math.pow((w * h) / (256 * 256), 1.62) * steps);
+}
+function updateImgEstimate() {
+  const el = mEl('imgEst');
+  if (!el) return;
+  const size = ((mEl('imgSize') && mEl('imgSize').value) || '512x512').split('x');
+  const steps = Number((mEl('imgSteps') && mEl('imgSteps').value) || 20);
+  const secs = sdEstimateSeconds(Number(size[0]) || 512, Number(size[1]) || 512, steps);
+  const human = secs >= 60 ? `${Math.round(secs / 6) / 10} daqiqa` : `${secs} sekund`;
+  el.textContent = `Taxminiy vaqt: ${human} (${size[0]}×${size[1]} · ${steps} qadam) — o‘lchovga asoslangan, video karta va bo‘sh RAM ga qarab o‘zgaradi.`;
+  el.classList.toggle('warn', secs > 240);
+}
+
+async function generateLocalImageHere() {
+  const prompt = ((mEl('imgPrompt') && mEl('imgPrompt').value) || '').trim();
+  if (!prompt) { activityLine('', 'Rasm tavsifini yozing'); return; }
+  const size = (mEl('imgSize') && mEl('imgSize').value) || '512x512';
+  const steps = Number((mEl('imgSteps') && mEl('imgSteps').value) || 20);
+  const out = mEl('imgOut');
+  const go = mEl('imgGo');
+  if (out) out.textContent = 'Yaratilmoqda… (lokal model — internet va kalitsiz) — To‘xtatish bilan bekor qilish mumkin';
+  if (go) go.disabled = true;
+  try {
+    const r = await api.imageGenerate({ prompt, size, steps }).catch((err) => ({ error: String(err.message || err) }));
+    if (!r || r.error) {
+      if (out) out.textContent = `Xato: ${(r && r.error) || 'noma’lum'} — «Rasm dvigateli» va «Rasm modellari» turkumlarida o‘rnatilganini tekshiring.`;
+      return;
+    }
+    if (out) {
+      out.textContent = '';
+      const img = document.createElement('img');
+      img.src = r.dataUrl;   // data: URL (CSP: img-src data: ruxsat etilgan)
+      img.alt = 'Lokal yaratilgan rasm';
+      const meta = document.createElement('div');
+      meta.textContent = `${r.via} · ${r.seconds}s · ${r.width}×${r.height} · ${r.steps} qadam`;
+      out.appendChild(img);
+      out.appendChild(meta);
+      if (r.rel || r.abs) {
+        const p = document.createElement('div');
+        p.textContent = `Ish papkasiga saqlandi: ${r.rel || r.abs}`;
+        const open = document.createElement('button');
+        open.className = 'btn btn-ghost';
+        open.textContent = 'Faylni ko‘rsatish';
+        open.addEventListener('click', () => { api.showItem(r.abs || r.rel).catch(() => {}); });
+        p.appendChild(open);
+        out.appendChild(p);
+      }
+    }
+    activityLine('', `🖼 lokal rasm yaratildi (${r.seconds}s, ${r.via})`);
+  } finally {
+    if (go) go.disabled = false;
+  }
+}
+
+/* Ulash — modal ochiq turib bir marta chaqiriladi. */
+(function wireModelsManager() {
+  const btn = mEl('aiModelsBtn');
+  if (btn) btn.addEventListener('click', () => openModels().catch((e) => console.warn('models', e)));
+  const modal = mEl('modelsModal');
+  if (!modal) return;
+  mEl('modelsClose')?.addEventListener('click', closeModels);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModels(); });
+  mEl('modelsRefresh')?.addEventListener('click', async () => {
+    await api.hardware(true).catch(() => {});
+    await refreshModels(true);
+    activityLine('', 'Apparat va modellar qayta skanerlandi');
+  });
+  mEl('modelsTabs')?.addEventListener('click', (e) => {
+    const b = e.target && e.target.closest ? e.target.closest('button[data-tab]') : null;
+    if (!b) return;
+    modelsMgr.tab = b.dataset.tab;
+    syncModelTabs();
+    renderModels();
+    if (modelsMgr.tab === 'installed' && !modelsMgr.external) refreshModels().catch(() => {});
+  });
+  mEl('modelsBody')?.addEventListener('click', (e) => { onModelsClick(e).catch((err) => console.warn('models click', err)); });
+  mEl('imgGo')?.addEventListener('click', () => { generateLocalImageHere().catch((e) => console.warn('image', e)); });
+  mEl('imgSize')?.addEventListener('change', updateImgEstimate);
+  mEl('imgSteps')?.addEventListener('change', updateImgEstimate);
+  mEl('imgStop')?.addEventListener('click', async () => {
+    const r = await api.imageStop().catch(() => null);
+    activityLine('', r && r.ok ? 'Rasm yaratish to‘xtatilmoqda…' : 'Rasm yaratilmayapti');
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modelsMgr.open) closeModels(); });
+  // CDP/smoke sinovlari uchun ilgak (faqat ko‘rsatish/so‘rov — xatti-harakatga ta’sir yo‘q).
+  window.__modelsHook = { open: openModels, close: closeModels, refresh: refreshModels, state: () => modelsMgr };
+})();
 
 /* ---------------- boot ---------------- */
 (async function boot() {

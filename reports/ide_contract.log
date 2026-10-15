@@ -1,0 +1,69 @@
+YANG IDE kontrakt testi
+  PASS  DOM: 114 id ishlatilgan, hammasi index.html'da bor
+  PASS  Ko'prik: 79 window.ide.* chaqiruv, hammasi preload'da bor
+  PASS  IPC invoke: 72 kanal, hammasiga main'da handler bor
+  PASS  IPC hodisa: 14 kanal yuboriladi, hammasi preload'da tinglanadi
+  PASS  CSS: .editor-hl/#editorArea qoidasi topildi
+  PASS  CSS: #gutter qoidasi topildi
+  PASS  Satr balandligi mos: CSS 20.150000000000002px = app.js 20.150000000000002px
+  PASS  Yuqori padding mos: CSS 10px = app.js 10px
+  PASS  Gutter kengligi va muharrir chap surilishi bir o'zgaruvchidan
+  PASS  Shrift o'lchami CSS va app.js'da bir xil (13px)
+  PASS  app.js o'zi <style> kiritmaydi
+  PASS  asosiy main.js IDE yadrosini yuklaydi (./ide/ide_host.js)
+  PASS  asosiy main.js `ide:open-window` kanalini ro'yxatga oladi
+  PASS  asosiy preload.cjs `openIde` ko'prigini beradi
+  PASS  package.json: `ide/**/*` paketga kiritilgan
+  PASS  package.json: IDE test fayllari paketdan chiqarilgan
+  PASS  Kanal to'qnashuvi yo'q: yadro 5 ta ilova kanalini egallamaydi
+  PASS  Yadro kanallari `yide:` prefiksida
+  PASS  ide_host.js: openIdeWindow/registerIdeIpc/disposeIde eksport qilinadi
+  PASS  ide_host.js: IPC kanallari yide:* prefiksida (ilovaning ide:* kanallari bilan to‘qnashmaydi)
+  PASS  YANG AI main.js: IDE yadrosi import qilinadi
+  PASS  YANG AI main.js: registerIdeIpc() chaqiriladi (IDE o‘sha jarayonda ishlaydi)
+  PASS  YANG AI main.js: IDE oynasi ochiladi + menyu yozuvi bor
+  PASS  YANG AI main.js: chiqishda disposeIde() (kuzatuvchi/terminal to‘xtaydi)
+  PASS  YANG AI main.js: ish papkasi haqiqiy manbadan olinadi (yo‘q `chats` Map yo‘q)
+  PASS  YANG AI preload.cjs: openIde -> ide:open-window
+  PASS  YANG AI main.js: ide:open-window handler ro‘yxatga olingan
+  PASS  YANG AI renderer: «YANG IDE» tugmasi bor va ulangan
+  PASS  YANG AI package.json: `ide/**` o‘rnatuvchi tarkibida (versiya 5.3.0+)
+  PASS  Haqiqiy terminal: xterm.js vendor qilingan (ide/vendor/xterm.js)
+  PASS  Terminal moduli PTY (node-pty) ni ixtiyoriy yuklaydi va fallback beradi
+  PASS  Terminal IPC to‘plami to‘liq: open/write/resize/close + data/exit hodisalari
+  PASS  Renderer xterm mount qiladi va PTY oqimini ulaydi
+  PASS  Til xizmati: tsserver (typescript) ishlatiladi — semantik xato uchun
+  PASS  Til xizmati IPC: status/diagnostics/definition/references/hover
+  PASS  F12 haqiqiy ta’rifga o‘tadi, Shift+F12 barcha havolalarni qidiradi
+  PASS  Hover (tur/imzo) ko‘rsatiladi
+  PASS  Debugger: CDP orqali nuqtalar, qadam, stack va o‘zgaruvchilar
+  PASS  Debugger UI: nuqta qatlami, panel va boshqaruv tugmalari mavjud
+  PASS  TARIX (log): har yurish buyruq/kod/chiqish bilan saqlanadi
+  PASS  AI tuzatish halqasi: ishga tushirib, xato bo‘lsa log bilan qayta tuzatadi
+  PASS  Tuzatish halqasi fayl matnini o‘zi beradi va AI qadamlarini cheklaydi
+  PASS  Tahrir chegarasi olib tashlandi (2 MB yo‘q, faqat 512 MB xotira himoyasi)
+  PASS  Katta fayl rejimi: qator raqamlari oynalanadi, sintaksis bo‘yash o‘chadi (qotmaslik uchun)
+  PASS  Lokal AI katalogi mavjud (local-ai/catalog.json)
+  PASS  Katalog JSON sifatida o‘qiladi va ichida `items` massivi bor
+  PASS  Katalogda 11 yozuv: har birida talablar, kuch va yuklab olish manbasi
+  PASS  Katalogda matn, rasm va rasm dvigateli turkumlari bor
+  PASS  Kuch reytingi O‘LCHOVGA tayanadi (kamida 2 modelda measured.idePass bor)
+  PASS  ide_models.js: apparat profili, moslik bahosi va tashqi AI skani mavjud
+  PASS  Yuklab olish: oqim (progress), bekor qilish va hajm tekshiruvi bor
+  PASS  Modellar yozsa bo‘ladigan papkaga tushadi (userData/models), ilova nusxasi saqlanadi
+  PASS  Lokal rasm generatsiyasi API EMAS (stable-diffusion.cpp) va IDE ga ulangan
+  PASS  «Lokal AI» menyusi UI da bor (tugma + modal + progress hodisasi)
+  PASS  «O‘lchash» tugmasi: haqiqiy 4 vazifa bilan ball yangilanadi (tugma → kanal → ishlovchi)
+  PASS  Ball va yulduz formulasi YAGONA joyda (agent/bench_score.js) — hisobot ham shundan oladi
+  PASS  Sinov skripti paketga kiradi va asar ichidan chiqariladi (node bola jarayon)
+  PASS  Git paneli: status/farq/belgilash/commit bir zanjirda (tugma → kanal → `git` CLI)
+  PASS  Git paneli: o‘zgargan fayllar, belgilash va diff ko‘rsatiladi
+  PASS  Ovozli buyruq: mikrofon tugmasi → transkripsiya → allowlist buyruq
+  PASS  Ovoz: XAVFSIZLIK — tanilgan matn shellga uzatilmaydi (faqat buyruq ID si)
+  PASS  Ovoz modeli katalogda (rubaistt, whisper.cpp) va «Ovoz modeli» turkumi UI da
+  PASS  Katta modellar boshqa diskka ko‘chiriladi (`YANG_MODELS_DIR`)
+  PASS  Kompyuterda o‘rnatilgan AI ni bir bosishda ulash (Ollama/LM Studio)
+  PASS  Apparat profili VRAM ni o‘lchaydi va WMI cheklovini ochiq aytadi
+  PASS  Ilova bilan kelgan nusxa o‘chirishdan himoyalangan (readonly)
+
+Hammasi o‘tdi (66 tekshiruv · 9 guruh)

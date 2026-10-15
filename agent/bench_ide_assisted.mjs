@@ -28,8 +28,13 @@ const OLLAMA = process.env.YANG_IDE_BENCH_OLLAMA || 'http://127.0.0.1:11434';
 // llama.cpp bilan. Ikkalasi bir yurishda sinovdan o'tadi va bitta hisobotga tushadi.
 const MODELS = (process.env.YANG_IDE_BENCH_MODELS || 'qwen2.5-coder:7b,local:model-qwen3-4b-2507.gguf')
   .split(',').map((s) => s.trim()).filter(Boolean);
-const LOCAL_DIR = path.resolve(ROOT, 'local-ai');
-const LOCAL_EXE = path.join(LOCAL_DIR, 'lc', 'llama-server.exe');
+// Papkalarni env bilan almashtirish mumkin: IDE dagi «O‘lchash» tugmasi shu skriptni
+// paketlangan ilovadan chaqiradi, u yerda modellar `resources/local-ai` da (foydalanuvchi
+// yuklab olganlari esa `%APPDATA%/yang-ai/models` da) — ilova papkasi ichida emas.
+const LOCAL_DIR = path.resolve(process.env.YANG_IDE_BENCH_LOCAL_DIR || path.join(ROOT, 'local-ai'));
+const LOCAL_EXE = process.env.YANG_IDE_BENCH_LOCAL_EXE || path.join(LOCAL_DIR, 'lc', 'llama-server.exe');
+// `local:` dan keyin absolyut yo‘l ham bo‘lishi mumkin (foydalanuvchi papkasidagi gguf).
+const localAbs = (file) => (path.isAbsolute(file) ? file : path.join(LOCAL_DIR, file));
 // 8082 — ilovaning o'zi ishlatadigan port; sinov uchun alohida port olamiz (to'qnashmasin).
 const LOCAL_PORT = Number(process.env.YANG_IDE_BENCH_LOCAL_PORT) || 8085;
 const LOCAL_BASE = `http://127.0.0.1:${LOCAL_PORT}/v1`;
@@ -69,13 +74,15 @@ async function tryLocalServer(file, abs, ctx, logPath) {
 
 async function startLocalServer(modelKey) {
   const file = localFile(modelKey);
-  const abs = path.join(LOCAL_DIR, file);
+  const abs = localAbs(file);
   if (!fs.existsSync(LOCAL_EXE)) throw new Error(`llama-server.exe topilmadi: ${LOCAL_EXE}`);
   if (!fs.existsSync(abs)) throw new Error(`gguf topilmadi: ${abs}`);
-  const logPath = path.join(OUT_DIR, `llama-${file}.log`);
+  // Jurnal va `--alias` uchun faqat fayl NOMI (absolyut yo‘l fayl nomiga yaroqsiz).
+  const base = path.basename(file);
+  const logPath = path.join(OUT_DIR, `llama-${base}.log`);
   const reasons = [];
   for (const ctx of CTX_LADDER) {
-    const attempt = await tryLocalServer(file, abs, ctx, logPath);
+    const attempt = await tryLocalServer(base, abs, ctx, logPath);
     if (attempt.ok) {
       localServer = attempt.child;
       localServer.on('exit', () => { if (localServer === attempt.child) localServer = null; });
@@ -197,7 +204,7 @@ async function modelCatalog() {
   }
   // Ilova ichidagi (bundled) gguf modellari — har biri disk hajmi bilan qayd etiladi.
   for (const key of MODELS.filter(isLocalModel)) {
-    const abs = path.join(LOCAL_DIR, localFile(key));
+    const abs = localAbs(localFile(key));
     const size = fs.existsSync(abs) ? fs.statSync(abs).size : 0;
     catalog[key] = { kind: 'bundled', sizeBytes: size, params: guessParams(localFile(key)), quant: /q4/i.test(localFile(key)) ? 'Q4_K_M' : null, context: 8192 };
   }

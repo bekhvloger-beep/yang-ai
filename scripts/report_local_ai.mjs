@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { benchScore } from '../agent/bench_score.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BENCH_DIR = path.join(ROOT, 'reports', 'local_ai');
@@ -162,19 +163,14 @@ function deriveModels(rows, catalog, tasks) {
 }
 
 /* ---------------------------------------------------------------------- ball */
-// BALL FORMULASI (audit uchun):
-//   score = idePass * 10            — asosiy mezon: IDE halqasi bilan nechta vazifa o'tdi
-//         + min(3, 60 / avgIdeSec)  — ikkinchi daraja, tezlik; FAQAT idePass > 0 bo'lsa.
-//         + oneShotPass * 0.1       — tenglikni buzuvchi: IDE'siz ham ishlagan model oldinda
-// Natija 2 xona aniqlikda yumaloqlanadi.
-// Nega tezlik cheklangan: "darhol yiqiladigan" model (masalan, 0.1 s da xato qaytargan)
-// avval 60/0.1 = 600 ball olib, birinchi o'ringa chiqib ketardi — o'lchov ma'nosiz bo'lardi.
+// Formula `agent/bench_score.js` da — IDE dagi «O‘lchash» tugmasi ham AYNAN shu
+// formuladan foydalanadi (ikki nusxa vaqt o‘tib ajralib ketmasligi uchun).
 function scoreOf(s) {
-  const idePass = Number(s.ideLoop?.pass || 0);
-  const oneShotPass = Number(s.oneShot?.pass || 0);
-  const avg = Number(s.ideLoop?.avgSeconds || 0);
-  const speed = idePass > 0 && avg > 0 ? Math.min(3, Number((60 / avg).toFixed(2))) : 0;
-  return Number((idePass * 10 + speed + oneShotPass * 0.1).toFixed(2));
+  return benchScore({
+    idePass: Number(s.ideLoop?.pass || 0),
+    oneShotPass: Number(s.oneShot?.pass || 0),
+    avgIdeSeconds: Number(s.ideLoop?.avgSeconds || 0),
+  });
 }
 
 function verdictOf(idePass, total) {

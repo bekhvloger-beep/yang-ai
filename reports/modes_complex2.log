@@ -1,0 +1,13 @@
+model: qwen2.5-coder:7b · rejimlar: solo + team
+FAIL  SOLO rejimi: vazifa xatosiz tugadi
+      → xato: Barcha provayderlar ishlamadi:
+Ollama (lokal) · qwen2.5-coder:7b: HTTP 500: llama-server process has terminated: exit status 0xe06d7363: NTSTATUS 0xe06d7363
+FAIL  TEAM rejimi: vazifa xatosiz tugadi
+      → xato: Pinned model ishlamadi: local · qwen2.5-coder:7b — HTTP 500: llama-server process has terminated: exit status 0xe06d7363: NTSTATUS 0xe06d7363
+
+--- xulosa ---
+solo   ISHLAMADI · 0s · 0 fayl
+team   ISHLAMADI · 0s · 0 fayl
+
+XULOSA: 0/2 PASS
+EXIT=1

@@ -1,0 +1,51 @@
+
+> yang-ai@5.5.0 test:ide
+> node ide/test_ide_contract.mjs
+
+YANG IDE kontrakt testi
+  PASS  DOM: 80 id ishlatilgan, hammasi index.html'da bor
+  PASS  Ko'prik: 55 window.ide.* chaqiruv, hammasi preload'da bor
+  PASS  IPC invoke: 50 kanal, hammasiga main'da handler bor
+  PASS  IPC hodisa: 14 kanal yuboriladi, hammasi preload'da tinglanadi
+  PASS  CSS: .editor-hl/#editorArea qoidasi topildi
+  PASS  CSS: #gutter qoidasi topildi
+  PASS  Satr balandligi mos: CSS 20.150000000000002px = app.js 20.150000000000002px
+  PASS  Yuqori padding mos: CSS 10px = app.js 10px
+  PASS  Gutter kengligi va muharrir chap surilishi bir o'zgaruvchidan
+  PASS  Shrift o'lchami CSS va app.js'da bir xil (13px)
+  PASS  app.js o'zi <style> kiritmaydi
+  PASS  asosiy main.js IDE yadrosini yuklaydi (./ide/ide_host.js)
+  PASS  asosiy main.js `ide:open-window` kanalini ro'yxatga oladi
+  PASS  asosiy preload.cjs `openIde` ko'prigini beradi
+  PASS  package.json: `ide/**/*` paketga kiritilgan
+  PASS  package.json: IDE test fayllari paketdan chiqarilgan
+  PASS  Kanal to'qnashuvi yo'q: yadro 5 ta ilova kanalini egallamaydi
+  PASS  Yadro kanallari `yide:` prefiksida
+  PASS  ide_host.js: openIdeWindow/registerIdeIpc/disposeIde eksport qilinadi
+  PASS  ide_host.js: IPC kanallari yide:* prefiksida (ilovaning ide:* kanallari bilan to‘qnashmaydi)
+  PASS  YANG AI main.js: IDE yadrosi import qilinadi
+  PASS  YANG AI main.js: registerIdeIpc() chaqiriladi (IDE o‘sha jarayonda ishlaydi)
+  PASS  YANG AI main.js: IDE oynasi ochiladi + menyu yozuvi bor
+  PASS  YANG AI main.js: chiqishda disposeIde() (kuzatuvchi/terminal to‘xtaydi)
+  PASS  YANG AI main.js: ish papkasi haqiqiy manbadan olinadi (yo‘q `chats` Map yo‘q)
+  PASS  YANG AI preload.cjs: openIde -> ide:open-window
+  PASS  YANG AI main.js: ide:open-window handler ro‘yxatga olingan
+  PASS  YANG AI renderer: «YANG IDE» tugmasi bor va ulangan
+  PASS  YANG AI package.json: `ide/**` o‘rnatuvchi tarkibida (versiya 5.3.0+)
+  PASS  Haqiqiy terminal: xterm.js vendor qilingan (ide/vendor/xterm.js)
+  PASS  Terminal moduli PTY (node-pty) ni ixtiyoriy yuklaydi va fallback beradi
+  PASS  Terminal IPC to‘plami to‘liq: open/write/resize/close + data/exit hodisalari
+  PASS  Renderer xterm mount qiladi va PTY oqimini ulaydi
+  PASS  Til xizmati: tsserver (typescript) ishlatiladi — semantik xato uchun
+  PASS  Til xizmati IPC: status/diagnostics/definition/references/hover
+  PASS  F12 haqiqiy ta’rifga o‘tadi, Shift+F12 barcha havolalarni qidiradi
+  PASS  Hover (tur/imzo) ko‘rsatiladi
+  PASS  Debugger: CDP orqali nuqtalar, qadam, stack va o‘zgaruvchilar
+  PASS  Debugger UI: nuqta qatlami, panel va boshqaruv tugmalari mavjud
+  PASS  TARIX (log): har yurish buyruq/kod/chiqish bilan saqlanadi
+  PASS  AI tuzatish halqasi: ishga tushirib, xato bo‘lsa log bilan qayta tuzatadi
+  PASS  Tuzatish halqasi fayl matnini o‘zi beradi va AI qadamlarini cheklaydi
+  PASS  Tahrir chegarasi olib tashlandi (2 MB yo‘q, faqat 512 MB xotira himoyasi)
+  PASS  Katta fayl rejimi: qator raqamlari oynalanadi, sintaksis bo‘yash o‘chadi (qotmaslik uchun)
+
+Hammasi o‘tdi (44 tekshiruv · 8 guruh)

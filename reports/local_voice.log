@@ -1,0 +1,34 @@
+PASS  A1. Model/ikkilik yo‘q bo‘lsa holat «tayyor emas» va sabab ANIQ aytiladi
+      → available=false · sabab="whisper-cli topilmadi — whisper.cpp ikkilik fayli kerak (YANG_WHISPER_EXE bilan yo‘l ko‘rsatiladi)" · papkalar=4 · tillar=uz
+PASS  A2. `voiceDirs()` env papkani birinchi o‘rinda qaytaradi (ustuvorlik)
+      → C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\empty
+PASS  A3. `findWhisperBinary()` bo‘sh papkada null qaytaradi (soxta topilma yo‘q)
+      → null
+PASS  B1. 9 ta o‘zbekcha/inglizcha ibora to‘g‘ri buyruqqa moslashadi
+      → hammasi to‘g‘ri
+PASS  B2. Argumenti yetmagan buyruq `missingArg` bilan qaytadi (jimgina bajarilmaydi)
+      → {"command":"open-file","label":"Faylni ochish","needsArg":true,"arg":"","args":[],"text":"ochish","missingArg":true}
+PASS  B3. XAVFSIZLIK: allowlistdan tashqari matn hech qachon buyruq bo‘lmaydi
+      → 6 xavfli matn → null
+PASS  B4. XAVFSIZLIK: absolyut yo‘l va `..` argument sifatida rad etiladi
+      → 4 yo‘l hujumi → null
+PASS  B5. Kodda tanish matnni shell'ga uzatish yo‘li YO‘Q (exec/execSync/shell:true ishlatilmaydi)
+      → exec/execSync/shell:true — topilmadi · izoh: bor
+PASS  B6. `COMMANDS` eksport qilinadi: har birida id/label/needsArg/phrases va id lar noyob
+      → 10 buyruq: run-file, save-file, new-chat, stop, debug, run-tests, git-status, git-diff, git-commit, open-file
+PASS  B7. Yozib olish yo‘qligi halol aytiladi (soxta `ok` yo‘q)
+      → yozib olish bu muhitda qo‘llab-quvvatlanmaydi — renderer mikrofonni WAV qilib yuboradi (transcribeBuffer)
+PASS  C1. Model tanlashda rubaistt afzal ko‘riladi (kattaroq begona model emas)
+      → ggml-rubaistt-medium-q5_0.bin (1200000 bayt)
+PASS  C2. Ikkilik va model topilganda holat «tayyor» bo‘ladi
+      → available=true · exe=C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\whisper-cli.cmd · model=ggml-rubaistt-medium-q5_0.bin
+PASS  C3. Soxta whisper-cli bilan HAQIQIY transkripsiya: matn o‘qiladi va tozalanadi
+      → matn="ARGS -m C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\ggml-rubaistt-medium-q5_0.bin -f C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\buyruq.wav -l uz -nt Salom dunyo!" · 0.1s
+PASS  C4. Til MAJBURAN o‘zbekcha uzatiladi (`-l uz`) va model yo‘li to‘g‘ri
+      → ARGS -m C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\ggml-rubaistt-medium-q5_0.bin -f C:\Users\behru\AppData
+PASS  C5. WAV yo‘q bo‘lsa aniq xato (jimgina bo‘sh matn emas)
+      → wav fayl topilmadi: C:\Users\behru\AppData\Local\Temp\yang-voice-test-ExwJ0G\yoq.wav
+PASS  C6. CLI nol bo‘lmagan kod bilan tugasa xato qaytariladi (kod va jurnal qoldig‘i bilan)
+      → whisper-cli 3 kodi bilan tugadi
+
+XULOSA: 16/16 PASS

@@ -1,0 +1,5 @@
+
+
+DevTools listening on ws://127.0.0.1:9361/devtools/browser/9c966c1d-718d-48e6-a82b-a35fbfd87af6
+[init] .env dan kalitlar import qilindi: .env → openrouter, .env → gemini, .env → groq, .env → vercel
+[init] lokal AI allaqachon ishlayapti (127.0.0.1:8082)

@@ -1,0 +1,35 @@
+  • electron-builder  version=26.15.3 os=10.0.26200
+  • loaded configuration  file=package.json ("build" field)
+  • executing @electron/rebuild  electronVersion=34.0.0 arch=x64 buildFromSource=false workspaceRoot=D:\loyiha\ChatDev-main projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=34.0.0 appOutDir=dist\win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=D:\loyiha\ChatDev-main\dist\win-unpacked
+  • searching for node modules  pm=npm searchDir=D:\loyiha\ChatDev-main
+  • updating asar integrity executable resource  executablePath=dist\win-unpacked\YANG AI.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\ggml-rpc-server.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-batched-bench.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-bench.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-completion.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-fit-params.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-gemma3-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-imatrix.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-minicpmv-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-llava-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-gguf-split.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-mtmd-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-mtmd-debug.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-perplexity.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-quantize.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-qwen2vl-cli.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-results.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-server.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-tokenize.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama-tts.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\local-ai\lc\llama.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\translator-runtime\python\python.exe
+  • signing with signtool.exe  path=dist\win-unpacked\resources\translator-runtime\python\pythonw.exe
+  • signing with signtool.exe  path=dist\win-unpacked\YANG AI.exe
+EXIT=0

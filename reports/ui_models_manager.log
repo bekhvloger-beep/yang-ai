@@ -1,0 +1,34 @@
+nishon: dev rejim (electron .)
+user-data: C:\Users\behru\AppData\Local\Temp\yang-models-ui-idedo5
+CDP ulandi · __ready=true
+PASS  1. preload ko‘prigi: menejer API si to‘liq (13 nom, IDE bilan bir xil)
+      → 13/13 · yetishmaydi=[]
+PASS  2. Yon paneldagi «Lokal AI» tugmasi menejerni ochadi
+      → tugma=true · modal ochiq=true
+PASS  3. Apparat profili o‘lchanadi (CPU/RAM/video/disk + 2 daraja)
+      → «CPUIntel(R) Core(TM) i5-9400F CPU @ 2.90GHz · 6 yadroRAM11.9 GB (bo‘sh 3.8 GB)VideoAMD Radeon RX 580 2048SP · 4 GB VRAMDisk2.8 GB bo‘shMatn darajasi★★» · yulduz bloklari=2
+PASS  4. Matn modellari ro‘yxati katalogdan chiziladi (har birida 2 yulduz bloki + talablar)
+      → qatorlar=5 · yulduz bloklari=10 (kutilgan ≥10) · talab bloklari=5
+PASS  5. «Rasm dvigateli» turkumi: har qatorda yuklab olish YOKI o‘rnatilgan holati bor
+      → qatorlar=2 · download tugmalari=0 · o‘rnatilgan qator=2 · «papkada ko‘rsatish»=2 · birinchi: «Rasm dvigateli — stable-diffusion.cpp (f» · faol tab=runtime
+PASS  6. Barcha 5 turkum almashinadi va katalogdagi 11 yozuv to‘liq ko‘rinadi
+      → text:5 qator / 2268 belgi · image:3 qator / 1919 belgi · runtime:2 qator / 1029 belgi · voice:1 qator / 873 belgi · installed:0 qator / 11 belgi · jami=11
+PASS  7. Kompyuterda bor AI skani ishlaydi (Ollama / LM Studio / HF keshi / model papkalari)
+      → «Yuklab olish SHART EMAS: bu yerda kompyuteringizda allaqachon bor AI lar. «Ishlatish» ularni shu ilovaga ulaydi (yuklab olish yo‘q, kalit yo‘q).Ollama — C:\User»
+PASS  8. Lokal rasm bo‘limi ko‘rinadi va vaqt taxmini o‘lchovga tayanadi
+      → ko‘rinadi=true · «Taxminiy vaqt: 3.7 daqiqa (512×512 · 30 qadam) — o‘lchovga asoslangan, video karta va bo‘sh RAM ga qarab o‘zgaradi.»
+PASS  9. «✕» modalni yopadi (holat ham yangilanadi)
+      → yopiq=true · modelsMgr.open=false
+PASS  10. Konsol/renderer xatolari yo‘q
+      → istisno qayd etilmadi
+eslatma: llama-server testdan oldin ham ishlayotgan edi — to‘xtatilmadi
+
+XULOSA: 10/10 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ui_models_manager.log
+      → yopiq=true · modelsMgr.open=false
+PASS  10. Konsol/renderer xatolari yo‘q
+      → istisno qayd etilmadi
+eslatma: llama-server testdan oldin ham ishlayotgan edi — to‘xtatilmadi
+
+XULOSA: 10/10 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ui_models_manager.log

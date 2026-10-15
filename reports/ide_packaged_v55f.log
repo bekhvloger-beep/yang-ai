@@ -1,0 +1,25 @@
+nishon: D:\loyiha\ChatDev-main\dist-ide\win-unpacked\YANG IDE.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-ide-pkg-wKsbtj
+ish papkasi: C:\Users\behru\AppData\Local\Temp\yang-ide-pkg-ws-c0m0eD
+qo‘shimcha papka: C:\Users\behru\AppData\Local\Temp\yang-ide-pkg-extra-cZWvds
+CDP port 9331
+PASS  1. Paketlangan IDE ochiladi va ish papkasini tiklaydi
+      → ish papkasi=C:\Users\behru\AppData\Local\Temp\yang-ide-pkg-ws-c0m0eD · ildizlar=yang-ide-pkg-ws-c0m0eD, yang-ide-pkg-extra-cZWvds
+PASS  2. Mustaqil rejim (embedded=false) va versiya paketdan olinadi
+      → embedded=false · versiya=1.0.0 (paketda: 1.0.0) · electron=34.0.0
+PASS  3. Fayl tizimi asar ichida ishlaydi: daraxt, o‘qish, yozish
+      → daraxt=[C:/Users/behru/AppData/Local/Temp/yang-ide-pkg-extra-cZWvds, salom.js] · o‘qish=113 belgi · diskda="console.log("paket yozdi");"
+PASS  4. Haqiqiy terminal paketda ham ishlaydi (native conpty topildi, isatty=true)
+      → shell=C:\WINDOWS\system32\cmd.exe · isatty=PKG_TTY_OK
+PASS  5. Til xizmati (tsserver) paketda ishlaydi: semantik xato topiladi
+      → tsserver=true · xato=Ln 5: Cannot find name 'yoqFunksiya'. · javob={"items":[{"line":4,"col":1,"endLine":4,"endCol":8,"message":"Cannot find name 'console'. Do you need to change your target library? Try changing the 'lib' comp
+PASS  6. Ko‘p ildizli workspace paketda ham ishlaydi (qo‘shimcha papka + undagi fayl)
+      → ildizlar=[yang-ide-pkg-ws-c0m0eD, yang-ide-pkg-extra-cZWvds] · qo‘shimcha fayl=o‘qildi
+PASS  7. AI qatlami paketdan dinamik import bo‘ladi
+      → 15 provayder · localmini
+PASS  8. «Sinab ko‘r + tuzat» API’si paketda mavjud (tarix + halqa)
+      → fixRun/runLog=true
+PASS  9. Ekran surati saqlandi (ko‘p ildizli tasma ko‘rinadi)
+      → reports/ide_packaged/ide-packaged-v55.png
+
+XULOSA: 9/9 PASS

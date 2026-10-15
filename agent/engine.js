@@ -1,6 +1,6 @@
 // engine.js — the agentic loop with provider failover, vision input and agent identities.
 import { EventEmitter } from 'node:events';
-import { streamChat, getAllProviders, getProviderKey, isProviderHealthy, suspendProvider, RateLimitError, isProviderEnabled, isBundledLocalProvider, localEndpoint, localServerUp, waitLocalServerReady } from './providers.js';
+import { streamChat, getAllProviders, getProviderKey, isProviderHealthy, suspendProvider, RateLimitError, isProviderEnabled, isBundledLocalProvider, localEndpoint, localServerUp, waitLocalServerReady, localContextSize, fitMessagesToContext, isContextOverflowError, CTX_SAFETY_TOKENS } from './providers.js';
 import { translateText, translatorUp, translateSettings, waitTranslatorReady } from './translate.js';
 import { TOOL_SPECS, createToolContext, TOOLS_NEEDING_APPROVAL } from './tools.js';
 
@@ -13,7 +13,7 @@ const FILE_CREATING_TOOLS = new Set(['write_file', 'create_document', 'create_im
 // 1-bosqich (qolgan band): lokal to'plam kengaytirildi — endi lokal model
 // "qurib, ishga tushirib ko'rsata" oladi (run_command) va rasm chizadi (create_image).
 const LOCAL_TOOL_NAMES = new Set(['list_dir', 'read_file', 'write_file', 'run_command', 'create_image', 'web_search', 'fetch_url']);
-const LOCAL_TOOL_SPECS = TOOL_SPECS.filter((t) => LOCAL_TOOL_NAMES.has(t.function.name));
+export const LOCAL_TOOL_SPECS = TOOL_SPECS.filter((t) => LOCAL_TOOL_NAMES.has(t.function.name));
 
 // Lokal modelni qisqa va aniq tutadigan system prompt (lokal provayder uchun).
 // Kichik model uchun eng muhim qoida: "yasab ber / qil / yoz / qur" — bu VAZIFA,
@@ -398,36 +398,73 @@ export class AgentEngine extends EventEmitter {
     for (const pair of ordered) {
       if (this.aborted) throw Object.assign(new Error('To‘xtatildi'), { aborted: true });
       if (blocked.has(pair.id)) continue;
+      // Ilova ichidagi lokal kichik modelga 10 ta tool og'ir — 7 tasi beriladi.
+      // Reja rejimida tool umuman berilmaydi — model faqat reja yozadi.
+      // Qadam chegarasidagi yakuniy so'rovda ham tool yo'q (matn majburiy).
+      const toolsForPair = this._finalOnly || this.planMode ? [] : pair.def.local ? LOCAL_TOOL_SPECS : TOOL_SPECS;
+      // Reja rejimida javob qisqa bo'lishi kerak (0.9k token). Bundan tashqari,
+      // lokal kichik model oddiy rejimda ham tool chaqirmasdan cheksiz matn yozib
+      // ketgan (o'lchov: 5341 token ≈ 9 daqiqa). Shu sababli lokal provayder uchun
+      // (a) token chegarasi, (b) matn uzunligi guard'i qo'yiladi — guard tool
+      // chaqiruviga tegmaydi (u alohida delta).
+      const extraBody = this.planMode
+        ? { max_tokens: 900, ...(pair.def.bundled ? BUNDLED_SAMPLING : pair.def.local ? { temperature: 0.2 } : {}) }
+        : pair.def.bundled
+          ? { max_tokens: 2048, ...BUNDLED_SAMPLING }
+          : pair.def.local
+            ? { max_tokens: 2048, temperature: 0.2 }
+            : undefined;
+      // ---- kontekst byudjeti (lokal model) ----
+      // llama-server 8192 token kontekst bilan ko'tariladi; undan katta so'rov HTTP 400
+      // «exceeds the available context size» oladi (o'lchov: 13 835 tokenli so'rov) va
+      // pin rejimda zaxira provayder yo'q — vazifa butunlay bajarilmay qolardi. Endi
+      // haqiqiy kontekst serverdan (/props → n_ctx) o'qiladi, so'rov unga sig'diriladi
+      // va baribir yetmasa — kichikroq byudjet bilan qayta urinamiz.
+      const local = !!pair.def.local || !!pair.def.bundled;
+      const ctxTokens = local ? await localContextSize(pair.def.base) : 0;
+      const outTokens = Number(extraBody && extraBody.max_tokens) || 2048;
+      let budget = local ? Math.max(512, ctxTokens - outTokens - CTX_SAFETY_TOKENS) : 0;
       try {
-        const r = await streamChat({
-          base: pair.def.base,
-          key: pair.key,
-          model: pair.model,
-          messages,
-          // Ilova ichidagi lokal kichik modelga 10 ta tool og'ir — 3 tasi beriladi.
-          // Reja rejimida tool umuman berilmaydi — model faqat reja yozadi.
-          // Qadam chegarasidagi yakuniy so'rovda ham tool yo'q (matn majburiy).
-          tools: this._finalOnly || this.planMode ? [] : pair.def.local ? LOCAL_TOOL_SPECS : TOOL_SPECS,
-          signal: this.ctrl.signal,
-          onDelta,
-          extraHeaders: pair.def.extraHeaders,
-          providerId: pair.id,
-          // Reja rejimida javob qisqa bo'lishi kerak (0.9k token). Bundan tashqari,
-          // lokal kichik model oddiy rejimda ham tool chaqirmasdan cheksiz matn yozib
-          // ketgan (o'lchov: 5341 token ≈ 9 daqiqa). Shu sababli lokal provayder uchun
-          // (a) token chegarasi, (b) matn uzunligi guard'i qo'yiladi — guard tool
-          // chaqiruviga tegmaydi (u alohida delta).
-          extraBody: this.planMode
-            ? { max_tokens: 900, ...(pair.def.bundled ? BUNDLED_SAMPLING : pair.def.local ? { temperature: 0.2 } : {}) }
-            : pair.def.bundled
-              ? { max_tokens: 2048, ...BUNDLED_SAMPLING }
-              : pair.def.local
-                ? { max_tokens: 2048, temperature: 0.2 }
-                : undefined,
-          guardChars: pair.def.local ? (this.planMode ? 4000 : 2600) : undefined,
-          // Tool argument JSON'i buzilib qaytsa (llama-server 500) — bir marta qayta urinamiz.
-          retryOn500: !!pair.def.bundled,
-        });
+        let r;
+        for (let attempt = 0; ; attempt++) {
+          let sendMessages = messages;
+          if (local) {
+            const fit = fitMessagesToContext(messages, toolsForPair, budget, { stripImages: !!pair.def.bundled });
+            sendMessages = fit.messages;
+            if (fit.trimmed && !this._ctxNoticeShown) {
+              this._ctxNoticeShown = true;
+              this.emit('notice', {
+                text: `✂️ So‘rov lokal model kontekstiga (${ctxTokens} token) sig‘dirildi — eski tarix qisqartirildi`,
+              });
+            }
+          }
+          try {
+            r = await streamChat({
+              base: pair.def.base,
+              key: pair.key,
+              model: pair.model,
+              messages: sendMessages,
+              tools: toolsForPair,
+              signal: this.ctrl.signal,
+              onDelta,
+              extraHeaders: pair.def.extraHeaders,
+              providerId: pair.id,
+              extraBody,
+              guardChars: pair.def.local ? (this.planMode ? 4000 : 2600) : undefined,
+              // Tool argument JSON'i buzilib qaytsa (llama-server 500) — bir marta qayta urinamiz.
+              retryOn500: !!pair.def.bundled,
+            });
+            break;
+          } catch (e2) {
+            if (e2.aborted || this.aborted) throw e2;
+            if (local && attempt < 2 && isContextOverflowError(e2)) {
+              budget = Math.max(512, Math.floor(budget / 2));
+              this.emit('notice', { text: `✂️ Kontekst yetmadi — yana qisqartirib urinaman (${budget} token)` });
+              continue;
+            }
+            throw e2;
+          }
+        }
         // Bo'sh javob (content ham, toolCalls ham yo'q) — muvaffaqiyat deb hisoblanmaydi:
         // zanjir keyingi provayderga o'tadi.
         if (!(r.toolCalls && r.toolCalls.length) && !((r.content || (getStreamedText ? getStreamedText() : '') || '').trim())) {

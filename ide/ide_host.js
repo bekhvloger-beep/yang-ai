@@ -41,6 +41,11 @@ import { registerPtyIpc, disposePty } from './ide_pty.js';
 import { registerLspIpc, disposeLsp } from './ide_lsp.js';
 import { registerDebugIpc, disposeDebug } from './ide_debug.js';
 import { registerRunnerIpc, disposeRunner, runCaptured, lastFailure } from './ide_runner.js';
+// ide_models.js — «Lokal AI» menejeri: apparat talablari, kuch reytingi, yuklab olish,
+// kompyuterda allaqachon o'rnatilgan AI larni topish va lokal rasm generatsiyasi.
+import { registerModelsIpc, disposeModels, modelDirs, userModelsDir, bundledModelsDir } from './ide_models.js';
+import { registerVoiceIpc, voiceModelDirs } from './ide_voice.js';
+import { registerGitIpc, disposeGit } from './ide_git.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_APP = path.resolve(HERE, '..');
@@ -70,6 +75,12 @@ const runningCommands = new Map();
 let watcher = null;
 let watchTimer = null;
 let ipcRegistered = false;
+// v5.5 — KO'P ILDIZLI WORKSPACE: asosiy ish papkasidan tashqari qo'shimcha papkalar.
+// Ro'yxat YANG AI bilan BIR XIL sozlamada (`config.json` → `extraRoots`) saqlanadi, shuning
+// uchun ilovaning yengil yon paneli va IDE oynasi bir xil ish maydonini ko'radi.
+let extraRoots = [];              // qo'shimcha ish papkalari (ruxsat etilgan ildizlar)
+let extraRootsLoaded = false;     // sozlamalardan o'qildimi
+let pendingExtraRoots = [];       // chaqiruvchi bergan, hali ro'yxatga qo'shilmagan ildizlar
 
 // `app.getPath(...)` faqat ready'dan keyin ishonchli — shuning uchun yo'llar funksiya.
 const stateFile = () => path.join(app.getPath('userData'), 'ide-state.json');
@@ -109,21 +120,159 @@ function realInside(wsRoot, abs) {
   return target;
 }
 
+/* --------------------------------------------------- ildizlar (multi-root) */
+/**
+ * Ruxsat etilgan ildizlar: ASOSIY ish papkasi + foydalanuvchi qo'shgan qo'shimcha papkalar.
+ * Qamoq O'ZGARMAYDI — faqat ro'yxat kengayadi: har bir yo'l baribir `realInside` (realpath)
+ * bo'yicha shu ro'yxat ICHIDA ekani tekshiriladi. Ya'ni `..`, absolyut yo'l, junction yoki
+ * symlink orqali chiqish avvalgidek bloklanadi; qo'shimcha papka qamoqni ochmaydi, u shunchaki
+ * yana bitta ruxsat etilgan hudud qo'shadi.
+ */
+function rootsList() {
+  const out = [];
+  const add = (p) => {
+    if (!p) return;
+    const abs = realOf(p) || path.resolve(String(p));
+    if (!abs) return;
+    const key = abs.toLowerCase();
+    if (out.some((x) => x.toLowerCase() === key)) return;
+    out.push(abs);
+  };
+  if (workspace) add(workspace);
+  for (const r of extraRoots) add(r);
+  return out;
+}
+
+/** Absolyut yo'l ruxsat etilgan ildizlardan birortasi ichidami? Ichida bo'lsa — haqiqiy yo'li. */
+function insideAnyRoot(abs, { allowRoot = false } = {}) {
+  for (const root of rootsList()) {
+    const real = realInside(root, abs);
+    if (!real) continue;
+    // Ildizning O'ZINI fayl sifatida yozish/o'chirish bloklanadi (papka ochishda ruxsat).
+    if (!allowRoot && path.resolve(real).toLowerCase() === path.resolve(root).toLowerCase()) return null;
+    return real;
+  }
+  return null;
+}
+
+/** Yo'l qaysi ildizga tegishli (daraxt yozuvlarida ko'rsatiladi). */
+function rootOf(abs) {
+  const roots = rootsList();
+  for (const r of roots) {
+    if (realInside(r, abs)) return r;
+  }
+  return roots[0] || '';
+}
+
+/**
+ * Rendererga ko'rsatiladigan yo'l — SHU yo'l bilan fayl qayta ochiladi/yoziladi, shuning uchun
+ * u har doim qamoqdan o'tadigan ko'rinishda bo'ladi:
+ *   • asosiy papka ichida — nisbiy (`src/index.js`, eski xatti-harakat);
+ *   • qo'shimcha papkada — ABSOLYUT (`D:/umumiy/lib.js`): `path.resolve` absolyut yo'lni
+ *     o'zgartirmaydi, keyin baribir `insideAnyRoot` tekshiruvi o'tadi.
+ */
+function showPath(abs) {
+  const primary = workspace ? path.resolve(workspace) : '';
+  if (primary) {
+    const r = path.relative(primary, abs);
+    if (r === '') return '.';
+    if (!r.startsWith('..') && !path.isAbsolute(r)) return r.replace(/\\/g, '/');
+  }
+  return String(abs).replace(/\\/g, '/');
+}
+
 function safePath(rel, { allowRoot = false } = {}) {
-  if (!workspace) return null;
-  const root = path.resolve(workspace);
-  const abs = path.resolve(root, String(rel ?? '.'));
-  const r = path.relative(root, abs);
-  if (!allowRoot && r === '') return null;
-  if (r.startsWith('..') || path.isAbsolute(r)) return null;
-  const real = realInside(root, abs);
+  const roots = rootsList();
+  if (!roots.length) return null;
+  const abs = path.resolve(roots[0], String(rel ?? '.'));
+  const real = insideAnyRoot(abs, { allowRoot });
   if (!real) return null;
-  return { abs: real, rel: path.relative(realOf(root) || root, real).replace(/\\/g, '/') || '.' };
+  return { abs: real, rel: showPath(real), root: rootOf(real) };
+}
+
+/** Qo'shimcha ildizlar bitta joyda — YANG AI sozlamalari bilan bir faylda. */
+const sharedConfigFile = () => path.join(sharedConfigDir(), 'config.json');
+
+async function readExtraRootsRaw() {
+  try {
+    const j = JSON.parse(await fsp.readFile(sharedConfigFile(), 'utf8'));
+    return Array.isArray(j.extraRoots) ? j.extraRoots : [];
+  } catch { return []; }
+}
+
+async function writeExtraRootsRaw(list) {
+  const file = sharedConfigFile();
+  let cur = {};
+  // Fayl hozir o'qiladi (nusxa emas) — IDE oynasi bilan asosiy ilova bir manbadan yozsin.
+  try { cur = JSON.parse(await fsp.readFile(file, 'utf8')) || {}; } catch { cur = {}; }
+  cur.extraRoots = list;
+  await fsp.mkdir(path.dirname(file), { recursive: true });
+  await fsp.writeFile(file, JSON.stringify(cur, null, 2), 'utf8');
+}
+
+/**
+ * Ro'yxatni normallashtirish: mavjud bo'lmagan yo'l tashlanadi; ASOSIY papka ichidagi
+ * (yoki unga teng) va allaqachon qabul qilingan ildiz ichidagi papkalar qo'shilmaydi —
+ * aks holda bitta papka daraxtda ikki marta chizilardi. Kandidat kengroq bo'lsa (masalan,
+ * avval `lib/`, keyin butun loyiha qo'shilsa) torrog'i olib tashlanadi. Takrorlar yo'q.
+ */
+const MAX_EXTRA_ROOTS = 12;   // amaliy chegara: daraxt ham, ro'yxat ham o'qiladigan qolsin
+
+function normalizeRoots(list) {
+  const primary = workspace ? (realOf(workspace) || path.resolve(workspace)) : '';
+  const out = [];
+  for (const p of list || []) {
+    if (out.length >= MAX_EXTRA_ROOTS) break;
+    if (typeof p !== 'string' || !p.trim()) continue;
+    const abs = realOf(p) || path.resolve(p);
+    if (!abs || !fs.existsSync(abs)) continue;
+    if (primary && realInside(primary, abs)) continue;      // asosiy papka o'zi qoplaydi
+    if (out.some((r) => realInside(r, abs))) continue;      // allaqachon qabul qilingan ildiz ichida
+    for (let i = out.length - 1; i >= 0; i--) {
+      if (realInside(abs, out[i])) out.splice(i, 1);        // kandidat kengroq
+    }
+    out.push(abs);
+  }
+  return out;
+}
+
+/** Qo'shimcha ildizlarni sozlamadan o'qib normallashtiramiz. */
+async function loadExtraRoots() {
+  extraRoots = normalizeRoots(await readExtraRootsRaw());
+  return extraRoots;
+}
+
+/** Ro'yxatni normallashtirib saqlaymiz (bitta manba: `config.json`). */
+async function setExtraRoots(list) {
+  extraRoots = normalizeRoots(list);
+  await writeExtraRootsRaw(extraRoots);
+  return extraRoots;
+}
+
+/**
+ * Ildizlar bir marta (oyna ochilishidan oldin) o'qilishini ta'minlaydi.
+ * Ilova (YANG AI) o'zi ham qo'shimcha papka bergan bo'lsa (`openIdeWindow({ extraRoots })`),
+ * ular ro'yxatga qo'shiladi — bitta manba, ikki oyna.
+ */
+async function ensureExtraRoots() {
+  if (!extraRootsLoaded) {
+    try { await loadExtraRoots(); extraRootsLoaded = true; } catch { /* app hali tayyor emas — keyin urinamiz */ }
+  }
+  if (pendingExtraRoots.length) {
+    const add = pendingExtraRoots;
+    pendingExtraRoots = [];
+    await setExtraRoots([...extraRoots, ...add]);
+  }
+  return extraRoots;
+}
+
+/** Renderer uchun ildizlar ro'yxati (asosiysi `primary: true`). */
+function rootsView() {
+  return rootsList().map((p, i) => ({ path: p, name: path.basename(p) || p, primary: i === 0 }));
 }
 
 function toRel(p) {
-  const r = path.relative(path.resolve(workspace), p).replace(/\\/g, '/');
-  return r || '.';
+  return showPath(p);
 }
 
 async function exists(p) {
@@ -167,19 +316,37 @@ function createWindow() {
 
 /**
  * IDE oynasini ochadi (yoki mavjudini oldinga chiqaradi).
- * @param {{ workspace?: string, parent?: import('electron').BrowserWindow }} [opts]
+ * @param {{ workspace?: string, extraRoots?: string[], parent?: import('electron').BrowserWindow }} [opts]
+ *        `extraRoots` — YANG AI allaqachon bilgan qo'shimcha papkalar (bir manba, ikki oyna).
  */
 export async function openIdeWindow(opts = {}) {
+  if (Array.isArray(opts.extraRoots) && opts.extraRoots.length) pendingExtraRoots.push(...opts.extraRoots);
   if (ideWin && !ideWin.isDestroyed()) {
     ideWin.show();
     ideWin.focus();
+    await ensureExtraRoots().catch(() => {});
     if (opts.workspace) await setWorkspace(opts.workspace, { persist: true }).catch(() => {});
+    // Oyna allaqachon ochiq: renderer o'zi so'ramagani uchun ish papkasi o'zgarganini
+    // xabar qilamiz (masalan foydalanuvchi boshqa chatga o'tib yana «YANG IDE» bosdi).
+    notifyWorkspace();
     return ideWin;
   }
-  createWindow();
+  // Ildizlar va ISH PAPKASI oyna yaratilishidan OLDIN tayyor bo'lsin: aks holda renderer
+  // `yide:init` ni erta chaqirib, «papka tanlanmagan» holatida ochib qo'yardi (o'lchandi:
+  // vaqti-vaqti bilan `init.workspace = null` bo'lardi).
+  await ensureExtraRoots().catch(() => {});
   const wanted = opts.workspace || (await readState()).lastWorkspace;
   if (wanted && (await exists(wanted))) await setWorkspace(wanted, { persist: false }).catch(() => {});
+  createWindow();
   return ideWin;
+}
+
+/** Renderer'ga ish papkasi (va ildizlar) o'zgarganini xabar qiladi. */
+function notifyWorkspace() {
+  send(`${CH}:workspace-changed`, {
+    workspace: workspace ? { path: workspace, name: path.basename(workspace) || workspace } : null,
+    roots: rootsView(),
+  });
 }
 
 /** IDE oynasi ochiqmi? */
@@ -196,6 +363,8 @@ export function disposeIde() {
   try { disposeDebug(); } catch { /* debugger yo'q */ }
   try { disposeRunner(); } catch { /* yurish yo'q */ }
   try { disposeLsp(); } catch { /* til xizmati yo'q */ }
+  try { disposeModels(); } catch { /* model menejeri yo'q */ }
+  try { disposeGit(); } catch { /* git paneli yo'q */ }
   const target = aiEngine || aiTeam;
   if (target) { try { target.abort(); } catch {} }
   aiEngine = null;
@@ -226,9 +395,16 @@ async function setWorkspace(p, { persist = true } = {}) {
   if (!st || !st.isDirectory()) return { error: 'Papka topilmadi' };
   workspace = abs;
   termCwd = abs;
+  await ensureExtraRoots();
+  // Ro'yxat SOZLAMADAN qayta o'qiladi va yangi asosiy papkaga nisbatan normallashtiriladi.
+  // Nega faylga qayta yozilmaydi: ilova IDE oynasini AYNAN qo'shimcha papka bilan ochsa
+  // (yoki foydalanuvchi papkani almashtirsa), o'sha papka «asosiy» bo'lib qolib, ro'yxatdan
+  // butunlay o'chib ketardi (o'lchandi: `extraRoots` bo'shab qolgan edi). Endi faqat
+  // foydalanuvchi O'ZI qo'shganda (`roots-add`) yoki olib tashlaganda fayl o'zgaradi.
+  await loadExtraRoots().catch(() => {});
   if (persist) await writeState({ lastWorkspace: abs, recent: [abs, ...((await readState()).recent || []).filter((x) => x !== abs)].slice(0, 8) });
   startWatcher();
-  return { path: abs, name: path.basename(abs) || abs };
+  return { path: abs, name: path.basename(abs) || abs, roots: rootsView() };
 }
 
 function startWatcher() {
@@ -258,7 +434,8 @@ async function listTree(rel, depth, counter = { n: 0 }) {
   if (!target) return { error: 'yo‘l tashqarida' };
   const st = await fsp.stat(target.abs).catch(() => null);
   if (!st) return { error: 'topilmadi' };
-  if (st.isFile()) return { entries: [{ path: target.rel, dir: false, size: st.size }] };
+  const roots = rootsList();
+  if (st.isFile()) return { entries: [{ path: showPath(target.abs), root: target.root, dir: false, size: st.size }], roots: rootsView() };
   const out = [];
   const walk = async (dir, d) => {
     let entries = [];
@@ -269,26 +446,39 @@ async function listTree(rel, depth, counter = { n: 0 }) {
       if (e.name === 'node_modules' || e.name === '.git' || e.name === '__pycache__') continue;
       if (e.name.startsWith('.') && e.name !== '.env' && e.name !== '.gitignore') continue;
       const full = path.join(dir, e.name);
-      const relPath = toRel(full);
+      // Har bir yozuv ruxsat etilgan ildizlardan BIRIDA qolishi shart (havolalar ham
+      // realpath orqali tekshiriladi) — aks holda daraxt begona nomlarni ko'rsatmaydi.
+      const real = insideAnyRoot(full, { allowRoot: true });
+      if (!real) continue;
       if (e.isDirectory()) {
-        out.push({ path: relPath, dir: true });
+        // Ko'rsatiladigan yo'l XOM yo'ldan olinadi (`full`), tekshiruv esa realpath bilan
+        // bajarildi: shunda oddiy holatda daraxt avvalgidek nisbiy yo'l ko'rsatadi.
+        out.push({ path: showPath(full), root: rootOf(full), dir: true });
         if (d < depth) await walk(full, d + 1);
       } else {
         let size = 0;
-        try { size = (await fsp.stat(full)).size; } catch {}
-        out.push({ path: relPath, dir: false, size });
+        try { size = (await fsp.stat(real)).size; } catch {}
+        out.push({ path: showPath(full), root: rootOf(full), dir: false, size });
       }
     }
   };
   await walk(target.abs, 0);
-  return { entries: out };
+  // Asosiy papka so'ralganda qo'shimcha ildizlar daraxt TEPASIDA ko'rinadi: foydalanuvchi
+  // ularni ochish uchun alohida amal qilishi shart emas (bir bosishda ochiladi).
+  if (roots.length > 1 && target.abs.toLowerCase() === path.resolve(roots[0]).toLowerCase()) {
+    const heads = roots.slice(1).map((r) => ({
+      path: showPath(r), root: r, dir: true, external: true, name: path.basename(r) || r,
+    }));
+    out.unshift(...heads);
+  }
+  return { entries: out, roots: rootsView() };
 }
 
 async function searchWorkspace(query, { caseSensitive = false, limit = 200 } = {}) {
   const q = String(query || '').trim();
   if (!q) return { results: [] };
-  const root = safePath('.', { allowRoot: true });
-  if (!root) return { error: 'papka tanlanmagan' };
+  const roots = rootsList();
+  if (!roots.length) return { error: 'papka tanlanmagan' };
   const needle = caseSensitive ? q : q.toLowerCase();
   const results = [];
   let scanned = 0;
@@ -300,27 +490,36 @@ async function searchWorkspace(query, { caseSensitive = false, limit = 200 } = {
       if (results.length >= limit || scanned > 6000) return;
       if (e.name === 'node_modules' || e.name === '.git' || e.name === '__pycache__' || e.name.startsWith('.')) continue;
       const full = path.join(dir, e.name);
-      if (e.isDirectory()) { await walk(full); continue; }
+      // Qamoq: havola orqali (junction/symlink) ish papkasidan chiqib ketmaymiz — aks holda
+      // qidiruv begona fayl mazmunini ham ko'rsatib qo'yardi.
+      const real = insideAnyRoot(full, { allowRoot: true });
+      if (!real) continue;
+      if (e.isDirectory()) { await walk(real); continue; }
       const ext = path.extname(e.name).toLowerCase();
       if (BINARY_SKIP.has(ext) || (!TEXT_EXT.has(ext) && ext !== '')) continue;
       scanned++;
       let text = '';
       try {
-        const st = await fsp.stat(full);
+        const st = await fsp.stat(real);
         if (st.size > 1.5 * 1024 * 1024) continue;
-        text = await fsp.readFile(full, 'utf8');
+        text = await fsp.readFile(real, 'utf8');
       } catch { continue; }
       const lines = text.split(/\r?\n/);
       for (let i = 0; i < lines.length; i++) {
         const hay = caseSensitive ? lines[i] : lines[i].toLowerCase();
         if (hay.includes(needle)) {
-          results.push({ path: toRel(full), line: i + 1, text: lines[i].trim().slice(0, 200) });
+          results.push({ path: showPath(full), line: i + 1, text: lines[i].trim().slice(0, 200) });
           if (results.length >= limit) return;
         }
       }
     }
   };
-  await walk(root.abs);
+  // Qidiruv ASOSIY papka bilan cheklanmaydi: qo'shimcha ildizlar ham qidiriladi (ular
+  // baribir qamoq ichida) — shunda `find in workspace` multi-root ma'nosini beradi.
+  for (const root of roots) {
+    if (results.length >= limit || scanned > 6000) break;
+    await walk(root);
+  }
   return { results, scanned };
 }
 
@@ -433,9 +632,10 @@ function parseErrorLinks(text) {
       const file = m[1];
       if (!file) continue;
       const abs = path.isAbsolute(file) ? file : path.resolve(termCwd, file);
-      const rel = toRel(abs);
-      if (rel.startsWith('..')) continue;
-      links.push({ path: rel, line: Number(m[2]) });
+      // Faqat ruxsat etilgan ildizlar ichidagi yo'llar havola bo'ladi: stack'dagi Node/Python
+      // ichki fayllari foydalanuvchiga kerak emas va ularni ochishga urinish behuda.
+      if (!insideAnyRoot(abs, { allowRoot: true })) continue;
+      links.push({ path: showPath(abs), line: Number(m[2]) });
     }
   }
   return links.slice(0, 20);
@@ -474,31 +674,75 @@ async function ensureLocalServer(config) {
     localServerStarted = true;
     return { host, port, base, already: true };
   }
-  const dir = app.isPackaged ? path.join(process.resourcesPath, 'local-ai') : path.join(ROOT_APP, 'local-ai');
-  const exeDir = path.join(dir, 'lc');
+  // Ikki ildiz: foydalanuvchi yuklab olgan modellar (`%APPDATA%/yang-ai/models`, paketda
+  // Program Files yozib bo'lmaydi) va ilova bilan kelganlar (`resources/local-ai`).
+  const [userDir, bundledDir] = modelDirs();
+  const exeDir = path.join(fs.existsSync(path.join(userDir, 'lc')) ? userDir : bundledDir, 'lc');
   const exe = path.join(exeDir, 'llama-server.exe');
   if (!fs.existsSync(exe)) {
     send(`${CH}:notice`, { text: 'Lokal model fayllari topilmadi — bulut provaydér ishlatiladi' });
     return null;
   }
-  // Model tanlash — O'LCHOVGA asoslangan (reports/local_ai/local-ai-hisobot.md):
-  //   qwen3.5-2B q4_k_m (1.28 GB) — bir xil 4 vazifada 3/4 (one-shot) va eng tez
-  //   → 1.7B (YANG AI bilan birga keladi, 3/4) → 4B (RAM >= 8 GB bo'lsa; sekin CPU'da
-  //   2-3/4, shuning uchun oxirgi o'rinda) → 0.5B zaxira.
-  // Ya'ni "ixcham, lekin kuchli" — 2B. 4B ni faqat foydalanuvchi qo'lda qo'shsa ishlatamiz.
+  // Model tanlash — O'LCHOVGA asoslangan (reports/local_ai/local-ai-hisobot.md).
+  // Ilgari bu yerda qattiq ro'yxat bor edi (2B → 1.7B → 4B → 0.5B) va foydalanuvchi
+  // «Lokal AI» menyusidan 7B yuklab olsa ham u ISHLATILMASDAN qolardi: ro'yxatning
+  // birinchi (kichik) fayli topilardi. Endi: MAVJUD hamma gguf ichidan balli eng
+  // yuqorisini tanlaymiz, faqat RAM ga sig'adiganlaridan (model + KV kesh + OS).
   const gb = os.totalmem() / 1024 ** 3;
-  const candidates = [
-    ['model-qwen3.5-2b-q4_k_m.gguf', true],
-    ['model-1.7b.gguf', true],
-    ['model-qwen3-4b-2507.gguf', gb >= 8],
-    ['model.gguf', true],
-  ];
-  const picked = candidates.find(([f, ok]) => ok && fs.existsSync(path.join(dir, f)));
-  if (!picked) {
-    send(`${CH}:notice`, { text: 'Lokal model fayli topilmadi (gguf) — bulut ishlatiladi' });
+  const catalog = loadModelCatalog();
+  const scored = [];
+  for (const root of [userDir, bundledDir]) {
+    let entries = [];
+    try { entries = fs.readdirSync(root); } catch { continue; }
+    for (const f of entries) {
+      if (!f.toLowerCase().endsWith('.gguf')) continue;
+      const abs = path.join(root, f);
+      let st; try { st = fs.statSync(abs); } catch { continue; }
+      if (!st.isFile()) continue;
+      const meta = catalog.items.find((x) => x.kind === 'text' && String(x.file).toLowerCase() === f.toLowerCase());
+      // Ball: o'lchangan bo'lsa o'sha (0..41), aks holda katalog darajasi, notanish faylga — 5.
+      const score = meta && meta.measured ? Number(meta.measured.score) || 0
+        : meta ? Number(meta.level || 3) * 10
+          : 5;
+      scored.push({ abs, file: f, bytes: st.size, score, measured: !!(meta && meta.measured) });
+    }
+  }
+  // Bir xil fayl ikki ildizda bo'lsa — foydalanuvchiniki ustun (yangiroq).
+  const unique = [];
+  for (const c of scored) if (!unique.some((x) => x.file.toLowerCase() === c.file.toLowerCase())) unique.push(c);
+  unique.sort((a, b) => (b.score - a.score) || (b.bytes - a.bytes));
+  const budget = os.totalmem() * 0.45;
+  const fits = unique.find((c) => c.bytes <= budget);
+  const chosenModel = fits || unique.slice().sort((a, b) => a.bytes - b.bytes)[0];
+  if (!chosenModel) {
+    send(`${CH}:notice`, { text: 'Lokal model fayli topilmadi (gguf) — «Lokal AI» menyusidan yuklab oling' });
     return null;
   }
-  const modelFile = picked[0];
+  if (!fits) {
+    send(`${CH}:notice`, { text: `Ogohlantirish: ${chosenModel.file} RAM uchun katta — sekin yoki yuklanmasligi mumkin` });
+  }
+  return startWithModel({
+    exe, exeDir,
+    modelPath: chosenModel.abs,
+    modelName: path.basename(chosenModel.abs),
+    host, port, base, gb,
+  });
+}
+
+/** Katalogni o'qiydi (ide_models.js bilan bir xil manba). Topilmasa bo'sh ro'yxat. */
+function loadModelCatalog() {
+  for (const root of modelDirs()) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(root, 'catalog.json'), 'utf8'));
+      if (Array.isArray(j.items)) return j;
+    } catch { /* keyingi ildiz */ }
+  }
+  return { items: [] };
+}
+
+/** Kontekst zinapoyasi bilan llama-server ni ko'taradi (RAM band bo'lsa kichraytirib qayta urinadi). */
+async function startWithModel({ exe, exeDir, modelPath, modelName, host, port, base, gb }) {
+  const modelFile = modelName;
   // Kontekst zinapoyasi: katta kontekst ko'proq KV kesh so'raydi va RAM band bo'lganda
   // llama-server "failed to allocate buffer for kv cache" bilan yiqiladi (o'lchandi:
   // 4B + 8192, bo'sh RAM 2.4 GB). Shuning uchun kichraytirib qayta urinamiz.
@@ -512,7 +756,7 @@ async function ensureLocalServer(config) {
     const reasons = [];
     for (const ctx of ladder) {
       send(`${CH}:notice`, { text: `Lokal model yuklanmoqda: ${modelFile} (kontekst ${ctx})` });
-      const attempt = await startLlamaServer({ exe, dir, modelFile, host, port, ctx });
+      const attempt = await startLlamaServer({ exe, dir: exeDir, modelPath, host, port, ctx });
       if (attempt.ok) {
         localServerStarted = true;
         localServerInfo = { host, port, base, model: modelFile, ctx };
@@ -532,10 +776,10 @@ async function ensureLocalServer(config) {
 
 // llama-server ni ko'tarib, port javob berguncha kutamiz. Avvalgi kod darhol qaytardi:
 // birinchi AI so'rovi hali yuklanmagan serverga urilib, javob o'rniga xato olardi.
-async function startLlamaServer({ exe, dir, modelFile, host, port, ctx }) {
+async function startLlamaServer({ exe, dir, modelPath, host, port, ctx }) {
   const startedAt = Date.now();
   let died = false;
-  const child = spawn(exe, ['-m', modelFile, '--alias', 'qwen3-instruct', '--host', host, '--port', String(port), '-c', String(ctx), '--reasoning', 'off', '--no-webui'], {
+  const child = spawn(exe, ['-m', modelPath, '--alias', 'qwen3-instruct', '--host', host, '--port', String(port), '-c', String(ctx), '--reasoning', 'off', '--no-webui'], {
     cwd: dir,
     detached: true,
     stdio: 'ignore',
@@ -625,29 +869,75 @@ function aiStop() {
 /* ------------------------------------------------------------------- IPC */
 /**
  * IDE IPC handler'larini ro'yxatga oladi (idempotent).
- * @param {{ standalone?: boolean }} [opts] standalone — mustaqil dastur rejimi (hisobot uchun).
+ * @param {{ standalone?: boolean, extraRoots?: string[] }} [opts] standalone — mustaqil dastur rejimi
+ *        (hisobot uchun); extraRoots — YANG AI allaqachon bilgan qo'shimcha papkalar.
  */
 export function registerIdeIpc(opts = {}) {
   standaloneMode = !!opts.standalone;
+  // Chaqiruvchi (YANG AI yoki mustaqil `ide/main.js`) qo'shimcha papkalarni bilsa — olib qolamiz.
+  if (Array.isArray(opts.extraRoots) && opts.extraRoots.length) pendingExtraRoots.push(...opts.extraRoots);
   if (ipcRegistered) return;
   ipcRegistered = true;
+  // Fon: holat faylidan ildizlarni o'qib qo'yamiz (app hali ready bo'lmasa — keyin urinadi).
+  ensureExtraRoots().catch(() => {});
 
   ipcMain.handle(`${CH}:pick-folder`, async () => {
+    await ensureExtraRoots().catch(() => {});
     const res = await dialog.showOpenDialog(ideWin || undefined, { properties: ['openDirectory'], title: 'Papka tanlang' });
-    if (res.canceled || !res.filePaths[0]) return { canceled: true };
+    if (res.canceled || !res.filePaths[0]) return { canceled: true, roots: rootsView() };
     const info = await setWorkspace(res.filePaths[0]);
-    return { ...info, recent: (await readState()).recent || [] };
+    return { ...info, roots: rootsView(), recent: (await readState()).recent || [] };
   });
 
   ipcMain.handle(`${CH}:open-folder`, async (_e, { path: p }) => {
+    await ensureExtraRoots().catch(() => {});
     const info = await setWorkspace(p);
-    return { ...info, recent: (await readState()).recent || [] };
+    return { ...info, roots: rootsView(), recent: (await readState()).recent || [] };
   });
 
   ipcMain.handle(`${CH}:init`, async () => {
+    await ensureExtraRoots().catch(() => {});
     const state = await readState();
     if (state.lastWorkspace && await exists(state.lastWorkspace)) await setWorkspace(state.lastWorkspace, { persist: false });
-    return { workspace: workspace ? { path: workspace, name: path.basename(workspace) } : null, recent: state.recent || [], tabs: state.tabs || [] };
+    return {
+      workspace: workspace ? { path: workspace, name: path.basename(workspace) } : null,
+      roots: rootsView(),
+      recent: state.recent || [],
+      tabs: state.tabs || [],
+    };
+  });
+
+  /* ---- Ko'p ildizli workspace: ro'yxat, qo'shish (papka tanlash), olib tashlash ---- */
+  ipcMain.handle(`${CH}:roots-list`, async () => {
+    await ensureExtraRoots().catch(() => {});
+    // Ro'yxat HAR SO'RALGANDA sozlamadan qayta o'qiladi: qo'shni oyna (YANG AI yon paneli)
+    // o'sha faylni yozadi — shu sabab ikki oyna bir xil ro'yxatni ko'radi, hodisa kutish shart emas.
+    await loadExtraRoots().catch(() => {});
+    return { roots: rootsView() };
+  });
+
+  ipcMain.handle(`${CH}:roots-add`, async () => {
+    await ensureExtraRoots().catch(() => {});
+    if (!workspace) return { error: 'Avval papka oching', roots: rootsView() };
+    const res = await dialog.showOpenDialog(ideWin || undefined, {
+      properties: ['openDirectory', 'createDirectory', 'multiSelections'],
+      title: 'Qo‘shimcha papka tanlang (bir nechtasini tanlash mumkin)',
+      buttonLabel: 'Qo‘shish',
+    });
+    if (res.canceled || !res.filePaths.length) return { canceled: true, roots: rootsView() };
+    await setExtraRoots([...extraRoots, ...res.filePaths]);
+    const roots = rootsView();
+    send(`${CH}:roots-changed`, { roots });
+    return { roots, extras: Math.max(0, roots.length - 1), picked: res.filePaths.length };
+  });
+
+  ipcMain.handle(`${CH}:roots-remove`, async (_e, { path: p } = {}) => {
+    await ensureExtraRoots().catch(() => {});
+    const want = (realOf(p) || path.resolve(String(p || ''))).toLowerCase();
+    await setExtraRoots(extraRoots.filter((r) => r.toLowerCase() !== want));
+    const roots = rootsView();
+    send(`${CH}:roots-changed`, { roots });
+    return { roots };
   });
 
   ipcMain.handle(`${CH}:list-tree`, async (_e, { rel = '.', depth = 3 } = {}) => listTree(rel, Math.max(1, Math.min(8, Number(depth) || 3))));
@@ -808,6 +1098,8 @@ export function registerIdeIpc(opts = {}) {
     localModel: localServerInfo ? localServerInfo.model : null,
     localStarted: localServerStarted,
     embedded: !standaloneMode,
+    modelsDir: userModelsDir(),
+    modelDirs: modelDirs(),
   }));
 
   /* -------------------------------------------------------------------------
@@ -818,11 +1110,26 @@ export function registerIdeIpc(opts = {}) {
   registerPtyIpc({
     send,
     getWorkspace: () => workspace,
-    // Terminal faqat ish papkasi ichida ochiladi (havola orqali chiqish ham bloklanadi).
+    // Terminal faqat ruxsat etilgan ildizlar ichida ochiladi (havola orqali chiqish ham
+    // bloklanadi); qo'shimcha papkalar ham xuddi shu tekshiruvdan o'tadi.
     guardCwd: (p) => { const t = safePath(p, { allowRoot: true }); return t ? t.abs : null; },
   });
   registerLspIpc({ safePath, getWorkspace: () => workspace });
   registerDebugIpc({ safePath, getWorkspace: () => workspace, send });
+  registerModelsIpc({
+    send,
+    getWorkspace: () => workspace,
+    safePath,
+    // Yuklab olingan modelni bir bosishda ishlatish — umumiy sozlamaga yoziladi
+    // (`%APPDATA%/yang-ai/config.json`), shuning uchun YANG AI ham shundan foydalanadi.
+    saveSharedModel: (provider, model) => aiSetModel(provider, model),
+  });
+  // Git paneli: status/diff/stage/commit/log. Yo'llar `safePath` (ildizlar ro'yxati)
+  // orqali ham tekshiriladi — workspace'dan tashqariga chiqadigan yo'l rad etiladi.
+  registerGitIpc({ getWorkspace: () => workspace, safePath });
+  // Lokal ovozli buyruqlar: rubaistt modeli + whisper.cpp. Model/ikkilik topilmasa
+  // holat ANIQ aytiladi (yolg‘on «tayyor» yo‘q) — UI shuni ko‘rsatadi.
+  registerVoiceIpc({ dirs: voiceModelDirs({ userModelsDir, bundledModelsDir }) });
   registerRunnerIpc({
     safePath,
     getWorkspace: () => workspace,

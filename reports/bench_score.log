@@ -1,0 +1,18 @@
+PASS  A. Qwen3.5 2B: ball 30.9 va ★3
+      → hisoblandi: ball 30.9 · ★3
+PASS  A. coder 7B: ball 41 va ★4
+      → hisoblandi: ball 41 · ★4
+PASS  A. coder 3B: ball 30.84 va ★3
+      → hisoblandi: ball 30.84 · ★3
+PASS  B. Yulduz chegaralari 0/4, 1/4, 2/4, 3/4, 4/4 → 1,1,2,3,4
+      → natija: 0/4→★1 · 1/4→★1 · 2/4→★2 · 3/4→★3 · 4/4→★4
+PASS  C. 0.1 s da yiqilgan model ballni shishirmaydi (tezlik 3 bilan cheklanadi)
+      → 1/4 · 0.1 s → 13 (3 + 10)
+PASS  D. Haqiqiy hisobotdan o‘qildi (ball va vazifa soni hisobotga mos)
+      → «qwen2.5-coder:7b» → 4/4 · one-shot 2 · 75s · ball 41
+PASS  D2. Absolyut yo‘l bo‘yicha ham to‘g‘ri model yozuvi topiladi (nomi bo‘yicha moslashtirish)
+      → ball 41.4 (4/4 · 50 s · one-shot 2 → 40 + min(3, 60/50) + 0,2)
+PASS  D3. Natija yo‘q bo‘lsa — aniq xato qaytadi (jimgina yolg‘on ball yozilmaydi)
+      → xato: model natijasi hisobotda topilmadi
+
+XULOSA: hammasi o‘tdi (0 xato)

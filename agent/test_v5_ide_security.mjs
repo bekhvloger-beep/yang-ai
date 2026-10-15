@@ -15,8 +15,40 @@ const appSrc = fs.readFileSync(path.join(here, '..', 'renderer', 'app.js'), 'utf
 for (const h of ['ide:read-file', 'ide:run-command', 'ide:list-tree', 'ide:save-file', 'ide:open-external']) {
   assert.ok(mainSrc.includes(`'${h}'`), `${h} handler mavjud emas`);
 }
-const relCheckCount = (mainSrc.match(/\w+\.startsWith\('\.\.'\)/g) || []).length;
-assert.ok(relCheckCount >= 6, `path traversal blok ${relCheckCount} ta — kamida 6 bo'lishi kerak (read-file, run-command, list-tree guard, safeRel, save-file, open-external)`);
+// 1b. Qamoq ARXITEKTURASI: yo'l `realpath` bo'yicha tekshiriladi (symlink/junction ni ham
+// ko'radi) va har bir yo'l oladigan handler o'sha yagona darvozadan o'tadi.
+// v5.5 da ko'p ildizli workspace qo'shildi — shu sabab «matnda nechta `startsWith('..')` bor»
+// o'rniga handler TANASIDA `insideAnyRoot(...)` borligi tekshiriladi (kuchliroq mezon).
+const handlerBody = (name) => {
+  const at = mainSrc.indexOf(`'${name}'`);
+  if (at < 0) return '';
+  const next = mainSrc.indexOf('ipcMain.handle(', at + 10);
+  return mainSrc.slice(at, next < 0 ? mainSrc.length : next);
+};
+for (const h of ['ide:read-file', 'ide:save-file', 'ide:list-tree', 'ide:run-command', 'ide:open-external']) {
+  assert.ok(/insideAnyRoot\s*\(/.test(handlerBody(h)), `${h} tanasida insideAnyRoot qamoq tekshiruvi yo'q`);
+}
+assert.ok(/fs\.realpathSync\.native/.test(mainSrc), 'realpath (symlink/junction) tekshiruvi yo‘q');
+assert.ok(/const insideAnyRoot = /.test(mainSrc) && /const insideWorkspace = /.test(mainSrc), 'qamoq yordamchilari (insideWorkspace/insideAnyRoot) yo‘q');
+// Yagona darvoza: `insideWorkspace` (realpath + `..`/abs tekshiruvi). `insideAnyRoot` esa
+// shu darvozani ruxsat etilgan HAR BIR ildiz uchun chaqiradi — ya'ni qamoq bitta joyda.
+const relCheckCount = (mainSrc.match(/startsWith\('\.\.'\)/g) || []).length;
+assert.ok(relCheckCount >= 1, `nisbiy yo'l («..») tekshiruvi umuman yo'q (topildi: ${relCheckCount})`);
+assert.ok(/const insideAnyRoot = \(roots, abs\) => \{[\s\S]{0,120}insideWorkspace\(root, abs\)/.test(mainSrc), 'insideAnyRoot har bir ildiz uchun insideWorkspace chaqirmayapti');
+
+// 1c. Ko'p ildizli workspace qamoqni ZAIFLASHTIRMASLIGI kerak: qo'shimcha papka faqat
+// foydalanuvchi papka tanlash oynasida O'ZI tanlagan papkadan qo'shiladi (renderer yo'l
+// bera olmaydi), ro'yxat realpath bilan filtrlanadi va olib tashlash faqat qo'shimchalardan.
+const addBody = handlerBody('ide:roots-add');
+assert.ok(/showOpenDialog/.test(addBody), 'ide:roots-add papka tanlash oynasisiz ishlayapti');
+assert.ok(/async \(\) =>/.test(addBody), 'ide:roots-add renderer’dan yo‘l qabul qilyapti (xavfli)');
+assert.ok(/extraRoots/.test(addBody) && /realOrNull/.test(addBody), 'ide:roots-add realpath bilan filtrlamayapti');
+const removeBody = handlerBody('ide:roots-remove');
+assert.ok(/extraRoots\(\)\.filter/.test(removeBody), 'ide:roots-remove faqat qo‘shimcha ildizlardan o‘chiradi');
+assert.ok(/cfg\.config\.extraRoots/.test(mainSrc), 'qo‘shimcha ildizlar sozlamada saqlanmayapti');
+for (const fn of ['ideRootsList', 'ideRootsAdd', 'ideRootsRemove']) {
+  assert.ok(preloadSrc.includes(fn), `preload'da ${fn} yo'q`);
+}
 
 // 2. Preload ko'plari (renderer faqat oshkor API'larga kiradi)
 for (const fn of ['readWorkspaceFile', 'ideRunCommand', 'ideListTree', 'imageStudio', 'ideSaveFile', 'ideOpenExternal']) {

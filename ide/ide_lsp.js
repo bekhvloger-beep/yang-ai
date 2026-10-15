@@ -13,13 +13,17 @@
 //
 // Muhim: server `ELECTRON_RUN_AS_NODE=1` bilan ILOVANING O'Z exe'si orqali yuritiladi —
 // shuning uchun paketlangan nusxada ham ishlaydi (foydalanuvchida Node o'rnatilmagan
-// bo'lsa ham). Python uchun: mavjud bo'lsa `pyflakes` ishlatiladi, aks holda eski
-// sintaksis tekshiruvi qoladi.
+// bo'lsa ham). Python uchun kuch-quvvat zinapoyasi ishlatiladi:
+//   pyright (tip xatolari, Pylance bilan bir dvigatel) → mypy (tip tekshiruvining
+//   klassikasi) → pyflakes (yengil: aniqlanmagan nom/ishlatilmagan import) → hech narsa
+//   (shunda eski sintaksis tekshiruvi qoladi). Uchtasi ham FOYDALANUVCHI o'rnatadigan
+//   vositalar — topilmasa IDE ishdan to'xtamaydi, zinapoyadan pastga tushadi.
 import { ipcMain } from 'electron';
 import { spawn, spawnSync } from 'node:child_process';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 
 const CH = 'yide';
 const require = createRequire(import.meta.url);
@@ -189,7 +193,138 @@ function normLoc(loc) {
 }
 
 /* -------------------------------------------------------------------- python */
-// pyflakes bo'lsa — haqiqiy semantik tekshiruv (aniqlanmagan nom, ishlatilmagan import).
+// Nega bir necha vosita: pyright ham, mypy ham foydalanuvchi tomonida o'rnatilishi shart
+// bo'lgan paketlar (`pip install pyright` / `mypy`). Shuning uchun tanlov BIR MARTA
+// o'lchanadi va yodda saqlanadi — har tahrirda qayta sinab IDE sekinlashmasin.
+// Muhim: modul formasi (`python -m pyright`) afzal — global `.cmd` shim kerak emas.
+let pyEngine = null; // null = hali sinanmagan, false = birortasi ham yo'q
+
+/** Eng kuchlidan boshlab zinapoya: kuchli vosita topilsa pastdagilari sinalmaydi. */
+function pySteps() {
+  const py = process.env.YANG_IDE_PYTHON || 'python';
+  return [
+    { engine: 'pyright', cmd: py, args: ['-m', 'pyright'], probe: ['--version'] },
+    { engine: 'pyright', cmd: process.env.YANG_IDE_PYRIGHT || 'pyright', args: [], probe: ['--version'] },
+    { engine: 'mypy', cmd: py, args: ['-m', 'mypy'], probe: ['--version'] },
+    { engine: 'mypy', cmd: process.env.YANG_IDE_MYPY || 'mypy', args: [], probe: ['--version'] },
+    // pyflakes'da `--version` bo'lmasligi mumkin — import bilan sinaymiz.
+    { engine: 'pyflakes', cmd: py, args: ['-m', 'pyflakes'], probe: ['-c', 'import pyflakes'] },
+  ];
+}
+
+function pyRun(cmd, args, timeoutMs, opts = {}) {
+  try {
+    return spawnSync(cmd, args, {
+      encoding: 'utf8', timeout: timeoutMs, windowsHide: true, maxBuffer: 8 * 1024 * 1024,
+      // Ish papkasi — faylning o'zi: mypy/pyright loyiha konfiguratsiyasini (mypy.ini,
+      // pyrightconfig.json) o'sha yerdan qidiradi va ilovaning ish papkasini iflos qilmaydi.
+      cwd: opts.cwd,
+    });
+  } catch { return null; }
+}
+
+/**
+ * mypy keshi foydalanuvchi loyihasida ham, ilova papkasida ham yaratilmasin.
+ * Paketlangan nusxada o'rnatish papkasi faqat o'qish uchun bo'ladi (Program Files),
+ * shuning uchun kesh tizim vaqt papkasiga yoziladi.
+ */
+const pyCacheDir = () => path.join(os.tmpdir(), 'yang-ide-mypy-cache');
+
+/** Vosita ko'tariladimi? Chiqishi bo'lsa — ha; «modul topilmadi» bo'lsa — yo'q. */
+function pyProbe(cmd, args) {
+  const r = pyRun(cmd, args, 10000);
+  if (!r || r.error) return false;
+  const out = `${r.stdout || ''}${r.stderr || ''}`.trim();
+  if (!out) return false;
+  // Windows'dagi "is not recognized", Python'ning "No module named" — ikkisi ham yo'q degani.
+  if (/no module named|not recognized|not found|cannot find/i.test(out)) return false;
+  return true;
+}
+
+function detectPyEngine() {
+  if (pyEngine !== null) return pyEngine;
+  pyEngine = false; // topilmasa qayta urinmaymiz (foydalanuvchi keyin o'rnatsa — ilova qayta ochiladi)
+  for (const step of pySteps()) {
+    if (pyProbe(step.cmd, [...step.args, ...step.probe])) { pyEngine = step; return pyEngine; }
+  }
+  return pyEngine;
+}
+
+/** pyright `--outputjson` — 0-asosli qator/ustun; bizning shakl 1-asosli. */
+function pyrightLint(step, abs) {
+  const r = pyRun(step.cmd, [...step.args, '--outputjson', abs], 20000, { cwd: path.dirname(abs) });
+  if (!r) return null;
+  const out = `${r.stdout || ''}`;
+  const at = out.indexOf('{');
+  if (at < 0) return null;
+  let data = null;
+  try { data = JSON.parse(out.slice(at)); } catch { return null; }
+  if (!data || !Array.isArray(data.generalDiagnostics)) return null;
+  const want = path.resolve(abs).toLowerCase();
+  const items = [];
+  for (const d of data.generalDiagnostics) {
+    // Faqat shu fayl: import qilingan modullarning xatolari foydalanuvchini chalg'itmasin.
+    if (String(d.file || '') && path.resolve(String(d.file)).toLowerCase() !== want) continue;
+    const start = (d.range && d.range.start) || {};
+    const msg = String(d.message || '').replace(/\s+/g, ' ').trim();
+    items.push({
+      line: (Number(start.line) || 0) + 1,
+      col: (Number(start.character) || 0) + 1,
+      message: d.rule ? `${msg} (${d.rule})` : msg,
+      severity: d.severity === 'warning' ? 'warning' : d.severity === 'information' ? 'info' : 'error',
+      source: 'pyright',
+    });
+  }
+  return items;
+}
+
+/** mypy matn chiqishi: `fayl.py:3:5: error: nom aniqlanmagan` (ustun ixtiyoriy). */
+function mypyLint(step, abs) {
+  const r = pyRun(
+    step.cmd,
+    [...step.args, '--hide-error-context', '--no-color-output', '--no-error-summary', '--cache-dir', pyCacheDir(), abs],
+    20000,
+    { cwd: path.dirname(abs) },
+  );
+  if (!r) return null;
+  const out = `${r.stdout || ''}${r.stderr || ''}`;
+  // Argumentlar eski mypy'da tanilmasa — sintaksis tekshiruviga qaytamiz (yolg'on xato ko'rsatmaymiz).
+  if (/usage: mypy|unrecognized arguments/i.test(out) && !/:\d+:/.test(out)) return null;
+  const want = path.resolve(abs).toLowerCase();
+  const items = [];
+  for (const line of out.split(/\r?\n/)) {
+    const m = line.match(/^(.+?):(\d+):(?:(\d+):)?\s*(error|warning):\s*(.*)$/);
+    if (!m) continue;
+    // mypy nomni fayl argumentiga qarab NISBIY chiqarishi mumkin (biz uni o'z papkasidan
+    // `cwd` bilan yuritamiz), shu sabab yo'lni ikki nuqtadan ham hisoblaymiz.
+    const rel = m[1].trim();
+    const cand = [path.resolve(rel), path.resolve(path.dirname(abs), rel)].map((s) => s.toLowerCase());
+    if (!cand.includes(want)) continue;
+    items.push({
+      line: Number(m[2]) || 1,
+      col: Number(m[3]) || 1,
+      message: m[5].replace(/\s+/g, ' ').trim(),
+      severity: m[4] === 'warning' ? 'warning' : 'error',
+      source: 'mypy',
+    });
+  }
+  return items;
+}
+
+function pyflakesLint(abs) {
+  const r = pyRun(process.env.YANG_IDE_PYTHON || 'python', ['-m', 'pyflakes', abs], 15000);
+  if (!r) return null;
+  const out = `${r.stdout || ''}${r.stderr || ''}`;
+  const items = [];
+  for (const line of out.split(/\r?\n/)) {
+    const m = line.match(/^(.+?):(\d+):(\d+)?\s*(.*)$/);
+    if (!m) continue;
+    items.push({ line: Number(m[2]) || 1, col: Number(m[3]) || 1, message: m[4].trim(), severity: 'error', source: 'pyflakes' });
+  }
+  return items;
+}
+
+/** pyflakes alohida so'raladi (holat qatorida ko'rsatiladi) — natija yodda saqlanadi. */
 function pyflakesAvailable() {
   if (pyflakesOk !== null) return pyflakesOk;
   try {
@@ -199,19 +334,19 @@ function pyflakesAvailable() {
   return pyflakesOk;
 }
 
+/**
+ * Python faylini semantik tekshiradi — eng yaxshi mavjud vosita bilan.
+ * @returns {{items: Array<{line:number,col:number,message:string,severity:string,source:string}>, engine: string} | null}
+ *          null — birorta vosita yo'q yoki u yiqildi (chaqiruvchi sintaksis rejimiga tushadi).
+ */
 function pythonLint(abs) {
-  if (!pyflakesAvailable()) return null;
-  try {
-    const r = spawnSync(process.env.YANG_IDE_PYTHON || 'python', ['-m', 'pyflakes', abs], { encoding: 'utf8', timeout: 15000, windowsHide: true });
-    const out = `${r.stdout || ''}${r.stderr || ''}`;
-    const items = [];
-    for (const line of out.split(/\r?\n/)) {
-      const m = line.match(/^(.+?):(\d+):(\d+)?\s*(.*)$/);
-      if (!m) continue;
-      items.push({ line: Number(m[2]) || 1, col: Number(m[3]) || 1, message: m[4].trim(), severity: 'error', source: 'pyflakes' });
-    }
-    return items;
-  } catch { return null; }
+  const step = detectPyEngine();
+  if (!step) return null;
+  const items = step.engine === 'pyright' ? pyrightLint(step, abs)
+    : step.engine === 'mypy' ? mypyLint(step, abs)
+      : pyflakesLint(abs);
+  if (!items) return null;
+  return { items, engine: step.engine };
 }
 
 /* ---------------------------------------------------------------------- IPC */
@@ -232,7 +367,7 @@ export function registerLspIpc(c) {
       available: !!exe,
       reason: exe ? null : tsError,
       server: exe ? path.basename(path.dirname(path.dirname(exe))) : null,
-      python: { pyflakes: pyflakesAvailable() },
+      python: { pyflakes: pyflakesAvailable(), engine: (detectPyEngine() || {}).engine || null },
     };
   });
 
@@ -243,8 +378,8 @@ export function registerLspIpc(c) {
     const ext = path.extname(abs).toLowerCase();
     if (ext === '.py') {
       const py = pythonLint(abs);
-      if (py) return { items: py, engine: 'pyflakes' };
-      return { items: [], engine: null, note: 'Python uchun semantik tekshiruv yo‘q (pyflakes o‘rnatilmagan) — sintaksis tekshiruvi ishlaydi' };
+      if (py) return { items: py.items, engine: py.engine };
+      return { items: [], engine: null, note: 'Python uchun semantik tekshiruv yo‘q (pyright/mypy/pyflakes o‘rnatilmagan) — sintaksis tekshiruvi ishlaydi' };
     }
     if (!LANG_TS.has(ext)) return { items: [], engine: null };
     const root = path.resolve(ctx.getWorkspace() || path.dirname(abs));

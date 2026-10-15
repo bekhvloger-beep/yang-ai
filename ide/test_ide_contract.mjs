@@ -23,7 +23,7 @@ const preloadSrc = read('preload.cjs');
 // ularni haqiqiy matnga aylantiramiz, aks holda tekshiruv bo'sh o'tib ketardi.
 // IDE mantiqi endi bir necha modulda (yadro + PTY + til xizmati + debugger + yurish/tarix).
 // Test ularning HAMMASINI o'qiydi, aks holda yangi kanallar "handlersiz" ko'rinadi.
-const MAIN_MODULES = ['main.js', 'ide_host.js', 'ide_pty.js', 'ide_lsp.js', 'ide_debug.js', 'ide_runner.js'];
+const MAIN_MODULES = ['main.js', 'ide_host.js', 'ide_pty.js', 'ide_lsp.js', 'ide_debug.js', 'ide_runner.js', 'ide_models.js', 'ide_git.js', 'ide_voice.js'];
 const mainSrc = MAIN_MODULES
   .filter((f) => fs.existsSync(path.join(HERE, f)))
   .map((f) => read(f))
@@ -35,7 +35,9 @@ const appPreloadSrc = read(path.join('..', 'preload.cjs'));
 const pkg = JSON.parse(read(path.join('..', 'package.json')));
 
 let failed = 0;
+let total = 0;
 function check(label, cond, detail = '') {
+  total += 1;
   if (cond) {
     console.log(`  PASS  ${label}`);
   } else {
@@ -219,5 +221,111 @@ check('Tahrir chegarasi olib tashlandi (2 MB yo‘q, faqat 512 MB xotira himoyas
 check('Katta fayl rejimi: qator raqamlari oynalanadi, sintaksis bo‘yash o‘chadi (qotmaslik uchun)',
   /paintGutter/.test(appSrc) && /HIGHLIGHT_MAX/.test(appSrc) && /bigNote/.test(html));
 
-console.log(failed ? `\n${failed} tekshiruv YIQILDI` : '\nHammasi o‘tdi (44 tekshiruv · 8 guruh)');
+/* 9) LOKAL AI MENEJERI — apparat talablari, kuch reytingi va yuklab olish.
+      Bu guruh "foydalanuvchi modelni tanlay oladimi" shartini ushlab turadi: katalog
+      fayli mavjud, katalogdagi har bir yozuvda minimal talablar va kuch bor, apparat
+      profili haqiqiy qiymatlardan o‘lchanadi, yuklab olish esa qamoq ichidagi
+      `%APPDATA%/yang-ai/models` ga yozadi (Program Files yozib bo‘lmaydi). */
+const catalogPath = path.join(HERE, '..', 'local-ai', 'catalog.json');
+check('Lokal AI katalogi mavjud (local-ai/catalog.json)', fs.existsSync(catalogPath));
+let cat = null;
+if (fs.existsSync(catalogPath)) { try { cat = JSON.parse(fs.readFileSync(catalogPath, 'utf8')); } catch { cat = null; } }
+check('Katalog JSON sifatida o‘qiladi va ichida `items` massivi bor', !!(cat && Array.isArray(cat.items) && cat.items.length >= 5),
+  cat ? `${(cat.items || []).length} yozuv` : 'o‘qilmadi');
+if (cat && Array.isArray(cat.items)) {
+  const bad = [];
+  for (const it of cat.items) {
+    const miss = ['id', 'kind', 'name', 'file', 'backend', 'min'].filter((k) => it[k] === undefined || it[k] === '');
+    if (miss.length) bad.push(`${it.id || '?'}: ${miss.join('/')}`);
+    if (!it.min || !it.min.ramGb || !it.min.diskGb) bad.push(`${it.id}: min.ramGb/min.diskGb yo‘q`);
+    if (it.kind !== 'text' && typeof it.strength !== 'object') bad.push(`${it.id}: strength yo‘q`);
+    if (!it.bundled && !it.url) bad.push(`${it.id}: url yo‘q (yuklab olish mumkin emas)`);
+    if (it.url && !/^https:\/\//.test(it.url)) bad.push(`${it.id}: url http(s) emas`);
+  }
+  const ids = cat.items.map((x) => x.id);
+  if (unique(ids).length !== ids.length) bad.push('takrorlanuvchi id bor');
+  check(`Katalogda ${cat.items.length} yozuv: har birida talablar, kuch va yuklab olish manbasi`, bad.length === 0, bad.slice(0, 4).join(' | '));
+  const kinds = unique(cat.items.map((x) => x.kind));
+  check('Katalogda matn, rasm va rasm dvigateli turkumlari bor',
+    kinds.includes('text') && kinds.includes('image') && kinds.includes('runtime'), kinds.join(','));
+  const measured = cat.items.filter((x) => x.measured && typeof x.measured.idePass === 'number');
+  check('Kuch reytingi O‘LCHOVGA tayanadi (kamida 2 modelda measured.idePass bor)', measured.length >= 2, `${measured.length} model`);
+}
+const modelsSrc = fs.existsSync(path.join(HERE, 'ide_models.js')) ? read('ide_models.js') : '';
+check('ide_models.js: apparat profili, moslik bahosi va tashqi AI skani mavjud',
+  /export async function hardwareProfile/.test(modelsSrc) && /function verdictFor/.test(modelsSrc)
+  && /export async function externalScan/.test(modelsSrc) && /export function machineStars/.test(modelsSrc));
+check('Yuklab olish: oqim (progress), bekor qilish va hajm tekshiruvi bor',
+  /function startDownload/.test(modelsSrc) && /model-progress/.test(modelsSrc)
+  && /controller\.abort/.test(modelsSrc) && /hajm mos emas/.test(modelsSrc));
+check('Modellar yozsa bo‘ladigan papkaga tushadi (userData/models), ilova nusxasi saqlanadi',
+  /app\.getPath\('userData'\), 'models'/.test(modelsSrc) && /export function modelDirs/.test(modelsSrc)
+  && /resourcesPath, 'local-ai'/.test(modelsSrc));
+check('Lokal rasm generatsiyasi API EMAS (stable-diffusion.cpp) va IDE ga ulangan',
+  fs.existsSync(path.join(HERE, '..', 'agent', 'local_sd.js'))
+  && /sd-cli\.exe/.test(fs.readFileSync(path.join(HERE, '..', 'agent', 'local_sd.js'), 'utf8'))
+  && /\$\{CH\}:image-generate/.test(modelsSrc) && /imageGenerate/.test(appSrc) && /imgPrompt/.test(html));
+check('«Lokal AI» menyusi UI da bor (tugma + modal + progress hodisasi)',
+  /id="aiModelsBtn"/.test(html) && /id="modelsModal"/.test(html) && /id="hwProfile"/.test(html)
+  && /aiModelsBtn/.test(appSrc) && /modelsCatalog/.test(preloadSrc) && /onModelProgress/.test(preloadSrc)
+  && /\.mdl-bar-fill/.test(cssSrc));
+// «O‘lchash»: yuklangan model 4 haqiqiy vazifa bilan sinab, kuch reytingi O‘LCHANGAN ball
+// bilan yangilanadi. Uch qatlam bir xil nomda bo‘lishi shart: tugma (renderer) → kanal
+// (preload) → ishlovchi (main, `ide_models.js`) va yozib qo‘yish joyi (measured.json).
+check('«O‘lchash» tugmasi: haqiqiy 4 vazifa bilan ball yangilanadi (tugma → kanal → ishlovchi)',
+  /data-act="measure"/.test(appSrc) && /modelsMeasure/.test(preloadSrc) && /onModelBench/.test(preloadSrc)
+  && /models-measure/.test(mainSrc) && /function measureModel/.test(modelsSrc)
+  && /bench_ide_assisted\.mjs/.test(modelsSrc) && /measured\.json/.test(modelsSrc)
+  && /applyMeasuredResults/.test(modelsSrc) && /function finishMeasure/.test(modelsSrc));
+check('Ball va yulduz formulasi YAGONA joyda (agent/bench_score.js) — hisobot ham shundan oladi',
+  fs.existsSync(path.join(HERE, '..', 'agent', 'bench_score.js'))
+  && /export function benchScore/.test(fs.readFileSync(path.join(HERE, '..', 'agent', 'bench_score.js'), 'utf8'))
+  && /benchScore/.test(fs.readFileSync(path.join(HERE, '..', 'scripts', 'report_local_ai.mjs'), 'utf8'))
+  && /benchStars/.test(modelsSrc));
+check('Sinov skripti paketga kiradi va asar ichidan chiqariladi (node bola jarayon)',
+  (() => { const b = JSON.parse(read(path.join('..', 'electron-builder.ide.json')));
+    return (b.asarUnpack || []).some((p) => /bench_ide_assisted/.test(p))
+      && (b.files || []).some((p) => /bench_ide_assisted/.test(p))
+      && (b.files || []).some((p) => /bench_score\.js/.test(p)); })());
+// Git paneli: tugma → kanal (preload) → ishlovchi (ide_git.js + ide_host.js) zanjiri.
+check('Git paneli: status/farq/belgilash/commit bir zanjirda (tugma → kanal → `git` CLI)',
+  /id="gitBtn"/.test(html) && /id="gitModal"/.test(html) && /id="gitCommit"/.test(html)
+  && /gitStatus/.test(preloadSrc) && /gitCommit/.test(preloadSrc) && /gitDiff/.test(preloadSrc)
+  && /registerGitIpc/.test(mainSrc) && /yide:git-commit/.test(mainSrc)
+  && fs.existsSync(path.join(HERE, 'ide_git.js'))
+  && /gitCommit/.test(appSrc));
+check('Git paneli: o‘zgargan fayllar, belgilash va diff ko‘rsatiladi',
+  /gitFiles/.test(html) && /gitDiff/.test(html) && /gitLog/.test(html)
+  && /data-act="\$\{act\}"|"stage"|"unstage"/.test(appSrc) && /\.git-row/.test(cssSrc));
+// Lokal ovozli buyruqlar: mikrofon → rubaistt (whisper.cpp) → FAQAT allowlist buyruq.
+check('Ovozli buyruq: mikrofon tugmasi → transkripsiya → allowlist buyruq',
+  /id="voiceBtn"/.test(html) && /id="voiceBar"/.test(html) && /id="voiceText"/.test(html)
+  && /voiceTranscribe/.test(preloadSrc) && /voiceCommand/.test(preloadSrc)
+  && /yide:voice-transcribe/.test(mainSrc) && /registerVoiceIpc/.test(mainSrc)
+  && /getUserMedia/.test(appSrc) && /16|sampleRate/.test(appSrc));
+check('Ovoz: XAVFSIZLIK — tanilgan matn shellga uzatilmaydi (faqat buyruq ID si)',
+  fs.existsSync(path.join(HERE, '..', 'agent', 'local_voice.js'))
+  && (() => { const src = fs.readFileSync(path.join(HERE, '..', 'agent', 'local_voice.js'), 'utf8');
+    return !/\bexecSync\b/.test(src) && !/shell:\s*true/.test(src) && /XAVFSIZLIK/.test(src) && /RAW_ALLOWED/.test(src); })()
+  && /voiceRunCommand/.test(appSrc));
+check('Ovoz modeli katalogda (rubaistt, whisper.cpp) va «Ovoz modeli» turkumi UI da',
+  (() => { const cat = JSON.parse(read(path.join('..', 'local-ai', 'catalog.json')));
+    const v = cat.items.find((x) => x.id === 'voice-rubaistt-medium-q5');
+    return !!v && v.kind === 'voice' && v.bytes === 539212484 && /rubaistt/.test(v.url) && /q5_0/.test(v.file); })()
+  && /data-tab="voice"/.test(html));
+check('Katta modellar boshqa diskka ko‘chiriladi (`YANG_MODELS_DIR`)',
+  /YANG_MODELS_DIR/.test(modelsSrc) && /process\.env\.YANG_MODELS_DIR/.test(modelsSrc));
+check('Kompyuterda o‘rnatilgan AI ni bir bosishda ulash (Ollama/LM Studio)',
+  /ollama/i.test(modelsSrc) && /lmstudio/i.test(modelsSrc) && /models-attach/.test(modelsSrc)
+  && /data-act="use"|"use"/.test(appSrc));
+check('Apparat profili VRAM ni o‘lchaydi va WMI cheklovini ochiq aytadi',
+  /Win32_VideoController/.test(modelsSrc) && /WMI 4 GB/.test(modelsSrc));
+// Program Files'dagi nusxa (`resources/local-ai`) O'CHIRILMAYDI: aks holda offline model va rasm
+// dvigateli butunlay yo'qolib, ularni faqat qayta yuklab tiklash mumkin bo'lardi.
+check('Ilova bilan kelgan nusxa o‘chirishdan himoyalangan (readonly)',
+  /readonly/.test(modelsSrc) && /o‘chirilmaydi/.test(modelsSrc) && /readonly/.test(appSrc)
+  && /inst\.readonly/.test(modelsSrc));
+
+// Sanoq HAQIQIY: matn qo‘lda yozilgan raqam bilan yuritilmaydi (u eskirib qolgan edi).
+console.log(failed ? `\n${failed}/${total} tekshiruv YIQILDI` : `\nHammasi o‘tdi (${total} tekshiruv · 9 guruh)`);
 if (failed) process.exitCode = 1;

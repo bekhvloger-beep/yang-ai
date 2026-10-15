@@ -1,0 +1,36 @@
+
+> yang-ai@5.4.0 predist
+> node scripts/sync_ide_vendor.mjs
+
+✓ @xterm/xterm/lib/xterm.js → ide/vendor/xterm.js
+✓ @xterm/xterm/css/xterm.css → ide/vendor/xterm.css
+✓ @xterm/addon-fit/lib/addon-fit.js → ide/vendor/addon-fit.js
+vendor: 3/3 fayl tayyor → ide\vendor
+
+> yang-ai@5.4.0 dist
+> electron-builder --win --publish never
+
+  • electron-builder  version=26.15.3 os=10.0.26200
+  • loaded configuration  file=package.json ("build" field)
+  ⨯ Invalid configuration object. electron-builder 26.15.3 has been initialized using a configuration object that does not match the API schema.
+ - configuration.nsis should be one of these:
+   null
+     How to fix:
+     1. Open https://www.electron.build/nsis
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+  failedTask=build stackTrace=Error: Invalid configuration object. electron-builder 26.15.3 has been initialized using a configuration object that does not match the API schema.
+ - configuration.nsis should be one of these:
+   null
+     How to fix:
+     1. Open https://www.electron.build/nsis
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         at validateSchema (D:\loyiha\ChatDev-main\node_modules\app-builder-lib\src\util\config\schemaValidator.ts:45:9)
+    at validateConfiguration (D:\loyiha\ChatDev-main\node_modules\app-builder-lib\src\util\config\config.ts:238:17)
+    at Packager.validateConfig (D:\loyiha\ChatDev-main\node_modules\app-builder-lib\src\packager.ts:390:5)
+    at Packager.build (D:\loyiha\ChatDev-main\node_modules\app-builder-lib\src\packager.ts:398:5)
+    at executeFinally (D:\loyiha\ChatDev-main\node_modules\builder-util\src\promise.ts:12:14)
+DIST3_EXIT=1

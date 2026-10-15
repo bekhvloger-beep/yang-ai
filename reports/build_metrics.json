@@ -1,0 +1,16 @@
+{
+  "targets": {
+    "ide": {
+      "installer": 1356765221,
+      "portable": 1356431377,
+      "payload": 1355966925,
+      "payloadMeasured": true,
+      "unpacked": 1613459725,
+      "freeCommitBefore": 5403312128,
+      "freeCommitMinDuringBuild": 4057989120,
+      "durationMs": 270091,
+      "builtAt": "2026-10-14T17:54:53.574Z"
+    }
+  },
+  "updatedAt": "2026-10-14T17:54:57.719Z"
+}

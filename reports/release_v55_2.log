@@ -1,0 +1,9 @@
+
+> yang-ai@5.5.0 release
+> node scripts/publish_release.mjs
+
+✓ Repo topildi: bekhvloger-beep/yang-ai
+✓ Izoh fayli: docs/v5.5.0-chiqarish.md (4700 belgi)
+✓ Release v5.5.0 allaqachon bor — izoh yangilanadi, assetlar ustiga yoziladi
+✓ Izoh yangilandi
+RELEASE_EXIT=0

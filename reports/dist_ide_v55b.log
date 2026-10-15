@@ -1,0 +1,19 @@
+
+> yang-ai@5.5.0 predist:ide
+> node scripts/sync_ide_vendor.mjs
+
+✓ @xterm/xterm/lib/xterm.js → ide/vendor/xterm.js
+✓ @xterm/xterm/css/xterm.css → ide/vendor/xterm.css
+✓ @xterm/addon-fit/lib/addon-fit.js → ide/vendor/addon-fit.js
+vendor: 3/3 fayl tayyor → ide\vendor
+
+> yang-ai@5.5.0 dist:ide
+> electron-builder --win --publish never --config electron-builder.ide.json
+
+  • electron-builder  version=26.15.3 os=10.0.26200
+  • loaded configuration  file=D:\loyiha\ChatDev-main\electron-builder.ide.json
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=win32 arch=x64 electron=34.0.0 appOutDir=dist-ide\win-unpacked
+  • downloaded      label=electron progress=100%
+  ⨯ EBUSY: resource busy or locked, unlink 'D:\loyiha\ChatDev-main\dist-ide\win-unpacked\icudtl.dat'  failedTask=build stackTrace=Error: EBUSY: resource busy or locked, unlink 'D:\loyiha\ChatDev-main\dist-ide\win-unpacked\icudtl.dat'
+DIST_IDE_EXIT=1

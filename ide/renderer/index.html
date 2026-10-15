@@ -20,8 +20,14 @@
       <button id="runFixBtn" class="btn" title="Ishga tushirib, xato bo'lsa AI tuzatib qayta sinaydi (log bilan)">Sinab ko‘r + tuzat</button>
       <button id="dbgRunBtn" class="btn" title="Nuqtalar bilan qadamlab debug qilish (Node)">Debug</button>
       <button id="saveBtn" class="btn">Saqlash</button>
+      <button id="aiModelsBtn" class="btn" title="Lokal AI: kompyuteringizga mos modellarni yuklab olish, minimal talablar va kuch reytingi">Lokal AI</button>
+      <button id="gitBtn" class="btn" title="Git: o‘zgargan fayllar, farq (diff) va commit">Git</button>
+      <button id="voiceBtn" class="btn" title="Ovozli buyruq (o‘zbekcha, lokal model) — mikrofon orqali">🎤</button>
       <button id="aiToggleBtn" class="btn">AI</button>
       <button id="termToggleBtn" class="btn">Terminal</button>
+      <!-- Ishlayotgan vazifa bo'lganda ko'rinadi (AI so'rovi, dasturni ishga tushirish,
+           tuzatish halqasi). Esc ham xuddi shu ishni qiladi. -->
+      <button id="stopAllBtn" class="btn stop hidden" title="Esc — ishlayotgan vazifani to'xtatadi (AI, dastur, tuzatish halqasi)">■ To‘xtatish</button>
     </header>
 
     <div id="body">
@@ -35,6 +41,12 @@
 
         <div id="filesView">
           <div class="side-pad"><input id="fileFilter" placeholder="Fayl filtri"></div>
+          <!-- Ko'p ildizli workspace (v5.5): asosiy papka + qo'shimcha papkalar.
+               Har bir qo'shimcha papka baribir qamoq (realpath) ichida qoladi. -->
+          <div class="side-pad roots-pad hidden" id="rootsPad">
+            <div id="ideRoots" class="roots-strip"></div>
+            <button id="ideRootAdd" class="btn btn-icon" title="Qo'shimcha papka qo'shish (bir nechtasini tanlash mumkin)">+</button>
+          </div>
           <div id="fileTree" class="tree"></div>
         </div>
 
@@ -174,7 +186,86 @@
     </div>
   </div>
 
+  <!-- ------------------------------------------- LOKAL AI menejeri (model bozori) -->
+  <!-- Har bir model uchun: minimal RAM/VRAM/disk, SHU kompyuterdagi kuch reytingi,
+       yuklab olish (progress bilan) va allaqachon o'rnatilgan AI larni bir bosishda ulash. -->
+  <div id="modelsModal" class="dlg hidden">
+    <div class="dlg-box models-box">
+      <div class="models-head">
+        <span class="models-title">Lokal AI menejeri</span>
+        <span id="modelsSd" class="dim"></span>
+        <div class="spacer"></div>
+        <button id="modelsRefresh" class="btn btn-icon" title="Apparat va modellarni qayta skanerlash">↻</button>
+        <button id="modelsClose" class="btn btn-icon" title="Yopish">✕</button>
+      </div>
+      <div id="hwProfile" class="hw-profile"></div>
+      <div id="modelsTabs" class="models-tabs">
+        <button data-tab="text" class="active">Matn modellari</button>
+        <button data-tab="image">Rasm modellari</button>
+        <button data-tab="runtime">Rasm dvigateli</button>
+        <button data-tab="voice">Ovoz modeli</button>
+        <button data-tab="installed">Kompyuterda bor</button>
+      </div>
+
+      <div id="modelsImage" class="models-image hidden">
+        <div class="img-row">
+          <input id="imgPrompt" placeholder="Rasm tavsifi (inglizcha yaxshi ishlaydi)…" spellcheck="false">
+          <select id="imgSize">
+            <option value="256x256">256×256 (qoralama)</option>
+            <option value="512x512" selected>512×512</option>
+            <option value="640x640">640×640</option>
+            <option value="768x768">768×768</option>
+          </select>
+          <select id="imgSteps">
+            <option value="8">8 qadam (qoralama)</option>
+            <option value="12">12 qadam (tez)</option>
+            <option value="20" selected>20 qadam (oddiy)</option>
+            <option value="30">30 qadam (sifatli)</option>
+          </select>
+          <button id="imgGo" class="btn btn-primary">Yaratish</button>
+          <button id="imgStop" class="btn">To‘xtatish</button>
+        </div>
+        <div id="imgEst" class="img-est dim"></div>
+        <div id="imgOut" class="img-out"></div>
+      </div>
+
+      <div id="modelsBody" class="models-body"></div>
+      <div class="models-foot"><span id="modelsNote" class="dim"></span></div>
+    </div>
+  </div>
+
   <div id="ctxMenu" class="hidden"></div>
+
+  <!-- Git paneli: status/diff/stage/commit. Barcha amallar `git` CLI orqali (IDE main
+       jarayoni), shuning uchun foydalanuvchi o‘z terminalida ko‘radigan holat bilan bir xil. -->
+  <div id="gitModal" class="dlg hidden">
+    <div class="dlg-box git-box">
+      <div class="git-head">
+        <span class="git-title">Git</span>
+        <span id="gitBranch" class="dim"></span>
+        <div class="spacer"></div>
+        <button id="gitRefresh" class="btn btn-icon" title="Holatni qayta o‘qish">↻</button>
+        <button id="gitClose" class="btn btn-icon" title="Yopish">✕</button>
+      </div>
+      <div id="gitFiles" class="git-files"></div>
+      <pre id="gitDiff" class="git-diff"></pre>
+      <div class="git-foot">
+        <input id="gitMsg" placeholder="Commit xabari…" spellcheck="false">
+        <button id="gitCommit" class="btn btn-primary">Commit</button>
+      </div>
+      <div id="gitLog" class="git-log"></div>
+    </div>
+  </div>
+
+  <!-- Lokal ovozli buyruq paneli: mikrofon renderer'da yoziladi (16 kHz mono WAV),
+       matnga aylantirish modeli whisper.cpp + rubaistt; buyruq faqat allowlistdan. -->
+  <div id="voiceBar" class="voice-bar hidden">
+    <span id="voiceState" class="voice-state">🎤</span>
+    <span id="voiceText" class="voice-text">—</span>
+    <div class="spacer"></div>
+    <button id="voiceAgain" class="btn">Qayta</button>
+    <button id="voiceClose" class="btn">Yopish</button>
+  </div>
 
   <script src="vendor/xterm.js"></script>
   <script src="vendor/addon-fit.js"></script>

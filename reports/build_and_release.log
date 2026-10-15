@@ -1,0 +1,41 @@
+════════════════════════════════════════════════════════════════════════
+QURISH + NASHR — 2026-10-14T17:56:27.754Z
+nishonlar: YANG IDE 1.0.0 · DRY-RUN · --force
+════════════════════════════════════════════════════════════════════════
+
+1) Oldindan tekshiruv (commit, disk, token)
+   • bo'sh commit: 4 387 241 984 B (4.09 GB) · kerak: 26 863 605 204 B (25.02 GB) (eng katta nishon + 25% zaxira)
+       - YANG IDE 1.0.0: payload ≈ 21 474 036 480 B (20.00 GB) (o‘lchangan) → mmap kerak ≈ 21 490 884 163 B (20.01 GB)
+   • disk (YANG IDE 1.0.0): 68 524 625 920 B (63.82 GB) / kerak 73 486 543 872 B (68.44 GB) — D:\loyiha\ChatDev-main\dist-ide
+       vaqtinchalik jild C:\Users\behru\AppData\Local\Temp: bo'sh 8 341 692 416 B (7.77 GB) · kerak 22 011 707 392 B (20.50 GB)
+   • GitHub tokeni: .gh-token
+   • reliz izohi: docs/v5.5.0-chiqarish.md (6097 belgi)
+
+   ✗ TO‘XTATILDI — quyidagi shartlar bajarilmadi:
+     - Bo'sh commit yetmaydi: 4 387 241 984 B (4.09 GB) bo'sh, 26 863 605 204 B (25.02 GB) kerak.
+      Sabab shu: makensis payload'ni mmap qiladi va "Internal compiler error #12345: error creating mmap the size of …" beradi.
+      hozir 1 ta llama-server ishlayapti (PID 7064: 4.49 GB) — bular Ollama xizmati yoki ochiq turgan YANG AI ilovasidan bo‘lishi mumkin.
+      Yechim: kerakli dasturlarni yoping yoki `node scripts/build_and_release.mjs --kill-orphans` bilan yetim model-serverlarni tozalang.
+     - Disk yetmaydi (D:\loyiha\ChatDev-main\dist-ide): 68 524 625 920 B (63.82 GB) bo'sh, 73 486 543 872 B (68.44 GB) kerak (yoyilgan papka + 2 o'rnatuvchi + zaxira).
+     - Vaqtinchalik jildda joy yetmaydi (C:\Users\behru\AppData\Local\Temp): 8 341 692 416 B (7.77 GB) bo'sh, 22 011 707 392 B (20.50 GB) kerak.
+
+   ⚠ --force: ogohlantirishlarga qaramay davom etiladi (build yiqilishi mumkin).
+
+2) [dry-run] YANG IDE 1.0.0: npm.cmd run dist:ide — qurilmaydi
+
+4) [dry-run] nashr qilinadigan artefaktlar:
+   · dist-ide\YANG-IDE-Setup-1.0.0.exe
+   · dist-ide\YANG-IDE-Setup-1.0.0.exe.blockmap
+   · dist-ide\YANG-IDE-Portable-1.0.0.exe
+   · dist-ide\YANG-IDE-Setup-1.0.0.exe (qo‘shimcha)
+   · dist-ide\YANG-IDE-Portable-1.0.0.exe (qo‘shimcha)
+   · admin-desk\dist\YANG Admin Desk 1.3.0.exe (qo‘shimcha)
+   · admin-desk\dist\YANG Admin Desk Setup 1.3.0.exe (qo‘shimcha)
+
+   dry-run: hech narsa qurilmadi va nashr qilinmadi.
+
+5) Xulosa
+   | nishon | Setup | Portable | yoyilgan | payload | daqiqa |
+   |---|---|---|---|---|---|
+   reliz: https://github.com/bekhvloger-beep/yang-ai/releases/tag/v5.5.0
+   o'lchovlar: reports\build_metrics.json

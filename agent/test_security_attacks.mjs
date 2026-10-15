@@ -72,6 +72,16 @@ const UD = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-attack-ud-'));
 const APP_LOG = path.join(ROOT, 'reports', 'security_attacks_app.log');
 const logFd = fs.openSync(APP_LOG, 'w');
 
+// v5.5 KO‘P ILDIZLI WORKSPACE: qo‘shimcha papka ilova ichida papka tanlash oynasi orqali
+// qo‘shiladi; oynani avtomatlashtirib bo‘lmagani uchun ro‘yxat OLDINDAN sozlamaga yoziladi
+// (foydalanuvchi bir marta tanlagan holatning aynan o‘zi: `config.json → extraRoots`).
+const EXTRA = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-attack-extra-'));
+const EXTRA_FILE = path.join(EXTRA, 'umumiy.txt');
+const EXTRA_OUTSIDE = path.join(EXTRA, '..', 'yang-attack-extra-outside.txt');
+fs.writeFileSync(EXTRA_FILE, 'QO‘SHIMCHA PAPKADAGI MATN\n', 'utf8');
+fs.writeFileSync(EXTRA_OUTSIDE, 'QO‘SHIMCHA PAPKADAN TASHQARI MAXFIY MATN\n', 'utf8');
+fs.writeFileSync(path.join(UD, 'config.json'), JSON.stringify({ extraRoots: [EXTRA] }, null, 2), 'utf8');
+
 let PORT = await pickFreePort(9455);
 const app = useExe
   ? spawn(EXE, [`--remote-debugging-port=${PORT}`, `--user-data-dir=${UD}`, '--disable-gpu'], { detached: true, stdio: ['ignore', logFd, logFd] })
@@ -218,6 +228,74 @@ try {
   const alive = await main.ev('document.title');
   check('9. G‘alati kirishlarga o‘qiladigan javob (ilova yiqilmaydi)',
     Array.isArray(weird) && weird.length === 5 && !!alive, `javoblar=${JSON.stringify(weird)}; asosiy oyna="${alive}"`);
+
+  /* ---------------- 10. Ko‘p ildizli workspace: ruxsat ko'paydi, qamoq o'zgarmadi ---------------- */
+  const norm = (p) => String(p || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+  const rootList = await ide.ev('window.ide.rootsList()');
+  const roots = (rootList && rootList.roots) || [];
+  const hasExtra = roots.some((r) => norm(r.path) === norm(EXTRA));
+  check('10. Qo‘shimcha papka ruxsat etilgan ildizlar ro‘yxatida ko‘rinadi',
+    hasExtra && roots.every((r) => !!r.path && !!r.name),
+    `ildizlar=[${roots.map((r) => `${r.name}${r.primary ? ' (asosiy)' : ''}`).join(', ')}]`);
+
+  /* ---------------- 11. Ijobiy nazorat: qo'shimcha papkadagi fayl HAQIQATAN ochiladi ---------------- */
+  const extraRead = await ide.ev(`window.ide.readFile(${JSON.stringify(EXTRA_FILE)})`);
+  check('11. Qo‘shimcha papkadagi fayl o‘qiladi (yangi ruxsat haqiqatan ishlaydi)',
+    !!(extraRead && !extraRead.error && String(extraRead.text || '').includes('QO‘SHIMCHA')),
+    extraRead && extraRead.error ? `xato: ${extraRead.error}` : `o‘qildi=${String((extraRead && extraRead.text) || '').length} belgi`);
+
+  /* ---------------- 12. Qo'shimcha papkadan ham tashqariga chiqib bo'lmaydi ---------------- */
+  const extraEscapes = [
+    `${EXTRA}\\..\\${path.basename(EXTRA_OUTSIDE)}`,
+    `${EXTRA}/../../Windows/win.ini`,
+    `${EXTRA}/..`,
+    `${EXTRA}/../..`,
+  ];
+  const extraOut = [];
+  for (const p of extraEscapes) {
+    const r = await ide.ev(`window.ide.readFile(${JSON.stringify(p)})`);
+    extraOut.push(refused(r));
+  }
+  // Yengil panel (asosiy ilova) ham shu yerda sinaladi: uning asosiy papkasi bu sinovda
+  // foydalanuvchi sozlamasidan keladi, shuning uchun UNDAN TASHQARIDAGI ma'lum yo'l
+  // olinadi (`C:\Windows\win.ini`) — aks holda «rad etildi» soxta bo‘lardi.
+  const liteEscape = await main.ev(`window.api.readWorkspaceFile(${JSON.stringify(SECRET)})`);
+  const liteTreeEscape = await main.ev(`window.api.ideListTree(${JSON.stringify(path.dirname(SECRET))}, 1)`);
+  check('12. Iqkinchi ildiz ham qamoqni ochmaydi: undan tashqariga chiqish bloklanadi',
+    extraOut.every(Boolean) && refused(liteEscape) && refused(liteTreeEscape),
+    `IDE (${extraEscapes.length} xil): ${extraOut.map((x) => (x ? 'rad' : 'O‘TDI')).join(', ')} · yengil panel: o‘qish=${refused(liteEscape) ? 'rad' : 'O‘TDI'}, daraxt=${refused(liteTreeEscape) ? 'rad' : 'O‘TDI'}`);
+
+  /* ---------------- 13. Qo'shimcha papkadan tashqariga YOZISH ---------------- */
+  // Oldingi yurishdan qolgan fayl bo'lsa tozalaymiz — aks holda «yaratilmadi» degan shart
+  // eski artefakt tufayli soxta yiqilardi.
+  const ESCAPE_FILES = [path.join(EXTRA, '..', 'yang-attack-extra-write.txt'), path.join(path.dirname(SECRET), 'yang-attack-lite.txt')];
+  for (const f of ESCAPE_FILES) { try { fs.rmSync(f, { force: true }); } catch { /* */ } }
+  const writeEscape = await ide.ev(`window.ide.writeFile(${JSON.stringify(`${EXTRA}/../yang-attack-extra-write.txt`)}, 'xato')`);
+  const liteWriteEscape = await main.ev(`window.api.ideSaveFile(${JSON.stringify(path.join(path.dirname(SECRET), 'yang-attack-lite.txt'))}, 'xato')`);
+  const outsideUntouched = fs.existsSync(EXTRA_OUTSIDE) && fs.readFileSync(EXTRA_OUTSIDE, 'utf8').includes('TASHQARI');
+  const created = ESCAPE_FILES.filter((f) => fs.existsSync(f));
+  check('13. Ikkinchi ildiz orqali tashqariga YOZISH ham bloklanadi (hech narsa yaratilmadi)',
+    refused(writeEscape) && refused(liteWriteEscape) && outsideUntouched && created.length === 0,
+    `IDE yozish=${refused(writeEscape) ? 'rad' : 'O‘TDI'}, yengil panel yozish=${refused(liteWriteEscape) ? 'rad' : 'O‘TDI'}, tashqi fayl joyida=${outsideUntouched}, yaratilgan fayl=${created.length ? created.join(', ') : 'yo‘q'}`);
+
+  /* ---------------- 14. Ikkala oyna BIR MANBADAN o'qiydi ---------------- */
+  const liteRoots = await main.ev('window.api.ideRootsList()');
+  const liteRootsList = (liteRoots && liteRoots.roots) || [];
+  const liteReadExtra = await main.ev(`window.api.readWorkspaceFile(${JSON.stringify(EXTRA_FILE)})`);
+  const beforeCount = liteRootsList.length;
+  check('14. Yengil panel ham o‘sha ro‘yxatni ko‘radi va qo‘shimcha papkani o‘qiy oladi',
+    liteRootsList.some((r) => norm(r.path) === norm(EXTRA)) && !!(liteReadExtra && !liteReadExtra.error && String(liteReadExtra.text || '').includes('QO‘SHIMCHA')),
+    `yengil panel ildizlari=[${liteRootsList.map((r) => r.name).join(', ')}] · o‘qish=${liteReadExtra && liteReadExtra.error ? `xato: ${liteReadExtra.error}` : 'ishladi'}`);
+
+  /* ---------------- 15. Ro'yxatdan olib tashlash xavfsiz ---------------- */
+  const bogusRemove = await main.ev(`window.api.ideRootsRemove(${JSON.stringify(SECRET)})`);
+  const afterBogus = (bogusRemove && bogusRemove.roots) || [];
+  const realRemove = await main.ev(`window.api.ideRootsRemove(${JSON.stringify(EXTRA)})`);
+  const afterReal = (realRemove && realRemove.roots) || [];
+  check('15. «Ro‘yxatdan olib tashlash» xavfsiz: begona yo‘l hech narsani olib tashlamaydi, haqiqiy yo‘l esa ro‘yxatdan chiqadi',
+    afterBogus.length === beforeCount && afterReal.length === beforeCount - 1
+      && !afterReal.some((r) => norm(r.path) === norm(EXTRA)),
+    `begona yo‘ldan keyin=${afterBogus.length}, haqiqiy olib tashlashdan keyin=${afterReal.length} (avval ${beforeCount}), qolganlar=[${afterReal.map((r) => r.name).join(', ')}]`);
 } catch (e) {
   check('umumiy oqim', false, `xato: ${e && e.message}`);
 } finally {
@@ -229,6 +307,8 @@ try {
   if (linkMade) { try { fs.rmdirSync(LINK); } catch { /* */ } }
   try { fs.rmSync(WS, { recursive: true, force: true }); } catch { /* */ }
   try { fs.rmSync(OUTSIDE, { force: true }); } catch { /* */ }
+  try { fs.rmSync(EXTRA, { recursive: true, force: true }); } catch { /* */ }
+  try { fs.rmSync(EXTRA_OUTSIDE, { force: true }); } catch { /* */ }
 }
 
 const failed = results.filter((r) => !r).length;

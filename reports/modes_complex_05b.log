@@ -1,0 +1,18 @@
+model: qwen2.5:0.5b · rejimlar: solo + team
+FAIL  SOLO rejimi: loyiha fayllari yozildi
+      → 0 fayl: [] · write_file=0 · agentlar=0 · 40.4s
+FAIL  SOLO rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → sabab: index.js yozilmagan · chiqish=undefined
+      → SOLO jami: 40.4s · fayllar=[]
+FAIL  TEAM rejimi: loyiha fayllari yozildi
+      → 2 fayl: [fayl.txt, fayl1.txt] · write_file=3 · agentlar=6 · 167.1s
+FAIL  TEAM rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → sabab: index.js yozilmagan · chiqish=undefined
+      → TEAM jami: 167.1s · fayllar=[fayl.txt, fayl1.txt]
+
+--- xulosa ---
+solo   ISHLAMADI · 40.4s · 0 fayl
+team   ISHLAMADI · 167.1s · 2 fayl
+
+XULOSA: 0/4 PASS
+EXIT=1

@@ -58,32 +58,71 @@ $('releaseStatusBtn')?.addEventListener('click', async () => {
   $('releaseStatus').textContent = 'tekshirilmoqda…';
   $('relSummary').textContent = '…';
   $('relExpected').innerHTML = '';
+  $('releaseAssets').textContent = '—';
   const r = await api.releaseVerify();
+  // Yaroqsiz token — xato emas, lekin ogohlantirish: o'qish tokensiz bajarilgan, nashr ishlamaydi.
+  const authWarn = r.authProblem
+    ? '<div class="warn">⚠ GitHub tokeni yaroqsiz (Bad credentials) — ma’lumot TOKENSIZ o‘qildi. «Sozlash» bo‘limida yangi token kiriting, aks holda nashr qilish va o‘zgarish yuborish ishlamaydi.</div>'
+    : '';
+
+  // 1) Versiya manbalari: har biri alohida ko'rsatiladi. Qiymat o'qilmasa «aniqlanmadi»
+  //    deb yozamiz — taxminiy raqam bilan operatorni chalg'itmaymiz.
+  const verBlock = '<div class="dim" style="margin-top:8px">Versiya manbalari:</div>'
+    + `<div>repo package.json: <b>${r.repoVersion ? 'v' + escapeHtml(r.repoVersion) : '<span class="dim">aniqlanmadi</span>'}</b></div>`
+    + `<div>lokal nusxa: <b>${r.localVersion ? 'v' + escapeHtml(r.localVersion) : '<span class="dim">aniqlanmadi</span>'}</b></div>`
+    + `<div>yig‘ilgan paket nomi: <b>${r.artifactVersion ? 'v' + escapeHtml(r.artifactVersion) : '<span class="dim">yo‘q</span>'}</b></div>`
+    + (r.versionSource && r.expectedVersion
+      ? `<div class="dim">hisoblangan versiya: <b>v${escapeHtml(r.expectedVersion)}</b> · manba: ${escapeHtml(r.versionSource)}</div>`
+      : '<div class="err">versiyani hech qaysi manbadan o‘qib bo‘lmadi (token/taqdimot tekshirilsin)</div>');
+
+  // 2) Mahalliy yig‘ilgan paketlar (dist/ va dist-ide/) — reliz hali yuklanmagan bo‘lsa ham ko'rinadi.
+  const local = r.localArtifacts || [];
+  const localBlock = local.length
+    ? '<div class="dim" style="margin-top:8px">Mahalliy yig‘ilgan paketlar:</div>'
+      + local.map((a) => `<div><code>${escapeHtml(a.name)}</code> — ${a.sizeMb} MB · ${fmtDate(new Date(a.mtime).toISOString())} · <span class="dim">${escapeHtml(a.dir)}/</span></div>`).join('')
+    : '<div class="dim" style="margin-top:8px">Mahalliy yig‘ilgan paket topilmadi (dist/ bo‘sh).</div>';
+
   if (!r.ok) {
     $('releaseStatus').textContent = r.noRelease ? 'reliz yo‘q' : 'xato';
-    $('relSummary').innerHTML = `<span class="err">${escapeHtml(r.error || 'xato')}</span>`
-      + (r.repoVersion ? `<div class="dim" style="margin-top:6px">Repo versiyasi: <b>${escapeHtml(r.repoVersion)}</b></div>` : '');
-    $('relExpected').innerHTML = ((r.expected || []).length)
-      ? '<b>Kutilgan fayllar:</b>' + r.expected.map((e) => `<div>✗ <code>${escapeHtml(e.name)}</code></div>`).join('')
+    $('relSummary').innerHTML = authWarn + `<span class="err">${escapeHtml(r.error || 'xato')}</span>` + verBlock + localBlock;
+    $('relExpected').innerHTML = ((r.required || []).length)
+      ? '<b>Majburiy fayllar (reliz yo‘q):</b>' + r.required.map((e) => `<div>✗ <code>${escapeHtml(e.name)}</code></div>`).join('')
       : '';
-    $('releaseAssets').textContent = '—';
+    $('releaseAssets').innerHTML = local.length
+      ? local.map((a) => `<div>${escapeHtml(a.name)} — ${a.sizeMb} MB</div>`).join('')
+      : '<span class="dim">fayl yo‘q</span>';
     return;
   }
+
   $('releaseStatus').innerHTML = `<a href="#" id="relUrl" style="text-decoration:underline">${escapeHtml(r.tag || '—')}</a> — ${fmtDate(r.publishedAt)}`;
   $('relUrl').addEventListener('click', (e) => { e.preventDefault(); api.openExternal(r.url); });
-  const match = r.upToDate
+  const match = r.upToDate === true
     ? `<span class="ok-chip">✓ teg repo versiyasiga mos (${escapeHtml(r.tagVersion || '')})</span>`
-    : `<span class="err">✗ teg (${escapeHtml(r.tagVersion || '—')}) repo versiyasiga (${escapeHtml(r.repoVersion || '—')}) mos emas</span>`;
-  $('relSummary').innerHTML = `<div><b>${escapeHtml(r.tag || '—')}</b> · ${fmtDate(r.publishedAt)}</div>`
+    : r.upToDate === false
+      ? `<span class="err">✗ teg (${escapeHtml(r.tagVersion || '—')}) repo versiyasiga (v${escapeHtml(r.repoVersion || r.localVersion || '—')}) mos emas</span>`
+      : '<span class="dim">teg bilan solishtirib bo‘lmadi (versiya aniqlanmadi)</span>';
+  $('relSummary').innerHTML = authWarn + `<div><b>${escapeHtml(r.tag || '—')}</b> · ${fmtDate(r.publishedAt)}</div>`
     + `<div style="margin-top:6px">${match}</div>`
-    + `<div class="dim" style="margin-top:6px">${r.authorized ? 'GitHub token bilan so‘raldi' : 'tokensiz so‘raldi (60 so‘rov/soat)'}</div>`;
-  $('relExpected').innerHTML = '<b>Majburiy fayllar:</b>'
-    + r.expected.map((e) => `<div>${e.present ? '✓' : '✗'} <code>${escapeHtml(e.name)}</code></div>`).join('')
-    + ((r.missing || []).length
-      ? `<div class="err" style="margin-top:6px">Yetishmayapti: ${r.missing.length} ta — avto-yangilanish ishlamasligi mumkin</div>`
-      : '<div class="ok-chip" style="margin-top:6px">Hammasi joyida</div>');
-  $('releaseAssets').innerHTML = (r.assets || []).length
-    ? r.assets.map((a) => `<div>${escapeHtml(a.name)} — ${a.sizeMb} MB · ${a.downloads} yuklab olingan</div>`).join('')
+    + verBlock + localBlock
+    + `<div class="dim" style="margin-top:8px">${r.authorized ? 'GitHub token bilan so‘raldi' : 'tokensiz so‘raldi (60 so‘rov/soat)'}</div>`;
+
+  // 3) Majburiy uchlik (avto-yangilanish) va qo'shimcha fayllar — alohida ko'rsatiladi,
+  //    chunki Portable/zip `YANG_ASSETS` rejimida umuman bo'lmasligi mumkin.
+  $('relExpected').innerHTML = '<b>Majburiy (avto-yangilanish):</b>'
+    + (r.required || []).map((e) => `<div>${e.present ? '✓' : '✗'} <code>${escapeHtml(e.name)}</code></div>`).join('')
+    + ((r.requiredMissing || []).length
+      ? (r.hasDistribution
+        ? `<div class="err" style="margin-top:6px">Yetishmayapti: ${r.requiredMissing.length} ta — avto-yangilanish ishlamasligi mumkin</div>`
+        : '<div class="dim" style="margin-top:6px">Relizda o‘rnatuvchi/portable/zip umuman yo‘q (masalan faqat manba kod) — «yetishmayapti» deb hisoblanmaydi</div>')
+      : '<div class="ok-chip" style="margin-top:6px">Hammasi joyida</div>')
+    + (((r.optional || []).length)
+      ? '<div class="dim" style="margin-top:8px">Qo‘shimcha (majburiy emas):</div>'
+        + r.optional.map((e) => `<div>${e.present ? '✓' : '—'} <code>${escapeHtml(e.name)}</code></div>`).join('')
+      : '');
+
+  const dist = (r.distribution || []).length ? r.distribution : (r.assets || []);
+  $('releaseAssets').innerHTML = dist.length
+    ? dist.map((a) => `<div>${escapeHtml(a.name)} — ${a.sizeMb} MB · ${a.downloads} yuklab olingan</div>`).join('')
     : '<span class="dim">fayl yo‘q</span>';
 });
 
@@ -108,7 +147,7 @@ $('localCfgPushBtn')?.addEventListener('click', async () => {
   if (!confirm(`app-config.json → ${r0.owner}/${r0.repo} (${r0.branch}) shoxobchasiga nashr qilinsinmi?`)) return;
   $('localCfgPushBtn').disabled = true;
   $('localCfgStatus').textContent = 'nashr qilinmoqda…';
-  const r = await api.pushLocalConfig('app-config.json: 5.4 reliz e’loni (YANG Admin Desk)');
+  const r = await api.pushLocalConfig('app-config.json yangilandi (YANG Admin Desk)');
   $('localCfgPushBtn').disabled = false;
   $('localCfgStatus').textContent = r.ok
     ? `✓ nashr qilindi · commit ${String(r.commit || '').slice(0, 10)} · ${r.bytes} B · ${r.branch}`
@@ -222,9 +261,27 @@ $('answerSendBtn').addEventListener('click', async () => {
 $('pollBtn').addEventListener('click', pollInbox);
 
 /* ---------- config (ads/notice/blocked/minver/support) ---------- */
+// Holat yozuvi: MODAL oyna (alert) ishlatilmaydi — u butun panelni to'sib qo'yardi va
+// ilova ochilishida avtomatik chaqirilganda operator hech narsa qila olmasdi.
+function cfgStatus(text, kind = '') {
+  const el = $('cfgStatus');
+  if (!el) return;
+  el.className = 'dim ' + kind;
+  el.textContent = text || '';
+}
+
 async function pullCfg() {
+  cfgStatus('GitHub\'dan olinmoqda…');
   const r = await api.pullConfig();
-  if (!r.ok) { alert('GitHub\'dan olib bo\'lmadi: ' + r.error); return; }
+  if (!r.ok) {
+    cfgStatus('GitHub\'dan olib bo\'lmadi: ' + (r.error || 'noma\'lum'), 'err');
+    return;
+  }
+  // Token yaroqsiz bo'lsa ham o'qish tokensiz bajarilgan — operator buni bilishi kerak
+  // (nashr qilish uchun esa yaroqli token shart).
+  cfgStatus(r.authProblem
+    ? '⚠ GitHub tokeni yaroqsiz — o\'qish tokensiz bajarildi, nashr qilish uchun «Sozlash»da yangilang'
+    : 'GitHub\'dan olindi', r.authProblem ? 'warn' : '');
   cfgObj = r.config;
   const ad = cfgObj.ad || {};
   $('adEnabled').checked = ad.enabled !== false && !!ad.title;
@@ -355,6 +412,19 @@ $('statsBtn').addEventListener('click', async () => {
   const v = Object.entries(r.versions || {}).map(([ver, n]) => `v${ver}: ${n}`).join(' · ') || '—';
   $('stVersions').textContent = v + (r.blocked && r.blocked.length ? ` · ⛔ blokda: ${r.blocked.length}` : '');
 });
+
+// Yon paneldagi yorliq: Desk versiyasi va lokal ilova versiyasi HAQIQIY manbadan olinadi
+// (index.html dagi qattiq yozilgan raqam eskirib qolmasin).
+(async function loadDeskInfo() {
+  try {
+    const d = await api.deskInfo();
+    const el = $('deskVersion');
+    if (!el) return;
+    const desk = d.deskVersion ? 'Desk v' + d.deskVersion : 'Desk';
+    const app = d.localVersion ? ' · ilova v' + d.localVersion : '';
+    el.textContent = `${desk}${app} · ${d.owner || ''}/${d.repo || ''} (${d.branch || 'main'})`;
+  } catch { /* yorliq eski matnda qoladi */ }
+})();
 
 // Poll: faqat Savollar tabida emas — doim ishlaydi (Telegram reply'lar uslublanmasin)
 pullCfg();

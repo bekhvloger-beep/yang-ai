@@ -1,0 +1,12 @@
+model: qwen2.5-coder:7b · rejimlar: team
+PASS  TEAM rejimi: loyiha fayllari yozildi
+      → 4 fayl: [README.md, index.js, lib/ekub.js, lib/ortacha.js] · write_file=13 · agentlar=6 · 1298.5s
+PASS  TEAM rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → exit=0
+      → TEAM jami: 1298.5s · fayllar=[README.md, index.js, lib/ekub.js, lib/ortacha.js]
+
+--- xulosa ---
+team   ISHLADI · 1298.5s · 4 fayl
+
+XULOSA: 2/2 PASS
+TEAM_EXIT=0

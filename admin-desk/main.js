@@ -157,13 +157,32 @@ async function pollTelegram() {
 // ---------- GitHub (app-config.json nashri) ----------
 async function ghGet(file) {
   const url = `https://api.github.com/repos/${admin.owner}/${admin.repo}/contents/${file}?ref=${admin.branch}`;
-  const res = await fetch(url, {
-    headers: { authorization: `Bearer ${admin.ghToken}`, accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' },
-    signal: AbortSignal.timeout(20000),
-  });
-  const j = await res.json();
-  if (!res.ok) return { sha: null, content: null, error: j.message || `HTTP ${res.status}` };
-  return { sha: j.sha, content: Buffer.from(j.content || '', 'base64').toString('utf8') };
+  const headers = { accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' };
+  // Token bo'lmasa `authorization` header UMUMAN qo'yilmaydi: `Bearer undefined` GitHub'da
+  // 401 berardi va repo versiyasini tokensiz o'qish (anonim 60 so'rov/soat) ishlamasdi.
+  if (admin.ghToken) headers.authorization = `Bearer ${admin.ghToken}`;
+  const fetchOnce = async (withToken) => {
+    const h = { ...headers };
+    if (!withToken) delete h.authorization;
+    const res = await fetch(url, { headers: h, signal: AbortSignal.timeout(20000) });
+    const j = await res.json().catch(() => ({}));
+    return { res, j };
+  };
+  try {
+    let { res, j } = await fetchOnce(!!admin.ghToken);
+    // Tokен yaroqsiz/eskirgan bo'lsa (401/403 «Bad credentials») o'qish TOKENSIZ qayta
+    // yuboriladi: ommaviy reponi o'qish uchun token shart emas (anonim 60 so'rov/soat).
+    // Busiz bitta eskirgan token butun Desk'ni ishlamaydigan qilib qo'yardi.
+    let authProblem = false;
+    if ((res.status === 401 || res.status === 403) && admin.ghToken) {
+      authProblem = true;
+      ({ res, j } = await fetchOnce(false));
+    }
+    if (!res.ok) return { sha: null, content: null, error: j.message || `HTTP ${res.status}`, authProblem };
+    return { sha: j.sha, content: Buffer.from(j.content || '', 'base64').toString('utf8'), authProblem };
+  } catch (e) {
+    return { sha: null, content: null, error: e.message || 'tarmoq xatosi' };
+  }
 }
 
 async function ghPut(file, contentJson, message) {
@@ -188,18 +207,72 @@ async function ghPut(file, contentJson, message) {
 }
 
 /* ---------- Reliz tekshiruvi ----------
- * `scripts/publish_release.mjs` har relizga aynan to'rt faylni yuklaydi. Ro'yxat shu yerda:
- * reliz chala bo'lsa (`latest.yml` yoki `.blockmap` tushib qolsa avto-yangilanish ishlamaydi)
- * operator buni bir qarashda ko'radi. */
-const expectedAssets = (version) => [
+ * `scripts/publish_release.mjs` AVTO-YANGILANISH uchun zarur uchlikni yuklaydi:
+ *   YANG-AI-Setup-<v>.exe + uning .blockmap'i + latest.yml
+ * Portable va zip — tarqatish uchun qo'shimcha fayllar; ular `YANG_ASSETS` rejimida
+ * umuman bo'lmasligi mumkin (masalan faqat zip yuklansa). Shuning uchun ular «majburiy»
+ * emas — operator ko'rishi uchun «bor/yo'q» ro'yxatida ko'rsatiladi.
+ * Versiya noma'lum bo'lsa kutilgan nomlarni TO'QIB chiqarmaymiz (aks holda `Setup-x.y.z.exe`
+ * kabi yolg'on «yetishmayapti» chiqadi) — buni chaqiruvchi tomondan tekshiramiz. */
+const REQUIRED_ASSETS = (version) => [
   `YANG-AI-Setup-${version}.exe`,
   `YANG-AI-Setup-${version}.exe.blockmap`,
-  `YANG-AI-Portable-${version}.exe`,
   'latest.yml',
+];
+/** Majburiy bo'lmagan, lekin tarqatishda bo'lishi mumkin bo'lgan nomlar (faqat ma'lumot). */
+const OPTIONAL_ASSETS = (version) => [
+  `YANG-AI-Portable-${version}.exe`,
+  `YANG AI-${version}-win.zip`,
 ];
 
 /** Relizdagi fayllar orasidan nom bo'yicha qidirish (katta/kichik harfga sezgir emas). */
 const hasAsset = (list, name) => (list || []).some((a) => String(a.name || '').toLowerCase() === name.toLowerCase());
+
+/** Lokal ishlab chiqilayotgan nusxa versiyasi (admin-desk yonidagi repo `package.json`). */
+function localRepoVersion() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).version || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Admin Desk'ning o'z versiyasi (shu papkadagi `package.json`) — yon paneldagi yorliq uchun. */
+function deskVersion() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8')).version || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Mahalliy yig'ilgan paketlar: `dist/` va `dist-ide/` dagi exe/zip fayllar (eng yangisi birinchi). */
+function localArtifacts(limit = 10) {
+  const dirs = [path.join(__dirname, '..', 'dist'), path.join(__dirname, '..', 'dist-ide')];
+  const out = [];
+  for (const dir of dirs) {
+    try {
+      if (!fs.existsSync(dir)) continue;
+      for (const name of fs.readdirSync(dir)) {
+        // Yordamchi fayllar (o'rnatuvchi ichidagi uninstaller, blockmap) — bu yerda kerak emas.
+        if (!/\.(exe|zip|msi)$/i.test(name) || /uninstaller|\.blockmap/i.test(name)) continue;
+        const st = fs.statSync(path.join(dir, name));
+        if (!st.isFile()) continue;
+        out.push({ name, sizeMb: +(st.size / 1e6).toFixed(1), mtime: st.mtimeMs, dir: path.basename(dir) });
+      }
+    } catch { /* papka o'qilmadi — o'tkazib yuboramiz */ }
+  }
+  return out.sort((a, b) => b.mtime - a.mtime).slice(0, limit);
+}
+
+/** Yig'ilgan paket nomidan versiyani ajratib olish (dist bo'sh bo'lmasa — ishonchli manba). */
+function versionFromArtifacts(list) {
+  for (const a of list || []) {
+    const m = String(a.name).match(/(?:YANG(?:-AI|-IDE)?-?(?:Setup|Portable)|YANG AI)-?(\d+\.\d+\.\d+)/i);
+    if (m) return m[1];
+  }
+  return null;
+}
 
 /** Loyiha ildizidagi app-config.json (dev rejimda ham, `process.cwd()` da ham izlanadi). */
 function localConfigPath() {
@@ -215,24 +288,32 @@ function localConfigPath() {
 
 /** Oxirgi reliz. Token bo'lmasa ham ishlaydi (GitHub anonim so'rovga ruxsat beradi). */
 async function fetchLatestRelease() {
-  const headers = { accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' };
-  if (admin.ghToken) headers.authorization = `Bearer ${admin.ghToken}`;
+  const url = `https://api.github.com/repos/${admin.owner}/${admin.repo}/releases/latest`;
+  const fetchOnce = async (withToken) => {
+    const headers = { accept: 'application/vnd.github+json', 'user-agent': 'yang-admin-desk' };
+    if (withToken && admin.ghToken) headers.authorization = `Bearer ${admin.ghToken}`;
+    return fetch(url, { headers, signal: AbortSignal.timeout(20000) });
+  };
   try {
-    const res = await fetch(`https://api.github.com/repos/${admin.owner}/${admin.repo}/releases/latest`, {
-      headers,
-      signal: AbortSignal.timeout(20000),
-    });
+    let res = await fetchOnce(true);
+    let authProblem = false;
+    // Yaroqsiz token ommaviy relizni o'qishni ham to'xtatmasin (401/403 → tokensiz qayta).
+    if ((res.status === 401 || res.status === 403) && admin.ghToken) {
+      authProblem = true;
+      res = await fetchOnce(false);
+    }
     if (res.status === 404) {
       return {
         ok: false,
         noRelease: true,
-        authorized: !!admin.ghToken,
+        authorized: !!admin.ghToken && !authProblem,
+        authProblem,
         error: `${admin.owner}/${admin.repo} da hali reliz yo‘q — «npm run release» bilan birinchi relizni yuklang.`,
       };
     }
     const j = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, authorized: !!admin.ghToken, error: j.message || `HTTP ${res.status}` };
-    return { ok: true, authorized: !!admin.ghToken, raw: j, assets: j.assets || [] };
+    if (!res.ok) return { ok: false, authorized: !!admin.ghToken && !authProblem, authProblem, error: j.message || `HTTP ${res.status}` };
+    return { ok: true, authorized: !!admin.ghToken && !authProblem, authProblem, raw: j, assets: j.assets || [] };
   } catch (e) {
     return { ok: false, authorized: !!admin.ghToken, error: e.message };
   }
@@ -247,6 +328,14 @@ async function branchAppVersion() {
 
 function registerIpc() {
   ipcMain.handle('setup:get', () => ({ ...admin, botToken: admin.botToken ? admin.botToken.slice(0, 8) + '…' : '', ghToken: admin.ghToken ? admin.ghToken.slice(0, 6) + '…' : '', hasBot: !!admin.botToken, hasGh: !!admin.ghToken }));
+  // Yon paneldagi yorliq uchun: Admin Desk versiyasi va lokal ilova versiyasi (qattiq yozilmaydi).
+  ipcMain.handle('desk:info', () => ({
+    deskVersion: deskVersion(),
+    localVersion: localRepoVersion(),
+    owner: admin.owner,
+    repo: admin.repo,
+    branch: admin.branch,
+  }));
   ipcMain.handle('setup:save', async (_e, patch) => {
     for (const k of ['botToken', 'adminChatId', 'ghToken', 'owner', 'repo', 'branch']) {
       const v = String(patch[k] || '').trim();
@@ -336,11 +425,13 @@ function registerIpc() {
 
   ipcMain.handle('cfg:pull', async () => {
     const r = await ghGet(DEFAULT_REPO.file);
-    if (r.error) return { ok: false, error: r.error, config: null };
+    if (r.error) return { ok: false, error: r.error, config: null, authProblem: !!r.authProblem };
     try {
-      return { ok: true, config: JSON.parse(r.content) };
+      // `authProblem` — token yaroqsiz, lekin o'qish tokensiz bajarildi: operator buni
+      // «Sozlash» bo'limida ko'rishi kerak (nashr qilish uchun yaroqli token kerak).
+      return { ok: true, config: JSON.parse(r.content), authProblem: !!r.authProblem };
     } catch (e) {
-      return { ok: false, error: 'JSON o\u2018qilmadi: ' + e.message, config: null };
+      return { ok: false, error: 'JSON o\u2018qilmadi: ' + e.message, config: null, authProblem: !!r.authProblem };
     }
   });
 
@@ -435,7 +526,7 @@ function registerIpc() {
   // GitHub'dagi oxirgi release holati (yangi versiya chiqqanini tekshirish)
   ipcMain.handle('release:status', async () => {
     const r = await fetchLatestRelease();
-    if (!r.ok) return { ok: false, error: r.error, noRelease: !!r.noRelease, authorized: r.authorized };
+    if (!r.ok) return { ok: false, error: r.error, noRelease: !!r.noRelease, authorized: r.authorized, authProblem: !!r.authProblem };
     const j = r.raw;
     return {
       ok: true,
@@ -448,37 +539,67 @@ function registerIpc() {
     };
   });
 
-  // TO‘LIQ tekshiruv: reliz tegi ↔ repo versiyasi va to‘rt kutilgan asset bormi.
+  // TO‘LIQ tekshiruv: versiya manbalari (repo / lokal dist) ↔ reliz tegi ↔ majburiy fayllar.
+  // Halol tamoyil: qiymat aniqlanmasa «noma’lum» deymiz, soxta raqam ko‘rsatmaymiz.
   ipcMain.handle('release:verify', async () => {
     const repoVersion = await branchAppVersion().catch(() => null);
-    const want = expectedAssets(repoVersion || 'x.y.z');
+    const localVersion = localRepoVersion();
+    const local = localArtifacts();
+    const artifactVersion = versionFromArtifacts(local);
+    const appVersion = repoVersion || localVersion || artifactVersion || null;
+    const versionSource = repoVersion ? 'repo package.json'
+      : localVersion ? 'lokal package.json (repo versiyasi o‘qilmadi)'
+        : artifactVersion ? 'yig‘ilgan paket nomi' : null;
+    const base = { repoVersion, localVersion, artifactVersion, versionSource, localArtifacts: local };
+    // Versiya noma’lum bo‘lsa majburiy fayl ro‘yxatini to‘qib chiqarmaymiz.
+    const requiredNames = appVersion ? REQUIRED_ASSETS(appVersion) : [];
+    const optionalNames = appVersion ? OPTIONAL_ASSETS(appVersion) : [];
     const r = await fetchLatestRelease();
     if (!r.ok) {
       return {
+        ...base,
         ok: false,
         error: r.error,
         noRelease: !!r.noRelease,
         authorized: r.authorized,
-        repoVersion,
-        expected: want.map((n) => ({ name: n, present: false })),
-        missing: want,
+        authProblem: !!r.authProblem,
+        required: requiredNames.map((n) => ({ name: n, present: false })),
+        optional: optionalNames.map((n) => ({ name: n, present: false })),
+        requiredMissing: requiredNames,
+        autoUpdateOk: appVersion ? false : null,
+        distribution: [],
       };
     }
     const j = r.raw;
-    const assets = r.assets;
-    const expected = want.map((n) => ({ name: n, present: hasAsset(assets, n) }));
+    const assets = r.assets || [];
+    const required = requiredNames.map((n) => ({ name: n, present: hasAsset(assets, n) }));
+    const optional = optionalNames.map((n) => ({ name: n, present: hasAsset(assets, n) }));
     const tagVersion = String(j.tag_name || '').replace(/^v/, '');
+    // Tarqatish fayllari: relizdagi barcha binar assetlar (exe/zip/msi/7z) — o‘rnatuvchi
+    // bo‘lmasa ham (masalan faqat zip yuklangan bo‘lsa) operator ko‘radi.
+    const distribution = assets
+      .filter((a) => /\.(exe|zip|msi|7z)$/i.test(String(a.name || '')) && !/uninstaller/i.test(String(a.name || '')))
+      .map((a) => ({ name: a.name, sizeMb: +(a.size / 1e6).toFixed(1), downloads: a.download_count }));
+    const expectedVersion = appVersion || tagVersion || null;
     return {
+      ...base,
       ok: true,
       authorized: r.authorized,
-      repoVersion,
+      authProblem: !!r.authProblem,
       tag: j.tag_name,
       tagVersion,
-      upToDate: !!repoVersion && tagVersion === repoVersion,
+      // Repo versiyasi noma’lum bo‘lsa solishtirib bo‘lmaydi — null (soxta «mos emas» chiqmasin).
+      upToDate: (repoVersion || localVersion) ? tagVersion === (repoVersion || localVersion) : null,
+      expectedVersion,
       publishedAt: j.published_at,
       url: j.html_url,
-      expected,
-      missing: expected.filter((e) => !e.present).map((e) => e.name),
+      required,
+      optional,
+      requiredMissing: required.filter((e) => !e.present).map((e) => e.name),
+      autoUpdateOk: expectedVersion ? required.every((e) => e.present) : null,
+      distribution,
+      // O‘rnatuvchi/portable/zip umuman yo‘qmi — u holda «yetishmayapti» emas, boshqa holat.
+      hasDistribution: distribution.length > 0,
       assets: assets.map((a) => ({ name: a.name, sizeMb: +(a.size / 1e6).toFixed(1), downloads: a.download_count })),
     };
   });
@@ -526,7 +647,7 @@ function registerIpc() {
     }
     // Buzuq JSON nashr qilinmasin — aks holda barcha ilovalar e'lonni o‘qiy olmay qoladi.
     try { JSON.parse(text); } catch (e) { return { ok: false, error: 'JSON buzuq — nashr qilinmadi: ' + e.message }; }
-    const put = await ghPut(DEFAULT_REPO.file, text, String(message || '').slice(0, 200) || 'app-config.json: 5.4 reliz e’loni (YANG Admin Desk)');
+    const put = await ghPut(DEFAULT_REPO.file, text, String(message || '').slice(0, 200) || 'app-config.json yangilandi (YANG Admin Desk)');
     if (!put.ok) return put;
     return {
       ok: true,

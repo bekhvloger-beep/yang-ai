@@ -1,0 +1,25 @@
+workspace: C:\Users\behru\AppData\Local\Temp\yang-ctxfit-fOv4IC
+
+lokal server: mavjud server
+
+PASS  A1. 🧭 Kontekst hajmi serverdan o‘qiladi (/props → n_ctx)
+      → /props n_ctx = 8192 token (ilova shu hajmga sig‘diradi, taxmin emas)
+PASS  A2. 📏 Katta so‘rov hajmi HAQIQIY tokenizator bilan o‘lchandi (skrinshotdagi holat)
+      → server /tokenize: 15829 token (taxmin: 17076) · kontekst 8192 · byudjet 6064 — sig‘maydi
+PASS  B1. 🔬 Nazorat: qisqartirilmagan so‘rov haqiqatan yiqiladi (bug reproduktsiyasi)
+      → xato: HTTP 400: request (15975 tokens) exceeds the available context size (8192 tokens), try increasing it
+      · write_file {"path":"kalkulyator2.py","content":"def add(a, b):\n    return a + b\n\ndef sub
+      · run_command {"command":"python kalkulyator2.py"}
+PASS  C1. ✂️ Engine so‘rovni kontekstga sig‘dirdi (foydalanuvchiga xabar berildi)
+      → notis: "✂️ So‘rov lokal model kontekstiga (8192 token) sig‘dirildi — eski tarix qisqartirildi" · 17076 → 5132 token (byudjet 6064)
+PASS  C2. ✅ O‘sha so‘rov endi HTTP 400 olmadi — model javob berdi
+      → 125 s · javob 941 belgi · tool'lar=[write_file, run_command]
+PASS  C3. 📄 Vazifa oxirigacha bajarildi (fayl yozildi)
+      → kalkulyator2.py: yozildi · fayllar=[kalkulyator2.py]
+PASS  D1. 🧩 Jamoa (planner) yo‘li ham kontekstga sig‘dirdi — 400 yo‘q
+      → so‘rov 4982 token → 5087 token (byudjet 6912, kontekst 8192) · urinish 1
+PASS  D2. 🖼️ Rasm olib tashlandi (ilova ichidagi model uni ko‘ra olmaydi) va model javob berdi
+      → rasm qismi: 1 · 222 s · javob 2949 belgi
+
+XULOSA: 8/8 PASS
+EXIT=0

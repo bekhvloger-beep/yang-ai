@@ -16,8 +16,10 @@ contextBridge.exposeInMainWorld('api', {
   blockToggle: (installId, blocked) => ipcRenderer.invoke('block:toggle', { installId, blocked }),
   stats: () => ipcRenderer.invoke('stats:summary'),
   releaseStatus: () => ipcRenderer.invoke('release:status'),
-  // Reliz tekshiruvi: tag ↔ repo versiyasi + to'rtta kutilgan asset.
+  // Reliz tekshiruvi: versiya manbalari (repo/lokal/paket) ↔ reliz tegi ↔ majburiy fayllar.
   releaseVerify: () => ipcRenderer.invoke('release:verify'),
+  // Yon panel uchun: Desk versiyasi va lokal ilova versiyasi (qattiq yozilmaydi).
+  deskInfo: () => ipcRenderer.invoke('desk:info'),
   // Mahalliy app-config.json: ko'rish va to'g'ridan-to'g'ri nashr qilish.
   localCfgPreview: () => ipcRenderer.invoke('cfg:local-preview'),
   pushLocalConfig: (message) => ipcRenderer.invoke('cfg:push-local', { message }),

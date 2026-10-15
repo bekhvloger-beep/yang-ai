@@ -1,0 +1,24 @@
+✓ Repo topildi: bekhvloger-beep/yang-ai
+✓ Izoh fayli: docs/v5.5.0-chiqarish.md (5801 belgi)
+✓ Release v5.5.0 allaqachon bor — izoh yangilanadi, assetlar ustiga yoziladi
+✓ Izoh yangilandi
+✓ Yuklandi: YANG-AI-Setup-5.5.0.exe (1773.1 MB)
+✓ Yuklandi: YANG-AI-Setup-5.5.0.exe.blockmap (1.8 MB)
+✓ Yuklandi: YANG-AI-Portable-5.5.0.exe (1772.8 MB)
+↻ latest.yml: hajm bir xil, sha256 boshqa — qayta yuklanadi
+✓ Yuklandi: latest.yml (0.0 MB)
+✓ Yuklandi: YANG-IDE-Setup-1.0.0.exe (1357.5 MB)
+✓ Yuklandi: YANG-IDE-Portable-1.0.0.exe (1357.2 MB)
+
+— Tekshiruv (lokal fayl ↔ GitHub asset) —
+  ✓ YANG-AI-Setup-5.5.0.exe — hajm mos, sha256 mos
+  ✓ YANG-AI-Setup-5.5.0.exe.blockmap — hajm mos, sha256 mos
+  ✓ YANG-AI-Portable-5.5.0.exe — hajm mos, sha256 mos
+  ✓ latest.yml — hajm mos, sha256 mos
+  ✓ YANG-IDE-Setup-1.0.0.exe — hajm mos, sha256 mos
+  ✓ YANG-IDE-Portable-1.0.0.exe — hajm mos, sha256 mos
+  → 6/6 asset tasdiqlandi
+
+Tayyor: https://github.com/bekhvloger-beep/yang-ai/releases/tag/v5.5.0
+Foydalanuvchilarda ilova o‘zi yangi versiyani aniqlab o‘rnatadi.
+RELEASE_EXIT=0

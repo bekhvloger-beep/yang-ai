@@ -1,6 +1,26 @@
-// imagegen.js — AI image GENERATION via provider chain (Gemini native -> OpenAI -> OpenRouter -> Vercel Gateway).
-// Each provider gets its own shot; first success returns the image buffer.
+// imagegen.js — AI image GENERATION.
+//
+// ZANJIR: LOKAL (stable-diffusion.cpp, API va kalitsiz) → Gemini native → OpenAI →
+// OpenRouter → Vercel Gateway. Har bir provayder o'z urinishini oladi; birinchi
+// muvaffaqiyat darhol qaytadi.
+//
+// Nega lokal birinchi: rasm generatsiyasi bulutda PUL/kvota talab qiladi va Gemini image
+// bepul kvotasi tez tugaydi ("Rasm generatsiyasi hozircha hech bir provayderda mavjud emas"
+// xatosi shundan edi). Endi kompyuterda `sd-cli.exe` + rasm modeli bo'lsa, rasm butunlay
+// offline yaratiladi (o'lchandi: 512×512 · 20 qadam ≈ 168 s, Radeon RX 580).
+import { generateLocalImage, resolveSdDirs } from './local_sd.js';
+
 export const GEMINI_IMAGE_MODELS = ['gemini-2.5-flash-image', 'gemini-3.1-flash-image', 'gemini-3-pro-image'];
+
+/** Katalogdagi o'lchamlar: SD1.5/SD-Turbo 512 px da o'rgatilgan (1024 px da sifat buziladi). */
+function localSizeFor(size, fallback = '512x512') {
+  const m = String(size || '').match(/^(\d{2,4})\s*[x×*]\s*(\d{2,4})$/);
+  if (!m) return fallback;
+  const w = Math.min(1024, Number(m[1]) || 512);
+  const h = Math.min(1024, Number(m[2]) || 512);
+  const side = Math.max(256, Math.min(512, Math.min(w, h)));
+  return `${side}x${side}`;
+}
 
 const OPENAI_IMAGE_MODELS = ['gpt-image-1', 'dall-e-3'];
 
@@ -67,8 +87,30 @@ const OPENAI_STYLE_ATTEMPTS = [
 ];
 
 export async function generateImage({ prompt, config, signal, size = '1024x1024' }) {
-  const keys = config.keys || {};
+  const keys = (config && config.keys) || {};
+  const local = (config && config.imagegen) || {};
   const errors = [];
+
+  // 0) LOKAL — internet, API kaliti va kvota kerak emas (`local: false` bilan o'chirish mumkin).
+  if (local.local !== false) {
+    try {
+      const r = await generateLocalImage({
+        prompt,
+        negative: local.negative || '',
+        size: local.size || localSizeFor(size),
+        steps: local.steps,
+        cfgScale: local.cfgScale,
+        seed: local.seed ?? -1,
+        vaeTiling: local.vaeTiling !== false,
+        dirs: resolveSdDirs(local.dirs || []),
+        signal,
+      });
+      return { buffer: r.buffer, mime: r.mime, via: `${r.via} · ${r.width}×${r.height} · ${r.steps} qadam` };
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      errors.push(`Lokal: ${String(e.message).slice(0, 140)}`);
+    }
+  }
   if (keys.gemini) {
     try {
       return await geminiNative(prompt, keys.gemini, signal);
@@ -110,6 +152,7 @@ export async function generateImage({ prompt, config, signal, size = '1024x1024'
   throw new Error(
     'Rasm generatsiyasi hozircha hech bir provayderda mavjud emas:\n' +
     (errors.length ? errors.join('\n') + '\n' : '') +
-    '(Gemini image free kvotasi tugagan — kunda yangilanadi; Vercel Gateway uchun vercel.com hisobiga karta ulang)'
+    '(Gemini image free kvotasi tugagan — kunda yangilanadi; Vercel Gateway uchun vercel.com hisobiga karta ulang.\n' +
+    'Eng ishonchli yo‘l — LOKAL rasm dvigatelini o‘rnatish: YANG IDE → «Lokal AI» menyusi → «Rasm dvigateli» + «Rasm modellari».)'
   );
 }

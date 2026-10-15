@@ -1,0 +1,31 @@
+
+YANG IDE boot testi
+  PASS  Sahifa yuklandi va title to‘g‘ri — YANG IDE
+  PASS  preload ko‘prigi (window.ide) mavjud — 27 ta metod
+  PASS  tashqi CSS fayl ulangan
+  PASS  renderer o‘z <style> blokini kiritmaydi — style soni: 0
+  PASS  asosiy panellar mavjud (5/5) — 5/5
+  PASS  oyna o‘lchami mantiqiy — 1264×735
+  PASS  fayl daraxti chizildi — 2 qator
+  PASS  saqlangan tab tiklandi — 1 tab
+  PASS  muharrir ochiq va fayl yuklangan — def factorial(n):
+    ""
+  PASS  qator raqamlari chizildi — 9 qator raqami
+  PASS  sintaksis bo‘yalishi ishlaydi (.tk-* tokenlar) — <span class="tk-kw">def</span> <span class="tk-fn">factorial
+  PASS  holat qatori kursor/tilni ko‘rsatadi — Ln 9, Col 1 · Python
+  PASS  muharrir va qatlamlar nolga teng emas — editor 954×401
+  PASS  kod qator raqamlari ostida qolmaydi (gutter chapda) — gutter 252..310 → editor x=310
+  PASS  bo‘yalgan qatlam <pre> textarea bilan bir nuqtadan boshlanadi — pre 310.0,80.0 vs area 310.0,80.0
+  PASS  matn metrikasi bir xil (shrift / o‘lcham / satr balandligi) — 13px / lh 20.15px
+  PASS  yuqori padding mos (bo‘yalgan matn surilmaydi) — pre 10px = area 10px
+  PASS  AI paneli ochiladi
+  PASS  team_plan: jamoa tarkibi ko‘rinadi
+  PASS  team_assign: agent → model ko‘rinadi
+  PASS  agent_begin: agent boshlanishi ko‘rinadi
+  PASS  agent_end: agent yakuni va hisoboti ko‘rinadi
+  PASS  team_done: yakuniy xulosa BIR MARTA chiqadi — 1 marta
+  PASS  konsol xatolari yo‘q
+  skrinshot: D:\loyiha\ChatDev-main\reports\ide_boot\ide-boot.png
+
+24/24 tekshiruv o‘tdi
+EXIT=0

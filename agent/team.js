@@ -4,7 +4,25 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
 import { AgentEngine } from './engine.js';
-import { streamChat, getAllProviders, getProviderKey, modelStrengths, isProviderHealthy, suspendProvider, isProviderEnabled } from './providers.js';
+import { streamChatFitted, getAllProviders, getProviderKey, modelStrengths, isProviderHealthy, suspendProvider, isProviderEnabled } from './providers.js';
+
+// Planner (reja) so'rovini lokal modelga yuboradi. Umumiy `streamChatFitted` ishlatiladi:
+// lokal llama-server konteksti (8192) dan katta so'rov HTTP 400 qaytaradi va Jamoa rejimi
+// butunlay to'xtardi (o'lchov: 13 835 tokenli so'rov). Rasm biriktirilgan bo'lsa, ilova
+// ichidagi model uni baribir ko'ra olmaydi — qisqartirishda rasm olib tashlanadi.
+async function plannerCall({ def, id, key, model, messages, signal, extraBody, guardChars, onNotice }) {
+  const { result, fit } = await streamChatFitted({
+    base: def.base, key, model, messages, tools: [], signal,
+    extraHeaders: def.extraHeaders, providerId: id, extraBody, guardChars, def,
+    onTrim: ({ ctx, fit: f }) => {
+      if (!onNotice) return;
+      onNotice(f.images
+        ? '✂️ Reja so‘rovidagi rasm olib tashlandi — ilova ichidagi lokal matn modeli rasmni ko‘ra olmaydi'
+        : `✂️ Reja so‘rovi lokal model kontekstiga (${ctx} token) sig‘dirildi`);
+    },
+  });
+  return { content: result.content, quota: result.quota, fit };
+}
 
 const CONCURRENCY = 3;
 
@@ -242,7 +260,7 @@ export class TeamRunner extends EventEmitter {
       }
       try {
         // Lokal planner ham cheksiz matn yozmasligi uchun token + matn guard'i.
-        const r = await streamChat({ base: def.base, key, model: this.config.model, messages, tools: [], signal, extraHeaders: def.extraHeaders, providerId: this.config.provider, extraBody: { max_tokens: 1200 }, guardChars: 5000 });
+        const r = await plannerCall({ def, id: this.config.provider, key, model: this.config.model, messages, signal, extraBody: { max_tokens: 1200 }, guardChars: 5000, onNotice: (text) => this.emitEvent('notice', { text }) });
         return r.content;
       } catch (e) {
         throw new Error(`Pinned model ishlamadi: ${this.config.provider} · ${this.config.model} — ${e.message}`);
@@ -270,11 +288,11 @@ export class TeamRunner extends EventEmitter {
       for (const model of models.slice(0, 2)) {
         if (signal && signal.aborted) throw new Error('To‘xtatildi');
         try {
-          const r = await streamChat({
-            base: def.base, key, model, messages, tools: [], signal,
-            extraHeaders: def.extraHeaders, providerId: id,
-            extraBody: { temperature: 0.3 }, // planner uchun barqaror chiqish
+          const r = await plannerCall({
+            def, id, key, model, messages, signal,
+            extraBody: { temperature: 0.3, max_tokens: 1200 }, // planner uchun barqaror va qisqa chiqish
             guardChars: def.bundled ? 5000 : undefined, // lokal planner cho'zilib ketmasin
+            onNotice: (text) => this.emitEvent('notice', { text }),
           });
           this.emitEvent('quota', { provider: id, providerName: def.name, model, ...(r.quota || {}) });
           return r.content;

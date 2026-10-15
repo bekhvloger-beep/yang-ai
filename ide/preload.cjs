@@ -13,6 +13,15 @@ contextBridge.exposeInMainWorld('ide', {
   pickFolder: () => ipcRenderer.invoke('yide:pick-folder'),
   openFolder: (path) => ipcRenderer.invoke('yide:open-folder', { path }),
 
+  // --- KO'P ILDIZLI workspace: qo'shimcha papkalar (asosiy papkadan tashqari) ---
+  // YANG AI ilovasi bilan BIR XIL ro'yxat (`config.json` → `extraRoots`).
+  rootsList: () => ipcRenderer.invoke('yide:roots-list'),
+  // Asosiy oyna ish papkasini almashtirsa (yoki IDE oynasi allaqachon ochiq bo'lsa) xabar keladi.
+  onWorkspaceChanged: (cb) => on('yide:workspace-changed', cb),
+  rootsAdd: () => ipcRenderer.invoke('yide:roots-add'),
+  rootsRemove: (path) => ipcRenderer.invoke('yide:roots-remove', { path }),
+  onRootsChanged: (cb) => on('yide:roots-changed', cb),
+
   // --- fayllar ---
   listTree: (rel = '.', depth = 3) => ipcRenderer.invoke('yide:list-tree', { rel, depth }),
   readFile: (path, maxBytes) => ipcRenderer.invoke('yide:read-file', { path, maxBytes }),
@@ -38,6 +47,27 @@ contextBridge.exposeInMainWorld('ide', {
   aiStop: () => ipcRenderer.invoke('yide:ai-stop'),
 
   sysInfo: () => ipcRenderer.invoke('yide:sys-info'),
+
+  // --- LOKAL AI menejeri: apparat talablari, kuch reytingi, yuklab olish ---
+  // Katalog ilova ichida (`local-ai/catalog.json`) — har bir model uchun minimal RAM/VRAM/disk,
+  // o'lchangan kuch reytingi va SHU kompyuterda mos keladimi (`verdict`) qaytadi.
+  hardware: (refresh = false) => ipcRenderer.invoke('yide:hw-profile', { refresh }),
+  modelsCatalog: () => ipcRenderer.invoke('yide:models-catalog'),
+  modelsDownload: (id) => ipcRenderer.invoke('yide:models-download', { id }),
+  modelsCancel: (id) => ipcRenderer.invoke('yide:models-cancel', { id }),
+  modelsRemove: (id) => ipcRenderer.invoke('yide:models-remove', { id }),
+  modelsReveal: (id) => ipcRenderer.invoke('yide:models-reveal', { id }),
+  modelsExternal: () => ipcRenderer.invoke('yide:models-external'),
+  // «O‘lchash» — yuklangan model 4 haqiqiy vazifa bilan sinovdan o'tadi
+  // (`agent/bench_ide_assisted.mjs`), ball `measured.json` ga yozilib katalog yangilanadi.
+  modelsMeasure: (id, tasks) => ipcRenderer.invoke('yide:models-measure', { id, tasks }),
+  modelsBenchState: () => ipcRenderer.invoke('yide:models-bench-state'),
+  onModelBench: (cb) => on('yide:model-bench', cb),
+  modelsAttach: (provider, model, base) => ipcRenderer.invoke('yide:models-attach', { provider, model, base }),
+  imageStatus: () => ipcRenderer.invoke('yide:image-status'),
+  imageGenerate: (opts) => ipcRenderer.invoke('yide:image-generate', opts || {}),
+  imageStop: () => ipcRenderer.invoke('yide:image-stop'),
+  onModelProgress: (cb) => on('yide:model-progress', cb),
 
   // --- HAQIQIY terminal (PTY): vim/top/ssh kabi interaktiv dasturlar ishlaydi ---
   ptyInfo: () => ipcRenderer.invoke('yide:pty-info'),
@@ -71,6 +101,22 @@ contextBridge.exposeInMainWorld('ide', {
   fixRun: (path, maxAttempts) => ipcRenderer.invoke('yide:fix-run', { path, maxAttempts }),
   fixStop: () => ipcRenderer.invoke('yide:fix-stop'),
   fixBusy: () => ipcRenderer.invoke('yide:fix-busy'),
+
+  // --- GIT paneli: status/diff/stage/commit/log (workspace ichida, `git` CLI bilan) ---
+  gitStatus: () => ipcRenderer.invoke('yide:git-status'),
+  gitDiff: (path, staged = false) => ipcRenderer.invoke('yide:git-diff', { path, staged }),
+  gitStage: (paths) => ipcRenderer.invoke('yide:git-stage', { paths }),
+  gitUnstage: (paths) => ipcRenderer.invoke('yide:git-unstage', { paths }),
+  gitCommit: (message) => ipcRenderer.invoke('yide:git-commit', { message }),
+  gitLog: (limit = 20) => ipcRenderer.invoke('yide:git-log', { limit }),
+
+  // --- LOKAL OVOZLI BUYRUQLAR (rubaistt + whisper.cpp) ---
+  // Mikrofon renderer'da yoziladi (16 kHz mono WAV), matnga aylantirish main'da.
+  // `voiceCommand` faqat ALLOWLIST dagi buyruq ID sini qaytaradi — matn hech qachon
+  // shell buyrug‘i sifatida bajarilmaydi.
+  voiceStatus: () => ipcRenderer.invoke('yide:voice-status'),
+  voiceTranscribe: (wavBase64) => ipcRenderer.invoke('yide:voice-transcribe', { wavBase64 }),
+  voiceCommand: (text) => ipcRenderer.invoke('yide:voice-command', { text }),
 
   // --- hodisalar ---
   onTermData: (cb) => on('yide:term-data', cb),

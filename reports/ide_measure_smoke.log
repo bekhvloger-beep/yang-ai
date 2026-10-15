@@ -1,0 +1,18 @@
+
+=== local:D:/loyiha/ChatDev-main/local-ai/model-1.7b.gguf (1.7B, ?, ilova ichida) ===
+  server: 9.9s da tayyor (-c 8192)
+  warm-up: 10.3s
+  PASS factorial   one-shot  33.8s · qadam=1
+  PASS factorial   ide-loop  32.3s · qadam=1
+
+| Model | Params | One-shot | IDE bilan | Tuzatish qadamlari | O‘rtacha (IDE) |
+|---|---|---:|---:|---:|---:|
+| local:D:/loyiha/ChatDev-main/local-ai/model-1.7b.gguf | 1.7B | 1/1 | 1/1 | 0 | 32.3s |
+
+## Vazifalar bo‘yicha
+
+| Model | Vazifa | One-shot | IDE bilan |
+|---|---|---|---|
+
+Yozildi: D:\loyiha\ChatDev-main\reports\local_ai\ide_measure_smoke\bench_raw.json va bench_summary.md
+EXIT=0

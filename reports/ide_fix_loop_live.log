@@ -1,0 +1,39 @@
+model: qwen2.5-coder:7b (Ollama’dagi modellar: qwen2.5-coder:3b, qwen2.5:0.5b, deepseek-r1:8b, qwen2.5-coder:7b, qwen2.5:latest, llama3:latest)
+[19:14:33] ilova ishga tushdi — asosiy oyna tayyor
+[19:14:34] IDE oynasi so‘raldi (tugma bosildi) — IDE sahifasi kutilmoqda
+[19:14:35] buzuq fayl tayyor — daraxt yangilanishi kutilmoqda
+PASS  1. IDE’da fayl ochildi (daraxtdan bosib)
+      → ekub.js muharrirda: true
+[19:14:36] «Sinab ko‘r + tuzat» bosildi — model ishlayapti (bir necha daqiqa bo‘lishi mumkin)
+[19:15:04] holat: run#1 → ai#1 · 🔒 Faqat tanlangan model: local · qwen2.5-coder:7b — zaxiraga o‘tilmaydi
+[19:15:36] holat: run#1 → ai#1 · tilgan fayl yozildi.▸ write_file ekub.js✓ write_file↻ Yozilgan faylni ishga tushirib tekshirishni so‘rayapman…
+PASS  2. Halqa TARIXNI ko‘rib tuzatdi: xato → AI → qayta yurish → muvaffaqiyat
+      → 76.4s ichida 2 yurish: kod 1, kod 0 · bosqichlar: run#1 → ai#1 → run#2 → done#2
+        · run#1: 1-urinish: ishga tushirilyapti…
+        · ai#1: xato (kod 1) — model tuzatyapti…
+        · run#2: 2-urinish: ishga tushirilyapti…
+        · done#2: ✅ 2-urinishdayoq muvaffaqiyatli tugadi (0.8s)
+      → AI hodisalari: 203 ta, shundan tool chaqiruvi 1 ta
+        · tool write_file ok=true {"path":"ekub.js","content":"// Ikki sonning eng katta umumiy bo‘luvchisi (EKUB).\nfunction ekub(a, b) {\n let temp;\n w
+PASS  3. Tuzatilgan fayl mustaqil ishga tushganda ham to‘g‘ri natija beradi (EKUB(48,18)=6)
+      → fayl exit=0 · mustaqil chaqiruv: ekub(48,18) = 6
+
+--- tuzatilgan fayl ---
+// Ikki sonning eng katta umumiy bo‘luvchisi (EKUB).
+function ekub(a, b) {
+  let temp;
+  while (b) {
+    temp = b;
+    b = a % b;
+    a = temp;
+  }
+  return a;
+}
+
+const natija = ekub(48, 18);
+if (natija !== 6) throw new Error('ekub(48, 18) = ' + natija + ' — 6 kutilgan');
+console.log('TOGRI', natija);
+-----------------------
+
+XULOSA: 3/3 PASS
+EXIT=0

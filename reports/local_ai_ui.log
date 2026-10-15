@@ -1,0 +1,29 @@
+dev IDE: D:\loyiha\ChatDev-main\node_modules\electron\dist\electron.exe ide/main.js
+ish papkasi: C:\Users\behru\AppData\Local\Temp\yang-models-ws-hV4CM8
+CDP port 9471
+
+PASS  1. Yuqori panelda «Lokal AI» tugmasi bor va menyuni ochadi
+      → tugma="Lokal AI" · modal ochiq=true
+PASS  2. Apparat profili haqiqiy qiymatlarni ko‘rsatadi (CPU, RAM, video karta, disk, daraja)
+      → RAM ekranda=11.9 GB · haqiqiy=11.9 GB · darajalar=["★★★☆☆","★★★☆☆"]
+PASS  3. Har bir modelda minimal talablar, o‘lchangan kuch (★) va sizdagi natija (→ ★) bor
+      → qatorlar=5 · ["Qwen3.5 2B (Q4_K_M) ★★★☆☆ → ☆☆☆☆☆","Qwen2.5 0.5B Instruct (Q4_K_M) ★☆☆☆☆ → ★☆☆☆☆","Qwen2.5-Coder 1.5B Instruct (Q4_K_M) ★★★☆☆ → ☆☆☆☆☆"]
+FAIL  4. Baho modelga qarab farq qiladi (7B kod modeli > 0.5B suhbat modeli)
+      → Qwen2.5-Coder 7B Instruct (Q4_K_M): ★★★★★ → ☆☆☆☆☆ (Ishlamaydi) vs Qwen2.5 0.5B Instruct (Q4_K_M): ★☆☆☆☆ → ★☆☆☆☆ (Mos keladi)
+PASS  5. Kompyuterda allaqachon o‘rnatilgan AI topiladi va «Ishlatish» tugmasi beriladi
+      → 22 qator · ulash takliflari=[{"p":"local","m":"deepseek-r1:8b"},{"p":"local","m":"qwen2.5-coder:7b"},{"p":"local","m":"qwen2.5:latest"}]
+PASS  6. Rasm turkumida generator va rasm modellari ko‘rinadi
+      → dvigatel="rasm dvigateli tayyor (vulkan)" · modellar=3
+PASS  7. Yaratishdan OLDIN taxminiy vaqt (o‘lchovga asoslangan) ko‘rsatiladi
+      → "Taxminiy vaqt: 6 sekund (256×256 · 8 qadam) — o‘lchovga asoslangan, video karta va bo‘sh RAM ga qarab o‘zgaradi."
+PASS  8. UI orqali LOKAL rasm yaratildi (lokal model, kalitsiz)
+      → 16 s · data-length=208746 · "Lokal · stable-diffusion.cpp (vulkan) · v1-5-pruned-emaonly-fp16.safetensors · 14.2s · 256"
+PASS  9. Natija ish papkasidagi `generated/` ga PNG sifatida saqlandi
+      → generated/rsm-2026-10-15T18-19-07.png · magic=89504e47
+PASS  10. Menyu «✕» bilan ham yopiladi
+      → yopiq=true
+PASS  11. Ekran surati: menyu apparat profili va modellar bilan
+      → reports/local_ai_ui/lokal-ai-menyusi.png
+
+XULOSA: 10/11 PASS
+EXIT=1

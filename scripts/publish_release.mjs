@@ -5,16 +5,37 @@
 // Skript idempotent: reliz mavjud bo'lsa assetlar nomi bo'yicha o'chirilib, qayta yuklanadi.
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const TOKEN = process.env.GH_TOKEN;
+
+// Token manbai (hech qachon chop etilmaydi):
+//   1) GH_TOKEN muhit o‘zgaruvchisi
+//   2) admin-config.json -> ghToken (admin panel yozadigan joy)
+//   3) `.gh-token` fayli (loyiha ildizida, .gitignore da)
+function readToken() {
+  if (process.env.GH_TOKEN) return process.env.GH_TOKEN.trim();
+  for (const file of ['admin-config.json', '.gh-token']) {
+    const p = path.join(ROOT, file);
+    try {
+      if (!fs.existsSync(p)) continue;
+      const raw = fs.readFileSync(p, 'utf8').trim();
+      const token = file.endsWith('.json') ? String((JSON.parse(raw) || {}).ghToken || '').trim() : raw;
+      if (token) return token;
+    } catch { /* fayl o‘qilmadi — keyingi manbaga o‘tamiz */ }
+  }
+  return '';
+}
+
+const TOKEN = readToken();
 const OWNER = process.env.GH_OWNER || 'bekhvloger-beep';
 const REPO = process.env.GH_REPO || 'yang-ai';
 
 if (!TOKEN) {
-  console.log('GH_TOKEN o‘rnatilmagan. Masalan: GH_TOKEN=ghp_xxx node scripts/publish_release.mjs');
+  console.log('Token topilmadi. Uch yo‘ldan biri: GH_TOKEN muhit o‘zgaruvchisi, admin-config.json (ghToken) yoki .gh-token fayli.');
+  console.log('Masalan: GH_TOKEN=ghp_xxx node scripts/publish_release.mjs');
   process.exit(1);
 }
 
@@ -142,12 +163,19 @@ Avvaldan bor:
 }
 
 // 3. upload assets (stream orqali — katta fayllar uchun; ENOBUFS buffer xatosini oldini oladi)
-const assets = [
-  path.join(ROOT, 'dist', `YANG-AI-Setup-${version}.exe`),
-  path.join(ROOT, 'dist', `YANG-AI-Setup-${version}.exe.blockmap`),
-  path.join(ROOT, 'dist', `YANG-AI-Portable-${version}.exe`),
-  path.join(ROOT, 'dist', 'latest.yml'),
-];
+// Assetlar: sukut bo‘yicha o‘rnatuvchi + portable + blockmap + latest.yml.
+// YANG_ASSETS bilan almashtirish mumkin (masalan o‘rnatuvchi yig‘ilmagan bo‘lsa — faqat zip):
+//   YANG_ASSETS="dist/YANG AI-${version}-win.zip" node scripts/publish_release.mjs
+// Diqqat: ro‘yxatda Setup bo‘lmasa `latest.yml` qo‘shilmaydi — u mavjud bo‘lmagan faylga
+// ishora qilib, avto-yangilanishni buzardi.
+const assets = process.env.YANG_ASSETS
+  ? String(process.env.YANG_ASSETS).split(',').map((s) => s.trim()).filter(Boolean).map((s) => (path.isAbsolute(s) ? s : path.join(ROOT, s)))
+  : [
+      path.join(ROOT, 'dist', `YANG-AI-Setup-${version}.exe`),
+      path.join(ROOT, 'dist', `YANG-AI-Setup-${version}.exe.blockmap`),
+      path.join(ROOT, 'dist', `YANG-AI-Portable-${version}.exe`),
+      path.join(ROOT, 'dist', 'latest.yml'),
+    ].filter((f) => fs.existsSync(f));
 // Qo'shimcha assetlar (masalan mustaqil IDE o'rnatuvchilari):
 //   YANG_EXTRA_ASSETS="dist-ide/YANG-IDE-Setup-1.0.0.exe,dist-ide/YANG-IDE-Portable-1.0.0.exe"
 // Diqqat: boshqa ilovaning latest.yml'ini bu yerga qo'shmang — u AI ilovasining
@@ -161,17 +189,20 @@ async function uploadOnce(file, name) {
   const size = (fs.statSync(file).size / 1e6).toFixed(1);
   // curl Content-Length ni aniq yuboradi (Node fetch stream chunked yuborib
   // GitHub'da "Bad Content-Length" 400 berardi) va RAM'ni bosmaydi.
-  const out = execFileSync(
+  // MUHIM: `--data-binary @fayl` faylni XOTIRAGA o'qiydi — 1,65 GB o'rnatuvchida curl
+  // «option --data-binary: out of memory» berdi (o'lchandi). `--upload-file` esa oqim bilan
+  // yuboradi: Content-Length fayl o'lchamidan olinadi, xotira ishlatilmaydi.
+  execFileSync(
     'curl',
     [
-      '-sS', '--fail-with-body', '--retry', '2', '--connect-timeout', '30', '--max-time', '1800',
+      '-sS', '--fail-with-body', '--retry', '2', '--connect-timeout', '30', '--max-time', '5400',
       '-X', 'POST',
       '-H', `Authorization: Bearer ${TOKEN}`,
       '-H', 'Content-Type: application/octet-stream',
-      '--data-binary', `@${file}`,
+      '--upload-file', file,
       `${uploadUrl}?name=${encodeURIComponent(name)}`,
     ],
-    { encoding: 'utf8', timeout: 1900000 },
+    { encoding: 'utf8', timeout: 5500000, maxBuffer: 8 * 1024 * 1024 },
   );
   console.log(`✓ Yuklandi: ${name} (${size} MB)`);
   return true;
@@ -184,10 +215,24 @@ async function deleteAssetByName(name) {
   }
 }
 
-// Allaqachon yuklangan va HAJMI bir xil assetlar qayta yuborilmaydi — 3.5 GB ni behuda
+// Faylning sha256 xulosasi (oqim bilan — 1,7 GB fayl xotiraga o‘qilmaydi).
+// GitHub asset uchun ham xuddi shu `sha256:<hex>` ko‘rinishida digest qaytaradi.
+function sha256File(file) {
+  return new Promise((resolve, reject) => {
+    const h = crypto.createHash('sha256');
+    fs.createReadStream(file, { highWaterMark: 4 * 1024 * 1024 })
+      .on('data', (c) => h.update(c))
+      .on('end', () => resolve(`sha256:${h.digest('hex')}`))
+      .on('error', reject);
+  });
+}
+
+// Allaqachon yuklangan va BIR XIL (sha256) assetlar qayta yuborilmaydi — 3,5 GB ni behuda
 // qayta yuklamaslik uchun (skript idempotent: qayta yurishda faqat yangilari ketadi).
+// Faqat hajmni solishtirish yetarli emas: ikki xil yig‘ilgan o‘rnatuvchi bir necha yuz bayt
+// farq qilishi mumkin, o‘shanda hajm boshqa, xesh boshqa bo‘ladi.
 const currentRelease = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
-const uploadedSizes = new Map((((currentRelease.json || {}).assets) || []).map((a) => [a.name, a.size]));
+const uploadedAssets = new Map((((currentRelease.json || {}).assets) || []).map((a) => [a.name, a]));
 
 for (const file of assets) {
   if (!fs.existsSync(file)) {
@@ -196,9 +241,14 @@ for (const file of assets) {
   }
   const name = path.basename(file);
   const sizeNow = fs.statSync(file).size;
-  if (uploadedSizes.get(name) === sizeNow) {
-    console.log(`= O‘zgarmagan: ${name} — qayta yuklanmadi`);
-    continue;
+  const prev = uploadedAssets.get(name);
+  if (prev && prev.size === sizeNow) {
+    const localDigest = await sha256File(file);
+    if (!prev.digest || prev.digest === localDigest) {
+      console.log(`= O‘zgarmagan: ${name} — qayta yuklanmadi (sha256 mos)`);
+      continue;
+    }
+    console.log(`↻ ${name}: hajm bir xil, sha256 boshqa — qayta yuklanadi`);
   }
   let done = false;
   for (let attempt = 1; attempt <= 3 && !done; attempt++) {
@@ -216,5 +266,34 @@ for (const file of assets) {
   if (!done) console.log(`⚠ YUKLANMADI: ${name} — keyinroq skriptni qayta ishga tushirish mumkin (idempotent)`);
 }
 
+// 4. Tekshiruv: yuklangan assetlarning hajmi va sha256 xulosasi lokal fayl bilan mos kelishi
+// kerak. Bu qadar katta fayllarda uzilib qolgan (qisqa) yuklanish faqat HTTP 200 bilan
+// bilinmaydi — nomzod fayl buzilgan bo‘lib qolar edi.
+console.log('\n— Tekshiruv (lokal fayl ↔ GitHub asset) —');
+let checked = 0;
+let bad = 0;
+{
+  const after = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
+  const byName = new Map((((after.json || {}).assets) || []).map((a) => [a.name, a]));
+  for (const file of assets) {
+    if (!fs.existsSync(file)) continue;
+    const name = path.basename(file);
+    const asset = byName.get(name);
+    if (!asset) {
+      console.log(`  ✗ ${name} — relizda topilmadi`);
+      bad++;
+      continue;
+    }
+    const localSize = fs.statSync(file).size;
+    const digest = await sha256File(file);
+    const ok = asset.size === localSize && (!asset.digest || asset.digest === digest);
+    console.log(`  ${ok ? '✓' : '✗'} ${name} — ${asset.size === localSize ? 'hajm mos' : `hajm farq: ${asset.size} ≠ ${localSize}`}, sha256 ${asset.digest === digest ? 'mos' : `farq (asset ${asset.digest || '—'})`}`);
+    checked++;
+    if (!ok) bad++;
+  }
+}
+console.log(bad === 0 ? `  → ${checked}/${checked} asset tasdiqlandi` : `  → ${bad}/${checked} asset MOS EMAS — skriptni qayta yuriting`);
+
 console.log(`\nTayyor: https://github.com/${OWNER}/${REPO}/releases/tag/${tag}`);
 console.log('Foydalanuvchilarda ilova o‘zi yangi versiyani aniqlab o‘rnatadi.');
+if (bad > 0) process.exitCode = 1;

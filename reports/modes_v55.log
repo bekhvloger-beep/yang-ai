@@ -1,0 +1,18 @@
+model: qwen2.5-coder:7b · rejimlar: solo + team
+PASS  SOLO rejimi: loyiha fayllari yozildi
+      → 3 fayl: [index.js, lib/ekub.js, lib/ortacha.js] · write_file=3 · agentlar=0 · 87.5s
+PASS  SOLO rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → exit=0
+      → SOLO jami: 87.5s · fayllar=[index.js, lib/ekub.js, lib/ortacha.js]
+PASS  TEAM rejimi: loyiha fayllari yozildi
+      → 3 fayl: [index.js, lib/ekub.js, lib/ortacha.js] · write_file=10 · agentlar=6 · 486.5s
+PASS  TEAM rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → exit=0
+      → TEAM jami: 486.5s · fayllar=[index.js, lib/ekub.js, lib/ortacha.js]
+
+--- xulosa ---
+solo   ISHLADI · 87.5s · 3 fayl
+team   ISHLADI · 486.5s · 3 fayl
+
+XULOSA: 4/4 PASS
+MODES_EXIT=0

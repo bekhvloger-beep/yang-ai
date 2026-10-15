@@ -719,6 +719,24 @@ body { font-size: 13px; }
   cursor: pointer; text-transform: none; letter-spacing: 0;
 }
 .ide-mini-btn:hover { border-color: var(--accent); color: var(--text); }
+/* v5.5 ko'p ildizli workspace: papkalar tasmasi (asosiy + qo'shimcha) */
+.ide-roots {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.ide-roots.hidden { display: none; }
+.ide-root-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px;
+  font-size: 11px; font-family: var(--mono); color: var(--text-dim); background: var(--bg-3);
+}
+.ide-root-chip.primary { border-color: var(--accent); color: var(--text); }
+.ide-root-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+.ide-root-badge { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.ide-root-x { all: unset; cursor: pointer; padding: 0 2px; color: var(--muted); font-size: 10.5px; }
+.ide-root-x:hover { color: #ff9a9a; }
+.ide-tree-row.dir { color: var(--text); }
+.ide-tree-row.ext { color: var(--accent); }
 .ide-term-note {
   padding: 4px 12px; font: 10.5px/1.4 var(--mono); color: var(--text-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -751,6 +769,74 @@ body { font-size: 13px; }
 .ide-file-actions { display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end; }
 
 /* ---------- v5: rasm studiyasi modal ---------- */
+/* ============================================================================
+   LOKAL AI MENEJERI (v5.6) — asosiy oynada ham xuddi IDE dagi ko‘rinish.
+   Sinflar IDE bilan bir xil nomda (`.models-*`, `.hw-*`, `.mdl-*`, `.img-*`), faqat
+   rang o‘zgaruvchilari asosiy oynanikiga moslashtirilgan (`--muted`, `--sans`).
+   ============================================================================ */
+.models-box { width: min(920px, 94vw); }
+.models-wrap { max-height: 72vh; overflow: hidden; gap: 10px; }
+.models-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.models-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.models-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.models-tabs button {
+  border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text-dim);
+  font: 11.5px var(--sans); padding: 4px 10px; border-radius: 999px; cursor: pointer;
+}
+.models-tabs button:hover { color: var(--text); }
+.models-tabs button.active { border-color: rgba(108, 140, 255, .5); background: var(--accent-soft); color: #cdd8ff; }
+.models-body { overflow: auto; flex: 1; min-height: 120px; padding-right: 2px; }
+.models-foot { font-size: 11px; }
+
+/* Apparat profili — «mening kompyuterim qanday darajada» */
+.hw-profile {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  padding: 8px 10px; border: 1px solid var(--border-2); border-radius: 9px; background: var(--bg-2);
+  font-size: 11.5px; color: var(--text-dim);
+}
+.hw-item { display: inline-flex; gap: 5px; align-items: center; }
+.hw-key { color: var(--muted); }
+.hw-val { color: var(--text); }
+.hw-level { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+.hw-stars { color: #e8c266; letter-spacing: 1px; }
+
+/* Model qatori */
+.mdl-row {
+  border: 1px solid var(--border-2); border-radius: 10px; padding: 9px 11px; margin-bottom: 7px;
+  background: var(--bg-2);
+}
+.mdl-row.installed { border-color: rgba(53, 195, 154, .42); }
+.mdl-row.blocked { opacity: .62; }
+.mdl-top { display: flex; align-items: center; gap: 8px; }
+.mdl-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.mdl-stars { color: #e8c266; letter-spacing: 1px; font-size: 12px; }
+.mdl-badge {
+  margin-left: auto; font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border-2); color: var(--text-dim); white-space: nowrap;
+}
+.mdl-badge.ok, .mdl-badge.on { border-color: rgba(53, 195, 154, .5); color: #8fdcae; }
+.mdl-badge.borderline { border-color: rgba(217, 160, 63, .5); color: var(--warn); }
+.mdl-badge.heavy { border-color: rgba(226, 143, 78, .5); color: #e28f4e; }
+.mdl-badge.blocked { border-color: rgba(229, 99, 111, .5); color: var(--danger); }
+.mdl-meta { margin-top: 5px; font-size: 11px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.mdl-note { margin-top: 4px; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; }
+.mdl-reasons { margin-top: 4px; font-size: 11px; color: var(--muted); line-height: 1.45; }
+.mdl-reasons span { display: block; }
+.mdl-actions { display: flex; gap: 6px; margin-top: 7px; align-items: center; flex-wrap: wrap; }
+.mdl-actions .btn { padding: 3px 10px; font-size: 11.5px; height: auto; }
+.mdl-bar { flex: 1; height: 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border-2); overflow: hidden; }
+.mdl-bar-fill { height: 100%; background: var(--accent); width: 0; transition: width .25s ease; }
+.mdl-pct { font-size: 11px; color: var(--text-dim); min-width: 118px; text-align: right; }
+
+/* Lokal rasm generatsiyasi (stable-diffusion.cpp) */
+.models-image { border: 1px solid var(--border-2); border-radius: 10px; padding: 9px; background: var(--bg-2); }
+.img-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.img-row input { flex: 1; min-width: 220px; }
+.img-out { margin-top: 8px; font-size: 11.5px; color: var(--text-dim); }
+.img-out img { max-width: 100%; max-height: 340px; border-radius: 8px; border: 1px solid var(--border-2); display: block; margin-bottom: 6px; }
+.img-est { margin-top: 5px; font-size: 11px; }
+.img-est.warn { color: var(--warn); }
+
 .img-studio-box { width: min(520px, 94vw); }
 .img-studio-quality { display: flex; gap: 8px; margin-top: 8px; }
 .img-studio-quality button {

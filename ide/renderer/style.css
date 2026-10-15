@@ -211,6 +211,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .act-line:hover { background: var(--bg-3); }
 .act-line.ok { color: var(--ok); }
 .act-line.bad { color: var(--danger); }
+
+/* «To‘xtatish» — faqat biror vazifa ishlayotganda ko‘rinadi, ko‘zga tashlanadigan bo‘lsin. */
+.btn.stop { background: var(--danger); border-color: var(--danger); color: #2a0d0d; font-weight: 600; }
+.btn.stop:hover { background: #f38b8b; }
 .act-time { color: var(--text-mute); flex: 0 0 auto; }
 
 /* -------------------------------------------------------------- AI panel */
@@ -337,3 +341,119 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 }
 .dbg-row:hover { background: var(--bg-3); color: var(--text); }
 .dbg-scope { padding: 5px 8px 2px; font: 10.5px var(--ui); text-transform: uppercase; color: var(--accent); letter-spacing: 0.05em; }
+
+/* ============================================================================
+   v5.5 qo'shimchasi: KO'P ILDIZLI workspace — qo'shimcha papkalar tasmasi.
+   Tasma fayl daraxtining tepasida turadi: qaysi papkalar ochiq ekani bir qarashda
+   ko'rinadi, `+` bilan qo'shiladi, `✕` bilan ro'yxatdan olib tashlanadi.
+   ============================================================================ */
+.roots-pad { display: flex; align-items: center; gap: 6px; padding-top: 0; }
+.roots-strip { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+.root-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  padding: 3px 7px; border: 1px solid var(--border-2); border-radius: 999px;
+  background: var(--bg-3); color: var(--text-dim); font-size: 11.5px;
+}
+.root-chip:hover { border-color: #354054; color: var(--text); }
+.root-chip.primary { border-color: rgba(108, 140, 255, 0.45); background: var(--accent-soft); color: #cdd8ff; }
+.root-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 118px; }
+.root-x {
+  border: 0; background: transparent; color: var(--text-mute); cursor: pointer;
+  font: 11px var(--ui); line-height: 1; padding: 1px 2px; border-radius: 4px;
+}
+.root-x:hover { color: var(--danger); background: rgba(240, 112, 112, 0.14); }
+.roots-pad .btn { height: 22px; width: 22px; flex: 0 0 auto; font-size: 14px; line-height: 1; padding: 0; }
+/* Qo'shimcha papka daraxtda boshqacha ko'rinadi (nomi ham rangli, izohda absolyut yo'l). */
+.tree-row.root { color: var(--accent); font-weight: 600; }
+
+/* ============================================================================
+   LOKAL AI MENEJERI (model bozori)
+   Har bir model uchun minimal talablar, SHU kompyuterdagi kuch reytingi (★),
+   yuklab olish progressi va bir bosishda ulash. Uslub bitta manbada (shu fayl).
+   ============================================================================ */
+.models-box { width: min(880px, 94vw); max-height: 88vh; display: flex; flex-direction: column; }
+.models-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.models-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.models-tabs { display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap; }
+.models-tabs button {
+  border: 1px solid var(--border-2); background: var(--bg-3); color: var(--text-dim);
+  font: 11.5px var(--ui); padding: 4px 10px; border-radius: 999px; cursor: pointer;
+}
+.models-tabs button:hover { color: var(--text); }
+.models-tabs button.active { border-color: rgba(108, 140, 255, 0.5); background: var(--accent-soft); color: #cdd8ff; }
+.models-body { overflow: auto; flex: 1; min-height: 120px; padding-right: 2px; }
+.models-foot { margin-top: 8px; font-size: 11px; }
+
+/* Apparat profili — "mening kompyuterim qanday darajada" */
+.hw-profile {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  padding: 8px 10px; border: 1px solid var(--border-2); border-radius: 9px; background: var(--bg-3);
+  font-size: 11.5px; color: var(--text-dim);
+}
+.hw-item { display: inline-flex; gap: 5px; align-items: center; }
+.hw-key { color: var(--text-mute); }
+.hw-val { color: var(--text); }
+.hw-level { margin-left: auto; display: inline-flex; gap: 10px; align-items: center; }
+.hw-stars { color: #e8c266; letter-spacing: 1px; }
+
+/* Model qatori */
+.mdl-row {
+  border: 1px solid var(--border-2); border-radius: 10px; padding: 9px 11px; margin-bottom: 7px;
+  background: var(--bg-3);
+}
+.mdl-row.installed { border-color: rgba(94, 201, 138, 0.42); }
+.mdl-row.blocked { opacity: 0.62; }
+.mdl-top { display: flex; align-items: center; gap: 8px; }
+.mdl-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.mdl-stars { color: #e8c266; letter-spacing: 1px; font-size: 12px; }
+.mdl-stars .dim { color: var(--text-mute); }
+.mdl-badge {
+  margin-left: auto; font-size: 10.5px; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border-2); color: var(--text-dim); white-space: nowrap;
+}
+.mdl-badge.ok { border-color: rgba(94, 201, 138, 0.5); color: #8fdcae; }
+.mdl-badge.borderline { border-color: rgba(232, 194, 102, 0.5); color: #e8c266; }
+.mdl-badge.heavy { border-color: rgba(226, 143, 78, 0.5); color: #e28f4e; }
+.mdl-badge.blocked { border-color: rgba(240, 112, 112, 0.5); color: var(--danger); }
+.mdl-badge.on { border-color: rgba(94, 201, 138, 0.5); color: #8fdcae; }
+.mdl-meta { margin-top: 5px; font-size: 11px; color: var(--text-mute); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.mdl-note { margin-top: 4px; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; }
+.mdl-reasons { margin-top: 4px; font-size: 11px; color: var(--text-mute); line-height: 1.45; }
+.mdl-reasons span { display: block; }
+.mdl-actions { display: flex; gap: 6px; margin-top: 7px; align-items: center; }
+.mdl-actions .btn { padding: 3px 10px; font-size: 11.5px; height: auto; }
+.mdl-bar { flex: 1; height: 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border-2); overflow: hidden; }
+.mdl-bar-fill { height: 100%; background: var(--accent); width: 0; transition: width 0.25s ease; }
+.mdl-pct { font-size: 11px; color: var(--text-dim); min-width: 118px; text-align: right; }
+
+/* Lokal rasm generatsiyasi */
+.models-image { border: 1px solid var(--border-2); border-radius: 10px; padding: 9px; margin-bottom: 9px; background: var(--bg-3); }
+.img-row { display: flex; gap: 6px; align-items: center; }
+.img-row input { flex: 1; }
+.img-row select { width: 108px; }
+.img-out { margin-top: 8px; font-size: 11.5px; color: var(--text-dim); }
+.img-out img { max-width: 100%; max-height: 320px; border-radius: 8px; border: 1px solid var(--border-2); display: block; margin-bottom: 6px; }
+.img-est { margin-top: 5px; font-size: 11px; }
+.img-est.warn { color: var(--warn); }
+
+/* ============================ Git paneli ============================ */
+.git-box { max-width: 900px; height: 76vh; display: flex; flex-direction: column; }
+.git-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.git-title { font-weight: 600; }
+.git-files { max-height: 26vh; overflow: auto; border-bottom: 1px solid var(--border); }
+.git-row { display: flex; align-items: center; gap: 10px; padding: 6px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.git-row:hover { background: var(--bg-3); }
+.git-row.active { background: var(--accent-soft); }
+.git-path { font-family: var(--mono); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.git-state { font-size: 11px; }
+.git-note { padding: 8px 12px; }
+.git-diff { flex: 1; margin: 0; padding: 10px 14px; overflow: auto; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; background: var(--bg-2); }
+.git-foot { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.git-foot input { flex: 1; background: var(--bg-3); border: 1px solid var(--border-2); color: var(--text); border-radius: 8px; padding: 7px 10px; font: inherit; }
+.git-log { max-height: 16vh; overflow: auto; padding: 6px 12px; border-top: 1px solid var(--border); }
+.git-commit-row { display: flex; gap: 8px; padding: 2px 0; font-size: 12px; }
+
+/* ==================== Lokal ovozli buyruq paneli ==================== */
+.voice-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--bg-2); border-top: 1px solid var(--border); }
+.voice-state { font-size: 14px; }
+.voice-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 12px; }

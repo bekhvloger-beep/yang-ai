@@ -1,0 +1,73 @@
+
+> yang-ai@5.5.0 release
+> node scripts/publish_release.mjs
+
+✓ Repo topildi: bekhvloger-beep/yang-ai
+✓ Izoh fayli: docs/v5.5.0-chiqarish.md (4700 belgi)
+✓ Release v5.5.0 yaratildi
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Setup-5.5.0.exe urinish 1: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Setup-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Setup-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 2/3: YANG-AI-Setup-5.5.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Setup-5.5.0.exe urinish 2: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Setup-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Setup-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 3/3: YANG-AI-Setup-5.5.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Setup-5.5.0.exe urinish 3: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Setup-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Setup-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+⚠ YUKLANMADI: YANG-AI-Setup-5.5.0.exe — keyinroq skriptni qayta ishga tushirish mumkin (idempotent)
+✓ Yuklandi: YANG-AI-Setup-5.5.0.exe.blockmap (1.8 MB)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Portable-5.5.0.exe urinish 1: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Portable-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Portable-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 2/3: YANG-AI-Portable-5.5.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Portable-5.5.0.exe urinish 2: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Portable-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Portable-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 3/3: YANG-AI-Portable-5.5.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-AI-Portable-5.5.0.exe urinish 3: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist\YANG-AI-Portable-5.5.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-AI-Portable-5.5.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+⚠ YUKLANMADI: YANG-AI-Portable-5.5.0.exe — keyinroq skriptni qayta ishga tushirish mumkin (idempotent)
+✓ Yuklandi: latest.yml (0.0 MB)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-IDE-Setup-1.0.0.exe urinish 1: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist-ide\YANG-IDE-Setup-1.0.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-IDE-Setup-1.0.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 2/3: YANG-IDE-Setup-1.0.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-IDE-Setup-1.0.0.exe urinish 2: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist-ide\YANG-IDE-Setup-1.0.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-IDE-Setup-1.0.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+↻ Qayta urinish 3/3: YANG-IDE-Setup-1.0.0.exe (10s kutilmoqda)
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+✗ YANG-IDE-Setup-1.0.0.exe urinish 3: Command failed: curl -sS --fail-with-body --retry 2 --connect-timeout 30 --max-time 1800 -X POST -H Authorization: Bearer <token-hide> -H Content-Type: application/octet-stream --data-binary @D:\loyiha\ChatDev-main\dist-ide\YANG-IDE-Setup-1.0.0.exe https://uploads.github.com/repos/bekhvloger-beep/yang-ai/releases/412309106/assets?name=YANG-IDE-Setup-1.0.0.exe
+curl: option --data-binary: out of memory
+curl: try 'curl --help' or 'curl --manual' for more information
+
+⚠ YUKLANMADI: YANG-IDE-Setup-1.0.0.exe — keyinroq skriptni qayta ishga tushirish mumkin (idempotent)
+RELEASE_EXIT=0

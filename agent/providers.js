@@ -433,6 +433,221 @@ export async function waitLocalServerReady(config, { shouldStop } = {}) {
   }
 }
 
+/* ---------- lokal model kontekst byudjeti ---------- */
+// llama-server `-c 8192` bilan ko'tariladi (main.js / ide_host.js) va undan katta so'rovga
+// HTTP 400 «request (N tokens) exceeds the available context size (M)» qaytaradi. Ilgari ilova
+// aynan shu xatoni ko'rsatib, vazifani bajarmay qolardi (o'lchov: 13 835 tokenli so'rov → 8192
+// kontekst, pin rejimda zaxira provayder ham yo'q). Endi haqiqiy kontekst serverning o'zidan
+// (/props → n_ctx) o'qiladi va so'rov unga sig'adigan qilib qisqartiriladi.
+export const CTX_SAFETY_TOKENS = 80; // hisoblash xatosi uchun zaxira
+// O'zbekcha matn + kod uchun baho. O'LCHOV (llama-server /tokenize bilan solishtirildi):
+// kod/tarix aralashmasi — taxmin 14 230, haqiqiy 15 829 token (real ≈ 2,7 belgi/token);
+// so'z aralashmasi (planner so'rovi) — real ≈ 2,0 belgi/token. Ilgari bu yerda 3 turardi
+// va hisob har doim kam chiqib, so'rov chegaradan oshib HTTP 400 olardi. Endi 2,5 —
+// pastdagi «byudjetni yarmiga tushirib qayta urinish» himoyasi bilan birga.
+const CHARS_PER_TOKEN = 2.5;
+const TOOL_RESULT_CAP = 2000; // qisqartirishda tool natijasining belgi chegarasi
+const LOCAL_CTX_DEFAULT = 8192; // /props javob bermasa (Ollama/LM Studio) — eng keng tarqalgan qiymat
+
+const ctxCache = new Map();
+
+/** llama-server kontekst hajmini (n_ctx) so'raydi. Bilinmasa — standart qiymat qaytadi. */
+export async function localContextSize(base) {
+  const key = String(base || '').replace(/\/+$/, '');
+  if (!key) return LOCAL_CTX_DEFAULT;
+  if (ctxCache.has(key)) return ctxCache.get(key);
+  let ctx = LOCAL_CTX_DEFAULT;
+  try {
+    const res = await fetch(key + '/props', { signal: AbortSignal.timeout(2500) });
+    if (res.ok) {
+      const j = await res.json();
+      const g = j && j.default_generation_settings;
+      const n = Number((g && (g.n_ctx || g.n_ctx_train)) ?? (j && j.n_ctx));
+      if (Number.isFinite(n) && n >= 512) ctx = Math.floor(n);
+    }
+  } catch { /* eski llama.cpp yoki Ollama serveri — standart qiymat qoladi */ }
+  ctxCache.set(key, ctx);
+  return ctx;
+}
+
+/** Xabarlar + tool ta'riflarining taxminiy token hajmi (xom belgi / CHARS_PER_TOKEN). */
+export function estimateTokens(messages, tools) {
+  let chars = 0;
+  for (const m of messages || []) {
+    chars += 8; // rol/ramka
+    const c = m && m.content;
+    if (typeof c === 'string') chars += c.length;
+    else if (Array.isArray(c)) {
+      for (const p of c) {
+        if (!p) continue;
+        if (typeof p.text === 'string') chars += p.text.length;
+        else if (p.type === 'image_url') {
+          // Rasm HAQIQIY yuklamasi qanchalik katta bo'lsa (base64 data URL) — shuncha belgi.
+          const url = (p.image_url && p.image_url.url) || '';
+          chars += url.startsWith('data:') ? url.length : 240;
+        }
+      }
+    }
+    if (m && m.tool_calls) {
+      try { chars += JSON.stringify(m.tool_calls).length; } catch { /* aylanma */ }
+    }
+  }
+  if (tools && tools.length) {
+    try { chars += JSON.stringify(tools).length; } catch { /* aylanma */ }
+  }
+  return Math.ceil(chars / CHARS_PER_TOKEN);
+}
+
+/**
+ * Xabarlar ro'yxatini `budget` tokenga sig'diradi. Qadamlar:
+ *   1) rasm qismlari olib tashlanadi — lokal matn modeli rasmni ko'ra olmaydi, base64 esa
+ *      butun kontekstni yeb qo'yadi;
+ *   2) eng katta tool natijalari TOOL_RESULT_CAP belgigacha qisqartiriladi;
+ *   3) eng eski almashinuvlar tashlanadi; eng oxirida uzun foydalanuvchi matni qisqartiriladi.
+ * System xabar va oxirgi foydalanuvchi xabari joyida qoladi.
+ */
+export function fitMessagesToContext(messages, tools, budget, { stripImages = false } = {}) {
+  const list = (messages || []).map((m) => ({ ...m }));
+  const tokensOf = () => estimateTokens(list, tools);
+  const stat = { trimmed: false, images: 0, capped: 0, dropped: 0, cut: 0, tokens: tokensOf() };
+
+  // Ilova ichidagi llama-server rasm ko‘ra olmaydi (mmproj yo‘q) — rasm qismlari
+  // matn izohiga almashtiriladi, aks holda so‘rov butunlay yiqiladi.
+  if (stripImages && list.some((m) => Array.isArray(m.content))) {
+    for (const m of list) {
+      if (!Array.isArray(m.content)) continue;
+      const parts = [];
+      let hadImage = false;
+      for (const p of m.content) {
+        if (p && p.type === 'image_url') { hadImage = true; continue; }
+        parts.push(p);
+      }
+      if (hadImage) {
+        parts.push({ type: 'text', text: '[foydalanuvchi rasm yubordi — lokal model uni ko‘ra olmaydi]' });
+        m.content = parts;
+        stat.images += 1;
+        stat.trimmed = true;
+      }
+    }
+    stat.tokens = tokensOf();
+  }
+  if (stat.tokens <= budget) return { messages: list, ...stat };
+
+  const big = list
+    .map((m, i) => (m.role === 'tool' && typeof m.content === 'string' ? [m.content.length, i] : null))
+    .filter(Boolean)
+    .sort((a, b) => b[0] - a[0]);
+  for (const [len, i] of big) {
+    if (stat.tokens <= budget) break;
+    if (len <= TOOL_RESULT_CAP) continue;
+    list[i] = { ...list[i], content: list[i].content.slice(0, TOOL_RESULT_CAP) + '\n...[kontekstga sig‘dirish uchun qisqartirildi]' };
+    stat.capped += 1;
+    stat.trimmed = true;
+    stat.tokens = tokensOf();
+  }
+
+  while (stat.tokens > budget) {
+    const from = list[0] && list[0].role === 'system' ? 1 : 0;
+    const firstUser = list.findIndex((m, i) => i >= from && m.role === 'user');
+    if (firstUser < 0) break;
+    const nextUser = list.findIndex((m, i) => i > firstUser && m.role === 'user');
+    if (nextUser < 0) break; // faqat bitta almashinuv qoldi — uni tashlab bo'lmaydi
+    list.splice(from, nextUser - from);
+    stat.dropped += 1;
+    stat.trimmed = true;
+    stat.tokens = tokensOf();
+  }
+
+  if (stat.tokens > budget) {
+    const last = list[list.length - 1];
+    if (last && Array.isArray(last.content) && last.content.some((p) => p && p.type === 'image_url')) {
+      // Budget bilan sig‘maydigan rasmni qisqartirib bo‘lmaydi — matn qismlari qoladi.
+      last.content = last.content.filter((p) => p && p.type !== 'image_url');
+      stat.tokens = tokensOf();
+      stat.trimmed = true;
+      stat.images += 1;
+    }
+    // Oxirgi xabar matnini qisqartirish. Diqqat: Jamoa/planner so‘rovida bu xabar
+    // MASSIV bo‘ladi (matn + rasm), ilgari qisqartirish faqat `string` holatini
+    // ko‘rardi — massivdagi uzun matn tegilmay qolib, so‘rov baribir chegaradan
+    // oshardi (o‘lchov: sig‘dirilgandan keyin ham 9 006 token → HTTP 400).
+    while (stat.tokens > budget && last) {
+      let get = null;
+      let put = null;
+      if (typeof last.content === 'string') {
+        get = () => last.content;
+        put = (v) => { last.content = v; };
+      } else if (Array.isArray(last.content)) {
+        const part = last.content.filter((p) => p && typeof p.text === 'string').sort((a, b) => b.text.length - a.text.length)[0];
+        if (part) { get = () => part.text; put = (v) => { part.text = v; }; }
+      }
+      if (!get) break;
+      const text = get();
+      if (text.length <= 200) break;
+      // Kamida yarmini olamiz — aks holda hisob xatosi bo‘lganda aylanish uzoq cho‘ziladi.
+      const over = Math.max((stat.tokens - budget) * CHARS_PER_TOKEN, Math.ceil(text.length / 2));
+      const cut = Math.min(text.length - 100, Math.ceil(over));
+      put(text.slice(0, text.length - cut) + '\n...[qisqartirildi]');
+      stat.cut += 1;
+      stat.trimmed = true;
+      stat.tokens = tokensOf();
+    }
+  }
+  return { messages: list, ...stat };
+}
+
+/** Kontekstga sig'maslik xatosi (llama-server / Ollama 400 javobi). */
+export function isContextOverflowError(e) {
+  return /exceeds the available context size|context length|too many tokens|context size|n_ctx/i.test(
+    String((e && e.message) || e || ''),
+  );
+}
+
+/**
+ * Lokal provayderga so'rovni kontekstga sig'dirib yuboradi.
+ *
+ * Nima uchun: ilova ichidagi llama-server `-c 8192` bilan ko'tariladi, undan katta so'rov
+ * HTTP 400 «request (N tokens) exceeds the available context size (M)» oladi (o'lchov:
+ * 13 835 tokenli so'rov). Bu sig'dirish avval faqat marshrutlash halqasi ichida
+ * (agent/engine.js) bor edi; reja/planner yo'li (agent/team.js) `streamChat` ni
+ * to'g'ridan-to'g'ri chaqirardi — Jamoa rejimida o'sha xato qaytib chiqardi. Endi
+ * ikkala yo'l ham shu funksiyadan o'tadi.
+ *
+ * Lokal model uchun chiqish chegarasi olinadi (extraBody.max_tokens, bo'lmasa 2048 —
+ * engine bilan bir xil), byudjet = kontekst − chiqish − zaxira; so'rov shunga
+ * qisqartiriladi va baribir sig'masa byudjet yarmiga tushirilib qayta uriniladi.
+ *
+ * @returns {{ result: object, ctx: number, budget: number, fit: object|null, attempts: number }}
+ */
+export async function streamChatFitted(opts) {
+  const { def, signal, tools, messages, extraBody, onTrim } = opts;
+  const isLocal = !!(def && (def.local || def.bundled));
+  const outTokens = Number(extraBody && extraBody.max_tokens) || (isLocal ? 2048 : MAX_TOKENS);
+  const ctx = isLocal ? await localContextSize(def.base) : 0;
+  let budget = isLocal ? Math.max(512, ctx - outTokens - CTX_SAFETY_TOKENS) : 0;
+  let lastFit = null;
+  for (let attempt = 0; ; attempt++) {
+    let sendMessages = messages;
+    if (isLocal) {
+      lastFit = fitMessagesToContext(messages, tools, budget, { stripImages: !!def.bundled });
+      sendMessages = lastFit.messages;
+      if (lastFit.trimmed && onTrim) onTrim({ ctx, budget, fit: lastFit });
+    }
+    try {
+      const result = await streamChat({ ...opts, messages: sendMessages });
+      return { result, ctx, budget, fit: lastFit, attempts: attempt + 1 };
+    } catch (e) {
+      // Hisob-kitob xato bo'lib chiqsa (yoki server boshqa kontekstda ko'tarilgan bo'lsa)
+      // — byudjetni yarmiga qisqartirib yana urinamiz, zaxira provayderga o'tmasdan.
+      if (isLocal && attempt < 2 && !e.aborted && !(signal && signal.aborted) && isContextOverflowError(e)) {
+        budget = Math.max(512, Math.floor(budget / 2));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
 // Kalitsiz provayderlar (Pollinations/Kilo/lokal) uchun uzoqroq 5xx backoff ishlatiladi.
 function isKeylessProvider(id) {
   const def = BUILTIN_PROVIDERS[id];

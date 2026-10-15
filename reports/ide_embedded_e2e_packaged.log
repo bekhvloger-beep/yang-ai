@@ -1,0 +1,28 @@
+nishon: dist/win-unpacked/YANG AI.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-ide-e2e-3zedhC
+ish papkasi: C:\Users\behru\AppData\Local\Temp\yang-ide-ws-6jn6TM
+CDP port 9345
+[17:41:15] YANG AI ishga tushirildi
+[17:41:17] asosiy oyna CDP'da · __ready=true · sarlavha="YANG AI"
+PASS  1. Asosiy oynada «YANG IDE» tugmasi ko‘rinadi va ko‘prik ulangan
+      → matn="YANG IDE", ko'rinadi=true, window.api.openIde=function
+[17:41:17] tugma bosildi — IDE oynasi kutilmoqda
+PASS  2. «YANG IDE» tugmasi IDE oynasini ochadi (alohida oyna, o‘z renderer’i)
+      → sarlavha="YANG IDE", muharrir=true, terminal=true, AI panel=true
+PASS  3. IDE yadrosi YANG AI jarayonida ishlaydi (embedded=true)
+      → embedded=true, versiya=5.3.0, electron=34.0.0, ram=12215 MB
+PASS  4. Fayl tizimi: papka ochish, daraxt, o‘qish va saqlash
+      → papka=yang-ide-ws-6jn6TM, daraxt=[bad.js, hello.js, hello.txt], saqlandi=true, qayta o‘qildi=yangi qator
+PASS  5. Xavfsizlik: `..` va absolyut yo‘l rad etiladi
+      → "../" → yo‘l tashqarida yoki papka tanlanmagan; absolyut → yo‘l tashqarida yoki papka tanlanmagan
+PASS  6. Terminal: faylni ishga tushirib chiqishini ko‘rsatadi
+      → buyruq=""D:\loyiha\ChatDev-main\dist\win-unpacked\YANG AI.exe" "C:\Users\behru\AppData\Local\Temp\yang-ide-ws-6jn6TM\hello.js""; chiqishda "IDE_TERM_OK" bor; chiqish hodisasi=code 0
+PASS  7. Diagnostika: buzuq `bad.js` uchun qator raqamli sintaksis xatosi
+      → 1-qator: SyntaxError: Function statements require a function name
+PASS  8. AI qatlami: agent modullari dinamik import bo‘ladi (paketda ham)
+      → provayder=localmini model=qwen3-instruct · 15 provayder · sozlamalar=C:\Users\behru\AppData\Roaming\yang-ai
+PASS  9. IDE oynasi yopilsa asosiy ilova ishlashda davom etadi
+      → asosiy oyna sarlavhasi="YANG AI" (kutilgan "YANG AI"), IDE target yopildi=true
+
+XULOSA: 9/9 PASS
+EXIT=0
