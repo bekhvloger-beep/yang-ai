@@ -1,52 +1,57 @@
 ════════════════════════════════════════════════════════════════════════
-QURISH + NASHR — 2026-10-16T18:00:52.866Z
-nishonlar: YANG AI 5.5.3, YANG IDE 1.0.0 · qurish+sinov (nashrsiz)
+QURISH + NASHR — 2026-10-16T23:10:40.198Z
+nishonlar: YANG AI 5.6.0, YANG IDE 1.0.0 · qurish+sinov+nashr
 ════════════════════════════════════════════════════════════════════════
 
 1) Oldindan tekshiruv (commit, disk, token)
-   • bo'sh commit: 6 622 806 016 B (6.17 GB) · kerak: 2 236 473 429 B (2.08 GB) (eng katta nishon + 25% zaxira)
-       - YANG AI 5.5.3: payload ≈ 1 772 331 060 B (1.65 GB) (zaxira qiymat) → mmap kerak ≈ 1 789 178 743 B (1.67 GB)
-       - YANG IDE 1.0.0: payload ≈ 1 355 965 221 B (1.26 GB) (o‘lchangan) → mmap kerak ≈ 1 372 812 904 B (1.28 GB)
-   • disk (YANG AI 5.5.3): 66 109 054 976 B (61.57 GB) / kerak 6 388 203 410 B (5.95 GB) — D:\loyiha\ChatDev-main\dist
-       vaqtinchalik jild C:\Users\behru\AppData\Local\Temp: bo'sh 3 632 570 368 B (3.38 GB) · kerak 2 310 001 972 B (2.15 GB)
-   • disk (YANG IDE 1.0.0): 66 109 054 976 B (61.57 GB) / kerak 4 863 861 079 B (4.53 GB) — D:\loyiha\ChatDev-main\dist-ide
-       vaqtinchalik jild C:\Users\behru\AppData\Local\Temp: bo'sh 3 632 570 368 B (3.38 GB) · kerak 1 893 636 133 B (1.76 GB)
-   • nashr o‘tkazib yuboriladi (--no-publish)
+   • bo'sh commit: 6 692 012 032 B (6.23 GB) · kerak: 2 236 528 132 B (2.08 GB) (eng katta nishon + 25% zaxira)
+       - YANG AI 5.6.0: payload ≈ 1 772 374 822 B (1.65 GB) (o‘lchangan) → mmap kerak ≈ 1 789 222 505 B (1.67 GB)
+       - YANG IDE 1.0.0: payload ≈ 1 356 013 388 B (1.26 GB) (o‘lchangan) → mmap kerak ≈ 1 372 861 071 B (1.28 GB)
+   • disk (YANG AI 5.6.0): 62 397 337 600 B (58.11 GB) / kerak 6 337 191 633 B (5.90 GB) — D:\loyiha\ChatDev-main\dist
+       vaqtinchalik jild C:\Users\behru\AppData\Local\Temp: bo'sh 6 008 614 912 B (5.60 GB) · kerak 2 310 045 734 B (2.15 GB)
+   • disk (YANG IDE 1.0.0): 62 397 337 600 B (58.11 GB) / kerak 4 864 142 900 B (4.53 GB) — D:\loyiha\ChatDev-main\dist-ide
+       vaqtinchalik jild C:\Users\behru\AppData\Local\Temp: bo'sh 6 008 614 912 B (5.60 GB) · kerak 1 893 684 300 B (1.76 GB)
+   • GitHub tokeni: .gh-token
+   • reliz izohi: docs/v5.6.0-chiqarish.md (8087 belgi)
 
    ✓ Barcha tekshiruvlar o‘tdi.
-   · commit zaxirasi: 4 386 332 587 B (4.09 GB)
+   · commit zaxirasi: 4 455 483 900 B (4.15 GB)
 
-2) Qurish: YANG AI 5.5.3
+2) Qurish: YANG AI 5.6.0
 
 $ npm.cmd run dist
-   · payload (o‘lchandi): 1 772 376 621 B (1.65 GB) → mmap kerak ≈ 1 789 224 304 B (1.67 GB)
-     qurish davomida bo‘sh commit eng kami: 5 835 325 440 B (5.43 GB) → zaxira +4 046 101 136 B (3.77 GB)
-   ✓ YANG AI 5.5.3 tayyor: Setup 1 773 174 822 B (1.65 GB) · Portable 1 772 841 062 B (1.65 GB) · yoyilgan papka 2 253 971 077 B (2.10 GB) · 5.1 daqiqa
+   · payload (o‘lchandi): 1 772 381 418 B (1.65 GB) → mmap kerak ≈ 1 789 229 101 B (1.67 GB)
+     qurish davomida bo‘sh commit eng kami: 6 382 682 112 B (5.94 GB) → zaxira +4 593 453 011 B (4.28 GB)
+   ✓ YANG AI 5.6.0 tayyor: Setup 1 773 179 631 B (1.65 GB) · Portable 1 772 845 862 B (1.65 GB) · yoyilgan papka 2 253 989 776 B (2.10 GB) · 4.4 daqiqa
 
 3) Paket sinovi: node ide/test_embedded_e2e.mjs
 
 $ node ide/test_embedded_e2e.mjs
-   ✓ YANG AI 5.5.3 paket sinovi o‘tdi
+   ✓ YANG AI 5.6.0 paket sinovi o‘tdi
 
 2) Qurish: YANG IDE 1.0.0
 
 $ npm.cmd run dist:ide
-   · payload (o‘lchandi): 1 356 015 094 B (1.26 GB) → mmap kerak ≈ 1 372 862 777 B (1.28 GB)
-     qurish davomida bo‘sh commit eng kami: 6 405 750 784 B (5.97 GB) → zaxira +5 032 888 007 B (4.69 GB)
-   ✓ YANG IDE 1.0.0 tayyor: Setup 1 356 813 388 B (1.26 GB) · Portable 1 356 479 544 B (1.26 GB) · yoyilgan papka 1 613 645 212 B (1.50 GB) · 3.0 daqiqa
+   · payload (o‘lchandi): 1 356 018 079 B (1.26 GB) → mmap kerak ≈ 1 372 865 762 B (1.28 GB)
+     qurish davomida bo‘sh commit eng kami: 6 450 839 552 B (6.01 GB) → zaxira +5 077 973 790 B (4.73 GB)
+   ✓ YANG IDE 1.0.0 tayyor: Setup 1 356 816 293 B (1.26 GB) · Portable 1 356 482 529 B (1.26 GB) · yoyilgan papka 1 613 655 727 B (1.50 GB) · 3.0 daqiqa
 
 3) Paket sinovi: node ide/test_ide_packaged.mjs
 
 $ node ide/test_ide_packaged.mjs
    ✓ YANG IDE 1.0.0 paket sinovi o‘tdi
 
-4) Nashr o‘tkazib yuborildi (--no-publish).
+4) Nashr: scripts/publish_release.mjs
+   qo‘shimcha assetlar: YANG-IDE-Setup-1.0.0.exe, YANG-IDE-Portable-1.0.0.exe, YANG Admin Desk 1.4.0.exe, YANG Admin Desk Setup 1.4.0.exe
+
+$ C:\Program Files\nodejs\node.exe scripts/publish_release.mjs
+   ✓ Nashr va sha256 tekshiruvi o‘tdi
 
 5) Xulosa
    | nishon | Setup | Portable | yoyilgan | payload | daqiqa |
    |---|---|---|---|---|---|
-   | YANG AI 5.5.3 | 1 773 174 822 B (1.65 GB) | 1 772 841 062 B (1.65 GB) | 2 253 971 077 B (2.10 GB) | 1 772 376 621 B (1.65 GB) | 5.1 |
-   | YANG IDE 1.0.0 | 1 356 813 388 B (1.26 GB) | 1 356 479 544 B (1.26 GB) | 1 613 645 212 B (1.50 GB) | 1 356 015 094 B (1.26 GB) | 3.0 |
-   jami nashr hajmi (Setup+Portable): 6 259 308 816 B (5.83 GB)
-   reliz: https://github.com/bekhvloger-beep/yang-ai/releases/tag/v5.5.3
+   | YANG AI 5.6.0 | 1 773 179 631 B (1.65 GB) | 1 772 845 862 B (1.65 GB) | 2 253 989 776 B (2.10 GB) | 1 772 381 418 B (1.65 GB) | 4.4 |
+   | YANG IDE 1.0.0 | 1 356 816 293 B (1.26 GB) | 1 356 482 529 B (1.26 GB) | 1 613 655 727 B (1.50 GB) | 1 356 018 079 B (1.26 GB) | 3.0 |
+   jami nashr hajmi (Setup+Portable): 6 259 324 315 B (5.83 GB)
+   reliz: https://github.com/bekhvloger-beep/yang-ai/releases/tag/v5.6.0
    o'lchovlar: reports\build_metrics.json
