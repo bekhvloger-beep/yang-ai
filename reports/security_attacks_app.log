@@ -1,5 +1,7 @@
 
 
-DevTools listening on ws://127.0.0.1:9455/devtools/browser/50988df8-be0c-456a-9a2d-fe457bcf6a2c
+DevTools listening on ws://127.0.0.1:9455/devtools/browser/a69b6b9d-18b8-4d8f-9639-b31060ab7712
+[init] .env dan kalitlar import qilindi: .env → openrouter, .env → gemini, .env → groq, .env → vercel
+[init] lokal AI modeli tanlandi: model-1.7b.gguf (11.9 GB RAM, -c 8192)
 [init] NLLB tarjimon allaqachon ishlayapti: http://127.0.0.1:8788
-[init] lokal AI allaqachon ishlayapti (127.0.0.1:8082)
+[init] lokal AI fon rejimida ishga tushirildi: model-1.7b.gguf

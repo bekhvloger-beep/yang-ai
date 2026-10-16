@@ -1,7 +1,7 @@
 git paneli sinovi (haqiqiy repo)
 
 PASS  0. Vaqtinchalik git repo yaratildi
-      → git init → 0 · isRepo(yang-gitpanel-kIX26S) = true
+      → git init → 0 · isRepo(yang-gitpanel-AUlKNM) = true
 PASS  A1. Yangi fayl `??` (kuzatilmagan) sifatida ko‘rinadi
       → fayllar=[??:birinchi.txt] · hisob={"staged":0,"unstaged":0,"untracked":1}
 PASS  B1. `gitStage` faylni indeksga qo‘yadi (stage holati yangilanadi)
@@ -9,7 +9,7 @@ PASS  B1. `gitStage` faylni indeksga qo‘yadi (stage holati yangilanadi)
 PASS  C1. Staged diff yangi fayl qatorlarini ko‘rsatadi (+)
       → diff qatorlari=8 · +salom=true · truncated=false
 PASS  D1. `gitCommit` commit yaratadi va `gitLog` uni ko‘rsatadi
-      → hash=af706d7 · log[0]="birinchi fayl qo‘shildi" · muallif=YANG Sinov · commit'dan keyingi hisob={"staged":0,"unstaged":0,"untracked":0}
+      → hash=2002290 · log[0]="birinchi fayl qo‘shildi" · muallif=YANG Sinov · commit'dan keyingi hisob={"staged":0,"unstaged":0,"untracked":0}
 PASS  E1. O‘zgargan fayl «M» va diff’da -/+ qatorlari bor
       → worktree='M' · staged=false · +xayr=true
 PASS  F1. `gitUnstage` faylni indeksdan chiqaradi (o‘zgarish diskda qoladi)
@@ -21,5 +21,5 @@ PASS  H1. Bo‘sh xabar, o‘zgarishsiz commit va repo bo‘lmagan papka — ani
 PASS  I1. 5000 qatordan katta diff kesiladi (`truncated: true`)
       → qatorlar=5000 · truncated=true · bayt=73798
 PASS  J1. `gitLog` chegarasi (1..200) ushlab turiladi
-      → commits=2 (limit=1000 → 200 ga cheklandi) · eng yangisi="d97b73d katta fayl"
+      → commits=2 (limit=1000 → 200 ga cheklandi) · eng yangisi="05978b6 katta fayl"
 XULOSA: 11/11 PASS

@@ -1,16 +1,27 @@
 {
   "targets": {
     "ide": {
-      "installer": 1356765221,
-      "portable": 1356431377,
-      "payload": 1355966925,
+      "installer": 1356813388,
+      "portable": 1356479544,
+      "payload": 1356015094,
       "payloadMeasured": true,
-      "unpacked": 1613459725,
-      "freeCommitBefore": 5403312128,
-      "freeCommitMinDuringBuild": 4057989120,
-      "durationMs": 270091,
-      "builtAt": "2026-10-14T17:54:53.574Z"
+      "unpacked": 1613645212,
+      "freeCommitBefore": 6622806016,
+      "freeCommitMinDuringBuild": 6405750784,
+      "durationMs": 179956,
+      "builtAt": "2026-10-16T18:09:24.544Z"
+    },
+    "app": {
+      "installer": 1773174822,
+      "portable": 1772841062,
+      "payload": 1772376621,
+      "payloadMeasured": true,
+      "unpacked": 2253971077,
+      "freeCommitBefore": 6622806016,
+      "freeCommitMinDuringBuild": 5835325440,
+      "durationMs": 307875,
+      "builtAt": "2026-10-16T18:06:04.127Z"
     }
   },
-  "updatedAt": "2026-10-14T17:54:57.719Z"
+  "updatedAt": "2026-10-16T18:09:30.222Z"
 }
