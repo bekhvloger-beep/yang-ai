@@ -1,0 +1,21 @@
+nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
+⚠️  O‘RNATILGAN nusxa manba koddan 1.6 kun eski (2026-10-14 < 2026-10-15)
+    Yangi paketni tekshirish kerak: YANG_APP_EXE="dist/win-unpacked/YANG AI.exe" bering yoki yangi o‘rnatuvchini o‘rnating — aks holda quyidagi natijalar ESKI nusxaga tegishli.
+user-data: C:\Users\behru\AppData\Local\Temp\yang-models-ui-Q5jNMQ
+eski CDP jarayoni yopildi (port 9345): 8844
+CDP ulandi · __ready=true
+FAIL  1. preload ko‘prigi: menejer API si to‘liq (13 nom, IDE bilan bir xil)
+      → 0/13 · yetishmaydi=[hardware, modelsCatalog, modelsDownload, modelsCancel, modelsRemove, modelsReveal, modelsExternal, modelsAttach, modelsMeasure, modelsBenchState, imageStatus, imageGenerate, imageStop]
+FAIL  2. Yon paneldagi «Lokal AI» tugmasi menejerni ochadi
+      → tugma=false · modal ochiq=undefined
+FAIL  3. Apparat profili o‘lchanadi (CPU/RAM/video/disk + 2 daraja)
+      → «» · yulduz bloklari=0
+FAIL  4. Matn modellari ro‘yxati katalogdan chiziladi (har birida 2 yulduz bloki + talablar)
+      → qatorlar=0 · yulduz bloklari=0 (kutilgan ≥0) · talab bloklari=0
+FAIL  umumiy oqim
+      → xato: JS xato: {"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of undefined (reading 'click')\n    at <anonymous>:4:8\n    at <anonymous>:9:5","objectId":"4386299654713010988.1.2"}
+eslatma: llama-server testdan oldin ham ishlayotgan edi — to‘xtatilmadi
+
+XULOSA: 0/5 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ui_models_manager.log
+MGR_STALE_EXIT=1
