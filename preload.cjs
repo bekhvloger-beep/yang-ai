@@ -134,4 +134,16 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('remote_config', listener);
     return () => ipcRenderer.removeListener('remote_config', listener);
   },
+  // Menyudan («Lokal AI → Lokal AI menejeri») modal ochish buyrug'i.
+  onOpenModels: (cb) => {
+    const listener = (_e, data) => cb(data || {});
+    ipcRenderer.on('ui:open-models', listener);
+    return () => ipcRenderer.removeListener('ui:open-models', listener);
+  },
+  // Kodlash rejimi menyudan yoqilganda renderer holatni yangilaydi.
+  onCodingMode: (cb) => {
+    const listener = (_e, data) => cb(data || {});
+    ipcRenderer.on('coding_mode', listener);
+    return () => ipcRenderer.removeListener('coding_mode', listener);
+  },
 });

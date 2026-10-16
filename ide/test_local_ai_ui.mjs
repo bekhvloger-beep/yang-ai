@@ -181,9 +181,9 @@ try {
   const starCount = (s) => (String(s || '').match(/★/g) || []).length;
   // Bu kompyuterda 7B HAQIQATAN sig'adimi? Ilovaning bahosiga ishonmaymiz — sinov
   // diskni O'ZI o'lchaydi (katalogdagi talab bilan solishtiradi). Joy yetarli bo'lsa
-  // 7B «→ ★★☆» dan past bo'lmasligi SHART; joy yetmasa bahoni «Ishlamaydi» qilib,
-  // sababini aynan yetmagan resurs bilan aytishi shart. Shu tariqa sinov ham mashina
-  // holatiga bog'lanib qolmaydi, ham zaiflashmaydi (nosoz sabab qabul qilinmaydi).
+  // 7B «→ ★★☆» dan past bo'lmasligi SHART; joy yetmasa baho OGOXLANTIRISH bo'lib,
+  // sababini aynan yetmagan resurs bilan aytishi va «baribir yuklab olish mumkin»
+  // deb ochiq yozishi shart (cheklov olib tashlangan: «Ishlamaydi» YO'Q).
   const cat7 = JSON.parse(fs.readFileSync(path.join(ROOT, 'local-ai', 'catalog.json'), 'utf8'))
     .items.find((x) => x.id === 'text-qwen25-coder-7b-q4km') || {};
   const needDiskGb = ((cat7.min || {}).diskGb) || 5;
@@ -193,12 +193,15 @@ try {
     freeDiskGb = (st.bavail * st.bsize) / 1024 ** 3;
   } catch { /* o'lchanmadi */ }
   const diskShort = freeDiskGb != null && freeDiskGb < needDiskGb * 1.1;
-  const blockedNow = starCount(byName[coder7].stars[1]) === 0;
-  const machineGradeOk = blockedNow
-    ? diskShort && /diskda/.test(byName[coder7].reasons || '') && /Ishlamaydi/.test(byName[coder7].badge || '')
+  // Cheklov olib tashlangan: hech bir qatorda «Ishlamaydi» bo'lmasligi va «0 yulduz»
+  // (☆ beshtasi) ko'rinmasligi shart — resurs yetmasa ham kamida 1 yulduz.
+  const anyBlocked = (textTab.first || []).some((r) => /Ishlamaydi/.test(r.badge || ''));
+  const warnedNow = /Ogohlantirish/.test(byName[coder7].badge || '') && /baribir yuklab olish mumkin/.test(byName[coder7].reasons || '');
+  const machineGradeOk = diskShort
+    ? warnedNow && /diskda/.test(byName[coder7].reasons || '') && starCount(byName[coder7].stars[1]) >= 1
     : starCount(byName[coder7].stars[1]) >= 3;
-  check('4. Baho modelga qarab farq qiladi va «shu kompyuterdagi natija» sababi bilan asoslanadi',
-    !!coder7 && !!tiny
+  check('4. Baho modelga qarab farq qiladi, sababi bilan asoslanadi va blok YO‘Q (ogohlantirish)',
+    !!coder7 && !!tiny && !anyBlocked
     && starCount(byName[coder7].stars[0]) > starCount(byName[tiny].stars[0])
     && machineGradeOk,
     coder7 && tiny

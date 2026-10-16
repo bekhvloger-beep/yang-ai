@@ -91,12 +91,14 @@ const benchEvents = [];
   const heavyReasons = String((heavy.verdict.reasons || []).join(' '));
   const diskShort = Number.isFinite(hw.diskFreeGb) && hw.diskFreeGb < (heavy.min.diskGb || 0) * 1.1;
   const ramShort = hw.ramGb < (heavy.min.ramGb || 0) * 0.9;
+  // CHEKLOV OLIB TASHLANDI: resurs yetmasa ham holat «ishlamaydi» emas, «warn»
+  // (ogohlantirish) bo'ladi va model yuklab olinadi/ishlatiladi.
   const heavyReal = (diskShort || ramShort)
-    ? heavy.verdict.state === 'blocked' && (diskShort ? /diskda/.test(heavyReasons) : /RAM/.test(heavyReasons))
+    ? heavy.verdict.state === 'warn' && (diskShort ? /diskda/.test(heavyReasons) : /RAM/.test(heavyReasons)) && /baribir/.test(heavyReasons)
     : heavy.verdict.state === 'ok';
-  check('3. Moslik qoidasi: resurs yetarli bo‘lsa 7B «mos», yetmasa sababi bilan «ishlamaydi», 128 GB — yo‘q',
+  check('3. Moslik qoidasi: resurs yetarli bo‘lsa 7B «mos», yetmasa ogohlantirish (blok YO‘Q), 128 GB ham bloklanmaydi',
     !!(light && light.verdict.state === 'ok') && heavyRule.state === 'ok' && heavyReal
-    && impossible.state === 'blocked' && mod.machineStars({ kind: 'text', strength: { code: 5 } }, impossible) === 0,
+    && impossible.state === 'warn' && mod.machineStars({ kind: 'text', strength: { code: 5 } }, impossible) === 1,
     `0.5B=${light && light.verdict.fit} · 7B(qoida)=${heavyRule.fit} · 7B(shu mashina)=${heavy.verdict.fit}`
     + ` [${diskShort ? `disk ${hw.diskFreeGb} GB < ${((heavy.min.diskGb || 0) * 1.1).toFixed(1)} GB` : ramShort ? `RAM ${hw.ramGb} GB qisqa` : 'joy yetarli'}]`
     + ` · 128GB=${impossible.fit} (${impossible.reasons[0]})`);

@@ -10,8 +10,8 @@
   },
   "notice": {
     "enabled": true,
-    "id": "release-5.4.0",
-    "text": "YANG AI 5.4: IDE endi chinakam muharrir — haqiqiy terminal (vim, top, ssh, REPL), tip tekshiruvi (tsserver: yo‘q funksiya/noto‘g‘ri tur, F12 haqiqiy ta’rif, Shift+F12 havolalar, hover), qadamlab debugger (nuqtalar, chaqiruvlar zanjiri, o‘zgaruvchilar), «Sinab ko‘r + tuzat» halqasi xato chiqsa tarixni ko‘rib o‘zi tuzatadi va qayta ishga tushiradi, tahrir hajmi chegarasi (2 MB) olib tashlandi. Ilova o‘zi yangilanadi.",
+    "id": "release-5.6.0",
+    "text": "YANG AI 5.6: Lokal AI to‘liq ochiq va boshqariladi. (1) Menejer endi MENYU qatoridan ham ochiladi — «Lokal AI → Lokal AI menejeri» (Ctrl+Shift+M) — va Sozlamalarda «Lokal AI» bo‘limi bor. (2) «Ishlamaydi» cheklovi OLIB TASHLANDI: resurs yetmasa ham model yuklab olinadi va ishlatiladi, faqat ogohlantiriladi (ilgari tugmalar bloklanardi). (3) Admin Desk’da yangi «🧠 Lokal AI» bo‘limi: model qo‘shish / o‘chirish / tahrirlash va katalogni GitHub’ga nashr qilish — tavsif, yulduz va talablar YANGI RELIZSIZ hamma ilovada ko‘rinadi. (4) Har bir lokal AI bir xil 4 vazifa bilan o‘lchandi va kuchlari tavsifiga yozildi. (5) Yangi KOD REJIMI (Kod AI): YANG AI senior dasturchi qoidalari bilan ishlaydi — to‘liq ishlaydigan fayl, ishga tushirib tekshirish, o‘ylab topilgan API yo‘q, minimal o‘zgarish. Ilova o‘zi yangilanadi.",
     "link": "https://github.com/bekhvloger-beep/yang-ai/releases/latest"
   },
   "minVersion": null,

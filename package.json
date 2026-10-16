@@ -1,6 +1,6 @@
 {
   "name": "yang-ai",
-  "version": "5.5.3",
+  "version": "5.6.0",
   "description": "YANG AI by AICOMP.UZ — professional desktop agentic assistant",
   "type": "module",
   "main": "main.js",
@@ -32,7 +32,9 @@
     "test:ide:fix": "node ide/test_fix_loop_live.mjs",
     "release": "node scripts/publish_release.mjs",
     "test:pin": "node agent/test_pin_failover.mjs",
-    "test:ui": "node scripts/ui_pin_test.mjs"
+    "test:ui": "node scripts/ui_pin_test.mjs",
+    "test:ai:catalog": "node agent/test_remote_catalog.mjs",
+    "test:ai:code": "node agent/test_coding_mode.mjs"
   },
   "dependencies": {
     "@homebridge/node-pty-prebuilt-multiarch": "0.14.1",

@@ -10,6 +10,8 @@ document.querySelectorAll('.nav-btn').forEach((b) => b.addEventListener('click',
   document.querySelectorAll('.tab').forEach((x) => x.classList.remove('active'));
   b.classList.add('active');
   $('tab-' + b.dataset.tab).classList.add('active');
+  // Lokal AI bo'limi birinchi ochilganda katalogni GitHub'dan olamiz (bekorga so'rov yo'q).
+  if (b.dataset.tab === 'models' && modelsCatalog === null) loadModels();
 }));
 
 /* ---------- setup ---------- */
@@ -433,3 +435,149 @@ setInterval(pollInbox, 60 * 1000);
 
 // Ochilishda reliz holatini ko'rsatib qo'yamiz (operator birinchi bo'lib shuni ko'radi).
 $('releaseStatusBtn')?.click();
+
+/* =====================================================================================
+   🧠 LOKAL AI KATALOGI (local-ai/catalog.json) — qo'shish / tahrirlash / o'chirish / nashr
+   Har bir karta katalogdagi BITTA yozuv. O'zgarish darhol `modelsCatalog.items[i]` ga
+   yoziladi, lekin ilovalarga faqat «Nashr qilish» bosilgach yetib boradi.
+   ===================================================================================== */
+let modelsCatalog = null;   // GitHub'dan olingan yoki tahrirlanayotgan katalog
+
+const MODELS_KINDS = [
+  ['text', 'matn'],
+  ['image', 'rasm'],
+  ['runtime', 'dvigatel'],
+  ['voice', 'ovoz'],
+];
+
+function modelsStatus(text, kind = '') {
+  const el = $('modelsStatus');
+  if (!el) return;
+  el.className = 'dim ' + kind;
+  el.textContent = text || '';
+}
+
+function modelNum(v, def = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : def;
+}
+
+function renderModels() {
+  const list = $('modelsList');
+  if (!list) return;
+  if (!modelsCatalog || !Array.isArray(modelsCatalog.items) || !modelsCatalog.items.length) {
+    list.innerHTML = '<div class="dim empty-hint">Katalog bo\'sh — «GitHub\'dan olish»ni bosing.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  modelsCatalog.items.forEach((it, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.idx = String(idx);
+    const strength = it.strength || {};
+    const min = it.min || {};
+    card.innerHTML = `
+      <div class="row" style="justify-content:space-between">
+        <h3>${escapeHtml(it.name || it.id || '—')} <span class="dim" style="font-weight:400">· ${escapeHtml(it.id || '')}</span></h3>
+        <button class="btn btn-danger small" data-act="remove">🗑 O'chirish</button>
+      </div>
+      <div class="grid-2">
+        <label class="field"><span>Nomi</span><input data-field="name" value="${escapeHtml(it.name || '')}" /></label>
+        <label class="field"><span>Turkum</span><select data-field="kind">
+          ${MODELS_KINDS.map(([v, t]) => `<option value="${v}"${it.kind === v ? ' selected' : ''}>${t}</option>`).join('')}
+        </select></label>
+        <label class="field"><span>Fayl nomi</span><input data-field="file" value="${escapeHtml(it.file || '')}" /></label>
+        <label class="field"><span>Hajm (bayt)</span><input type="number" data-field="bytes" value="${modelNum(it.bytes)}" /></label>
+        <label class="field"><span>Yuklab olish havolasi (url)</span><input data-field="url" value="${escapeHtml(it.url || '')}" /></label>
+        <label class="field"><span>Tillar / qamrov (vergul bilan)</span><input data-field="langs" value="${escapeHtml((it.langs || []).join(', '))}" /></label>
+        <label class="field"><span>Kuch darajasi (level 1–5)</span><input type="number" min="1" max="5" data-field="level" value="${modelNum(it.level, 3)}" /></label>
+        <label class="field"><span>Kod kuchi (strength.code 1–5)</span><input type="number" min="1" max="5" data-field="strength.code" value="${modelNum(strength.code, 3)}" /></label>
+        <label class="field"><span>Minimal RAM (GB)</span><input type="number" data-field="min.ramGb" value="${modelNum(min.ramGb, 4)}" /></label>
+        <label class="field"><span>Kerak disk (GB)</span><input type="number" data-field="min.diskGb" value="${modelNum(min.diskGb, 1)}" /></label>
+      </div>
+      <label class="chk"><input type="checkbox" data-field="bundled"${it.bundled ? ' checked' : ''} /> Ilova ichida keladi (yuklab olish shart emas)</label>
+      <label class="field"><span>Tavsif (izoh — foydalanuvchiga shu matn ko'rinadi)</span><textarea rows="3" data-field="notes">${escapeHtml(it.notes || '')}</textarea></label>
+    `;
+    card.querySelector('[data-act="remove"]').addEventListener('click', () => {
+      if (!confirm(`«${it.name || it.id}» katalogdan olib tashlansinmi? (nashr qilmaguningizcha ilovalarga ta'sir qilmaydi)`)) return;
+      modelsCatalog.items.splice(idx, 1);
+      renderModels();
+      modelsStatus(`olib tashlandi: ${it.name || it.id} — saqlash uchun «Nashr qilish»ni bosing`, 'warn');
+    });
+    for (const el of card.querySelectorAll('[data-field]')) {
+      const ev = el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(ev, () => {
+        const path = el.dataset.field.split('.');
+        let obj = it;
+        for (let i = 0; i < path.length - 1; i++) { obj[path[i]] = obj[path[i]] || {}; obj = obj[path[i]]; }
+        const key = path[path.length - 1];
+        if (el.type === 'checkbox') obj[key] = el.checked;
+        else if (el.type === 'number') obj[key] = modelNum(el.value, 0);
+        else if (key === 'langs') obj[key] = el.value.split(',').map((s) => s.trim()).filter(Boolean);
+        else obj[key] = el.value;
+      });
+    }
+    list.appendChild(card);
+  });
+}
+
+async function loadModels() {
+  modelsStatus('GitHub\'dan olinmoqda…');
+  const r = await api.catalogPull();
+  if (!r.ok) {
+    modelsStatus('GitHub\'dan olib bo\'lmadi: ' + (r.error || 'noma\'lum'), 'err');
+    return;
+  }
+  modelsCatalog = r.catalog;
+  renderModels();
+  modelsStatus(r.authProblem
+    ? '⚠ GitHub tokeni yaroqsiz — o\'qish tokensiz bajarildi, nashr uchun token yangilang'
+    : `olindi · ${(modelsCatalog.items || []).length} model`, r.authProblem ? 'warn' : '');
+}
+
+$('modelsPullBtn')?.addEventListener('click', loadModels);
+
+$('modelsAddBtn')?.addEventListener('click', () => {
+  if (!modelsCatalog) { modelsStatus('Avval «GitHub\'dan olish»ni bosing', 'err'); return; }
+  modelsCatalog.items = modelsCatalog.items || [];
+  modelsCatalog.items.push({
+    id: 'yangi-model-' + Date.now(),
+    kind: 'text',
+    name: 'Yangi model',
+    file: 'model.gguf',
+    bytes: 0,
+    url: '',
+    backend: 'llama.cpp',
+    min: { ramGb: 4, diskGb: 1 },
+    recommend: { ramGb: 6, vramGb: 0 },
+    measured: null,
+    strength: { code: 3, general: 3, speed: 3, uzbek: 3 },
+    level: 3,
+    langs: [],
+    notes: '',
+  });
+  renderModels();
+  modelsStatus('yangi model qo\'shildi — maydonlarni to\'ldirib «Nashr qilish»ni bosing');
+});
+
+$('modelsLocalBtn')?.addEventListener('click', async () => {
+  const r = await api.catalogLocal();
+  const pre = $('modelsPreview');
+  if (!r.ok) { modelsStatus('xato: ' + (r.error || ''), 'err'); return; }
+  pre.textContent = r.text;
+  pre.style.display = 'block';
+  modelsStatus(`${r.path} · ${r.bytes} B · ${r.valid ? '✓ JSON to\'g\'ri' : '✗ JSON buzuq: ' + r.jsonError}`);
+});
+
+$('modelsPushBtn')?.addEventListener('click', async () => {
+  if (!modelsCatalog) { modelsStatus('Avval «GitHub\'dan olish»ni bosing', 'err'); return; }
+  if (!confirm(`local-ai/catalog.json → GitHub shoxobchasiga nashr qilinsinmi? (${(modelsCatalog.items || []).length} model)`)) return;
+  const btn = $('modelsPushBtn');
+  btn.disabled = true;
+  modelsStatus('nashr qilinmoqda…');
+  const r = await api.catalogPush(modelsCatalog);
+  btn.disabled = false;
+  modelsStatus(r.ok
+    ? `✓ nashr qilindi · commit ${String(r.commit || '').slice(0, 10)} · ${r.bytes} B${r.localSaved ? ' · lokal nusxa ham yangilandi' : ''}`
+    : 'xato: ' + (r.error || ''), r.ok ? '' : 'err');
+});

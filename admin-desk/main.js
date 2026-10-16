@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_REPO = { owner: 'bekhvloger-beep', repo: 'yang-ai', branch: 'main', file: 'app-config.json' };
+// Lokal AI katalogi (model tavsiflari, yulduzlar, minimal RAM/disk, yuklab olish havolasi).
+// Ilovalar uni paketdan o'qiydi; Admin Desk shu faylni GitHub'ga nashr qiladi.
+const CATALOG_FILE = 'local-ai/catalog.json';
 const RAW_URL = (s) => `https://raw.githubusercontent.com/${s.owner}/${s.repo}/${s.branch}/${s.file}`;
 
 let win = null;
@@ -284,6 +287,11 @@ function localConfigPath() {
     try { if (fs.existsSync(p)) return p; } catch { /* o'qilmadi — keyingisini sinaymiz */ }
   }
   return null;
+}
+
+/** Repo ildizidagi lokal AI katalogi (lokal nusxa — nashrdan oldin ko'rish/tekshirish uchun). */
+function catalogLocalPath() {
+  return path.join(__dirname, '..', 'local-ai', 'catalog.json');
 }
 
 /** Oxirgi reliz. Token bo'lmasa ham ishlaydi (GitHub anonim so'rovga ruxsat beradi). */
@@ -655,6 +663,62 @@ function registerIpc() {
       commitUrl: put.url || null,
       branch: admin.branch,
       bytes: Buffer.byteLength(text, 'utf8'),
+    };
+  });
+
+  /* ---------- Lokal AI katalogi (local-ai/catalog.json) ----------
+   * Operator shu yerdan model TAVSIFINI (izoh, yulduz, minimal RAM/disk, havola)
+   * o'zgartiradi, yangi model qo'shadi yoki keraksizini olib tashlaydi va nashr qiladi.
+   * Ilovalar GitHub'dagi shu faylni paketdagi nusxa ustidan qo'llaydi — ya'ni tavsif
+   * yangi reliz chiqarmasdan ham yangilanadi.
+   * ---------------------------------------------------------------------------- */
+  ipcMain.handle('models:catalog-pull', async () => {
+    const r = await ghGet(CATALOG_FILE);
+    if (r.error) return { ok: false, error: r.error, authProblem: !!r.authProblem };
+    try {
+      return { ok: true, catalog: JSON.parse(r.content), text: r.content, sha: r.sha, authProblem: !!r.authProblem };
+    } catch (e) {
+      return { ok: false, error: 'katalog JSON o\u2018qilmadi: ' + e.message, authProblem: !!r.authProblem };
+    }
+  });
+
+  ipcMain.handle('models:catalog-local', async () => {
+    const p = catalogLocalPath();
+    try {
+      const text = await fsp.readFile(p, 'utf8');
+      let valid = true;
+      let jsonError = null;
+      try { JSON.parse(text); } catch (e) { valid = false; jsonError = e.message; }
+      return { ok: true, path: p, text, bytes: Buffer.byteLength(text, 'utf8'), valid, jsonError };
+    } catch (e) {
+      return { ok: false, error: 'lokal katalog o\u2018qilmadi: ' + e.message };
+    }
+  });
+
+  ipcMain.handle('models:catalog-push', async (_e, { catalog } = {}) => {
+    if (!admin.ghToken) return { ok: false, error: 'GitHub token kiritilmagan (Sozlash bo\u2018limi)' };
+    // Katalog bo'sh yoki buzuq bo'lsa nashr qilinmaydi: aks holda ilovalarda model
+    // ro'yxati butunlay yo'q bo'lib qolardi.
+    if (!catalog || typeof catalog !== 'object' || !Array.isArray(catalog.items) || !catalog.items.length) {
+      return { ok: false, error: 'katalog bo\u2018sh yoki buzuq (items massivi kerak)' };
+    }
+    const text = JSON.stringify(catalog, null, 2) + '\n';
+    try { JSON.parse(text); } catch (e) { return { ok: false, error: 'JSON buzuq — nashr qilinmadi: ' + e.message }; }
+    const put = await ghPut(CATALOG_FILE, text, 'local-ai/catalog.json yangilandi (YANG Admin Desk)');
+    if (!put.ok) return put;
+    // Lokal nusxa faqat nashr muvaffaqiyatli bo'lgach yangilanadi (ikkalasi bir xil qolsin).
+    let localSaved = false;
+    try {
+      await fsp.writeFile(catalogLocalPath(), text, 'utf8');
+      localSaved = true;
+    } catch { /* lokal nusxa yozilmadi — nashr baribir bo'ldi */ }
+    return {
+      ok: true,
+      commit: put.sha || null,
+      commitUrl: put.url || null,
+      branch: admin.branch,
+      bytes: Buffer.byteLength(text, 'utf8'),
+      localSaved,
     };
   });
 }

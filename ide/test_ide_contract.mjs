@@ -326,6 +326,37 @@ check('Ilova bilan kelgan nusxa o‘chirishdan himoyalangan (readonly)',
   /readonly/.test(modelsSrc) && /o‘chirilmaydi/.test(modelsSrc) && /readonly/.test(appSrc)
   && /inst\.readonly/.test(modelsSrc));
 
+/* ---------------- v5.6: cheklovsiz lokal AI, menyu qatori, Kod AI ---------------- */
+// Asosiy ilovaning o'z fayllari (bu test IDE papkasidan ishlaydi).
+const mainHtml = read(path.join('..', 'renderer', 'index.html'));
+const mainAppJs = read(path.join('..', 'renderer', 'app.js'));
+const engineSrc = read(path.join('..', 'agent', 'engine.js'));
+const remoteCatSrc = fs.existsSync(path.join(HERE, '..', 'agent', 'remote_catalog.js'))
+  ? read(path.join('..', 'agent', 'remote_catalog.js'))
+  : '';
+const deskRHtml = read(path.join('..', 'admin-desk', 'renderer', 'index.html'));
+const deskMainSrc = read(path.join('..', 'admin-desk', 'main.js'));
+
+// Cheklov olib tashlandi: resurs yetmasa ham model YUKLAB OLINADI va ishlatiladi.
+check('Cheklov olib tashlandi: menejerda «Ishlamaydi» holati yo‘q (faqat ogohlantirish)',
+  !/blocked: 'Ishlamaydi'/.test(modelsSrc) && /warn: 'Ogohlantirish'/.test(modelsSrc)
+  && !/state = 'blocked'/.test(modelsSrc) && /machineStars/.test(modelsSrc));
+check('Lokal AI menyu qatoridan ham ochiladi (asosiy ilova menyusi + ko‘prik)',
+  /label: 'Lokal AI'/.test(appMainSrc) && /openModelsUi/.test(appMainSrc) && /ui:open-models/.test(appMainSrc)
+  && /onOpenModels/.test(appPreloadSrc) && /onOpenModels/.test(mainAppJs));
+check('Sozlamalarda «Lokal AI» bo‘limi ko‘rinadi (tab + panel + Kod rejimi tugmasi)',
+  /data-tab="localai"/.test(mainHtml) && /data-pane="localai"/.test(mainHtml)
+  && /setOpenModels/.test(mainAppJs) && /id="codeBtn"/.test(mainHtml));
+check('Admin Desk tahrirlagan katalog ilovada ustuvor (remote merge, relizsiz)',
+  !!remoteCatSrc && /export function mergeCatalog/.test(remoteCatSrc) && /mergeCatalog\(raw\)/.test(modelsSrc)
+  && /REMOTE_CATALOG_URL/.test(appMainSrc) && /fetchRemoteCatalog/.test(appMainSrc));
+check('YANG AI kodlash uchun maxsus rejim beradi (Kod AI system prompti)',
+  /export const CODING_MODE_EXTRA/.test(engineSrc) && /config\.codingMode/.test(engineSrc)
+  && /CODING_MODE_EXTRA/.test(engineSrc) && /id="codingModeToggle"/.test(mainHtml)
+  && /Kodlash rejimi/.test(appMainSrc));
+check('Admin Desk: lokal AI qo‘shish / o‘chirish / tahrirlash va nashr bo‘limi',
+  /data-tab="models"/.test(deskRHtml) && /catalog-push/.test(deskMainSrc) && /catalog-pull/.test(deskMainSrc));
+
 // Sanoq HAQIQIY: matn qo‘lda yozilgan raqam bilan yuritilmaydi (u eskirib qolgan edi).
 console.log(failed ? `\n${failed}/${total} tekshiruv YIQILDI` : `\nHammasi o‘tdi (${total} tekshiruv · 9 guruh)`);
 if (failed) process.exitCode = 1;

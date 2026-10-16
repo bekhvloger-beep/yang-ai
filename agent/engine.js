@@ -141,6 +141,37 @@ const PLAN_MODE_EXTRA = `REJA REJIMI yoqilgan: foydalanuvchi HOZIR faqat REJA so
 - Reja 3-8 qadam bo'lsin, aniq va o'lchanadigan bo'lsin.
 - Oxirida bitta qatorda: "Tayyor bo'lsa — «Qurishni boshlash» tugmasini bosing." deb yozing.`;
 
+// Kodlash rejimi («Kod AI») — YANG AI ni kodlash uchun maxsus tayyorlaydi.
+// Yoqilganda system promptga qo'shiladi (`config.codingMode`). Qoidalar o'lchangan
+// xatolarga qarshi: (1) model kodni chatda ko'rsatib faylga yozmaydi, (2) yozgach
+// ishga tushirmaydi, (3) mavjud bo'lmagan API/funksiyani o'ylab topadi, (4) keraksiz
+// katta o'zgarish kiritadi. Har biri aniq talab bilan yopiladi.
+export const CODING_MODE_EXTRA = `KODLASH REJIMI (Kod AI) — sen senior dasturchisan. Quyidagilarga QAT'IY amal qil:
+- Har qanday kod o'zgarishi FAYL sifatida yoziladi (write_file). Chatda kod ko'rsatib qo'yish — bajarilmagan ish.
+- Avval mavjud holatni o'qi: list_dir/read_file bilan fayl va uslubni ko'r, keyin yoz. Fayl mazmunini o'ylab topma.
+- O'zgarish MINIMAL bo'lsin: faqat vazifaga kerakli qatorlarga teg. Butun faylni qayta yozishdan saqlan (agar fayl kichik bo'lmasa).
+- Loyihaning mavjud uslubi, nomlash va tuzilishiga amal qil. Yangi kutubxona qo'shishdan oldin u loyihada BORLIGINI tekshir.
+- Mavjud bo'lmagan funksiya/API/argumentni "taxminan" yozma: read_file yoki web_search bilan tasdiqla.
+- Fayl TO'LIQ bo'lsin: bo'sh joy, "...", TODO, "<qolgani o'zgarmaydi>" qoldirilmaydi.
+- Yozgach TEKSHIR: run_command bilan ishga tushir (test, build, linter yoki oddiy import). Xato bo'lsa — xato matnini o'qib TUZAT va qayta ishga tushir; tuzatmaguningcha tugatilgan deb hisoblama.
+- Xato matnini yashirma va jim o'tkazma: nima yiqilganini ayt va tuzat.
+- Yozgan kodning chekka holatlarini (bo'sh kirish, 0, takrorlar, katta kirish) hisobga ol.
+- Yakunda qisqa xulosa: qaysi fayl(lar) o'zgardi, nima tekshirildi, natija (o'tdi/yiqildi).
+- Foydalanuvchi tilida javob ber; kod, identifikator va buyruqlar inglizcha qoladi.`;
+
+/**
+ * System qatlamiga qo'shiladigan «extra» bloklarni yig'adi — YAGONA joy.
+ * Sof funksiya: reja rejimi, tasdiqlangan reja va Kodlash rejimi (Kod AI) shu yerda
+ * birlashtiriladi. `agent/test_coding_mode.mjs` shu funksiyani bevosita sinaydi.
+ */
+export function buildSystemExtra({ systemExtra = null, planMode = false, approvedPlan = null, codingMode = false } = {}) {
+  const parts = [systemExtra];
+  if (planMode) parts.push(PLAN_MODE_EXTRA);
+  if (approvedPlan) parts.push(approvedPlanExtra(approvedPlan));
+  if (codingMode) parts.push(CODING_MODE_EXTRA);
+  return parts.filter(Boolean).join('\n\n') || null;
+}
+
 // Tasdiqlangan reja bilan qurish (4-bosqich: "Qurishni boshlash" bosilganda).
 function approvedPlanExtra(plan) {
   return `Foydalanuvchi quyidagi rejani TASDIQLADI — uni aynan bajar:
@@ -663,10 +694,13 @@ export class AgentEngine extends EventEmitter {
       userMsg = { role: 'user', content: effectiveUserText };
     }
     // Reja rejimi / tasdiqlangan reja — system qatlamiga qo'shiladi.
-    const extraParts = [this.systemExtra];
-    if (this.planMode) extraParts.push(PLAN_MODE_EXTRA);
-    if (this.approvedPlan) extraParts.push(approvedPlanExtra(this.approvedPlan));
-    const systemExtra = extraParts.filter(Boolean).join('\n\n') || null;
+    const systemExtra = buildSystemExtra({
+      systemExtra: this.systemExtra,
+      planMode: this.planMode,
+      approvedPlan: this.approvedPlan,
+      // Kodlash rejimi (Kod AI): sozlamada yoqilgan bo'lsa — har so'rovga qo'shiladi.
+      codingMode: !!(this.config && this.config.codingMode),
+    });
 
     const messages = [
       { role: 'system', content: systemPrompt(this.workspace, process.platform, systemExtra, trUp && this.translateOutput, userText, localProvider) },

@@ -142,6 +142,9 @@
             <button id="imgStudioBtn" class="icon-btn" title="Rasm studiyasi (v5) — o‘zbekcha prompt bilan rasm chizish"><svg class="ico"><use href="#i-brush" /></svg></button>
             <button id="planBtn" class="mode-btn" title="Avval reja tuzadi — tasdiqlagach quradi"><svg class="ico"><use href="#i-list" /></svg> Plan</button>
             <button id="buildBtn" class="mode-btn" title="So‘rovni darhol bajaradi (qurish)"><svg class="ico"><use href="#i-bolt" /></svg> Build</button>
+            <!-- Kodlash rejimi (Kod AI): senior dasturchi qoidalari — to‘liq fayl, ishga tushirib
+                 tekshirish, o‘ylab topilgan API yo‘q, minimal o‘zgarish. Sozlamalarda ham bor. -->
+            <button id="codeBtn" class="mode-btn" title="Kodlash rejimi (Kod AI) — YANG AI senior dasturchi sifatida qat’iy ishlaydi"><svg class="ico"><use href="#i-edit" /></svg> Kod</button>
             <span id="statusLine" class="status-line"></span>
             <div class="spacer"></div>
             <button id="stopBtn" class="btn btn-danger hidden">■ To‘xtatish</button>
@@ -318,6 +321,7 @@
         <div class="set-tabs" id="setTabs">
           <button class="set-tab active" data-tab="provider">Provayder</button>
           <button class="set-tab" data-tab="model">Model</button>
+          <button class="set-tab" data-tab="localai">Lokal AI</button>
           <button class="set-tab" data-tab="translate">Tarjima</button>
           <button class="set-tab" data-tab="ui">Interfeys</button>
           <button class="set-tab" data-tab="system">Tizim</button>
@@ -406,6 +410,25 @@
             <input type="checkbox" id="autoApprove" />
             <span>Buyruqlarni so‘roqsiz bajarish (auto-approve) — <b>ehtiyot bo‘ling</b></span>
           </label>
+        </section>
+
+        <!-- ---------- Lokal AI (v5.6) ---------- -->
+        <!-- Menejer asosiy oynada (menyudan ham: «Lokal AI → Lokal AI menejeri», Ctrl+Shift+M).
+             Bu bo‘lim uni Sozlamalar ichidan ham ko‘rinadigan qiladi. -->
+        <section class="set-pane hidden" data-pane="localai">
+          <div class="pane-lead">
+            <b>Lokal AI — model bozori va Kod AI</b>
+            <small>Lokal modellarni yuklab olish, kompyuterda bor AI larni bir bosishda ulash, «O‘lchash» (4 haqiqiy vazifa) va lokal rasm — hammasi API kaliti va internet kvotasiz.</small>
+          </div>
+          <div class="field">
+            <span>Model menejeri</span>
+            <div class="row-2">
+              <button id="setOpenModels" class="btn btn-primary small"><svg class="ico"><use href="#i-hex" /></svg> Lokal AI menejerini ochish</button>
+              <button id="setOpenModelsInstalled" class="btn btn-ghost small"><svg class="ico"><use href="#i-cpu" /></svg> Kompyuterda bor AI</button>
+            </div>
+            <div id="setModelsSummary" class="dim" style="margin-top:6px">—</div>
+          </div>
+          <label class="chk"><input type="checkbox" id="codingModeToggle" /> <span><b>Kodlash rejimi (Kod AI)</b> — senior dasturchi qoidalari: to‘liq ishlaydigan fayl, ishga tushirib tekshirish, o‘ylab topilgan API yo‘q, minimal o‘zgarish</span></label>
         </section>
 
         <!-- ---------- Tarjima ---------- -->

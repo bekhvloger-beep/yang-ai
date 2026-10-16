@@ -18,6 +18,7 @@
         <button class="nav-btn active" data-tab="inbox">📥 Savollar</button>
         <button class="nav-btn" data-tab="content">📣 Reklama / E'lon</button>
         <button class="nav-btn" data-tab="stats">📊 Statistika</button>
+        <button class="nav-btn" data-tab="models">🧠 Lokal AI</button>
         <button class="nav-btn" data-tab="release">🚀 Reliz holati</button>
         <button class="nav-btn" data-tab="setup">⚙ Sozlash</button>
       </nav>
@@ -180,6 +181,26 @@
           </div>
           <pre id="localCfgPreview" style="display:none; max-height:320px; overflow:auto; margin-top:10px; padding:10px; border:1px solid #232a3a; border-radius:8px; background:#0a0c12; font-size:11px; line-height:1.55"></pre>
         </div>
+      </section>
+
+      <!-- Lokal AI katalogi: model qo'shish/o'chirish/tahrirlash va nashr -->
+      <section id="tab-models" class="tab">
+        <div class="tab-head">
+          <h2>🧠 Lokal AI katalogi</h2>
+          <div class="row">
+            <button id="modelsPullBtn" class="btn btn-ghost">⤓ GitHub'dan olish</button>
+            <button id="modelsLocalBtn" class="btn btn-ghost">👁 Lokal fayl</button>
+            <button id="modelsAddBtn" class="btn btn-ghost">＋ Yangi model</button>
+            <button id="modelsPushBtn" class="btn btn-primary">⬆ Nashr qilish</button>
+            <span id="modelsStatus" class="dim"></span>
+          </div>
+        </div>
+        <p class="dim">Bu bo'lim <b>local-ai/catalog.json</b> faylini boshqaradi: model <b>tavsifi</b> (izoh/matn),
+          kuch <b>yulduzlari</b>, <b>minimal RAM va disk</b>, yuklab olish <b>havolasi</b> hamda turkum (matn/rasm/dvigatel/ovoz).
+          «Nashr qilish» faylni GitHub'ga yuklaydi va ilovalar keyingi ishga tushishida shu tavsifni ko'radi —
+          yangi model qo'shish yoki keraksizini olib tashlash ham shu yo'l bilan bo'ladi (yangi reliz shart emas).</p>
+        <div id="modelsList"><div class="dim empty-hint">«GitHub'dan olish»ni bosing — katalog shu yerda chiqadi.</div></div>
+        <pre id="modelsPreview" style="display:none; max-height:320px; overflow:auto; margin-top:10px; padding:10px; border:1px solid #232a3a; border-radius:8px; background:#0a0c12; font-size:11px; line-height:1.55"></pre>
       </section>
 
       <!-- Setup -->

@@ -23,5 +23,9 @@ contextBridge.exposeInMainWorld('api', {
   // Mahalliy app-config.json: ko'rish va to'g'ridan-to'g'ri nashr qilish.
   localCfgPreview: () => ipcRenderer.invoke('cfg:local-preview'),
   pushLocalConfig: (message) => ipcRenderer.invoke('cfg:push-local', { message }),
+  // Lokal AI katalogi (local-ai/catalog.json): olish, lokal nusxani ko'rish va nashr qilish.
+  catalogPull: () => ipcRenderer.invoke('models:catalog-pull'),
+  catalogLocal: () => ipcRenderer.invoke('models:catalog-local'),
+  catalogPush: (catalog) => ipcRenderer.invoke('models:catalog-push', { catalog }),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

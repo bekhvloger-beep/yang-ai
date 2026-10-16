@@ -31,6 +31,9 @@ const els = {
   uiPanelToggle: $('uiPanelToggle'), uiAnimToggle: $('uiAnimToggle'), uiStepsToggle: $('uiStepsToggle'),
   uiAdToggle: $('uiAdToggle'), uiPanelSide: $('uiPanelSide'), quickModels: $('quickModels'),
   switchFx: $('switchFx'), fxLabel: $('fxLabel'), fxSub: $('fxSub'),
+  // ---- v5.6: Kodlash rejimi (Kod AI) + Sozlamalardagi Lokal AI bo'limi ----
+  codeBtn: $('codeBtn'), codingModeToggle: $('codingModeToggle'),
+  setOpenModels: $('setOpenModels'), setOpenModelsInstalled: $('setOpenModelsInstalled'), setModelsSummary: $('setModelsSummary'),
 };
 
 /* ---------------- UI sozlamalari (Interfeys bo'limi) ---------------- */
@@ -941,6 +944,27 @@ function updateChips() {
   const prov = (cfg.providers && cfg.providers[cfg.config.provider]) || {};
   els.modelName.textContent = `${prov.name || cfg.config.provider} · ${cfg.config.model}`;
   updateBottomBar();
+  syncCodingMode();     // Kodlash rejimi holati (config'dan) har doim ko'rinib tursin
+}
+
+/* ---------------- Kodlash rejimi (Kod AI) ---------------- */
+// YANG AI ni kodlashga «maxsus tayyorlangan» qiladi: engine system promptiga senior
+// dasturchi qoidalarini qo'shadi (to'liq fayl, ishga tushirib tekshirish, o'ylab topilgan
+// API yo'q, minimal o'zgarish). Holat config'da (`codingMode`) saqlanadi, shuning uchun
+// asosiy jarayon ham, keyingi ishga tushirish ham uni biladi.
+function syncCodingMode() {
+  const on = !!(cfg && cfg.config && cfg.config.codingMode);
+  els.codeBtn.classList.toggle('on', on);
+  if (els.codingModeToggle) els.codingModeToggle.checked = on;
+}
+async function setCodingMode(on) {
+  const val = !!on;
+  cfg.config.codingMode = val;
+  syncCodingMode();
+  try { await api.saveConfig({ codingMode: val }); } catch { /* sessiyada ham ishlaydi */ }
+  addNotice(val
+    ? '🧑‍💻 Kodlash rejimi yoqildi — YANG AI senior dasturchi sifatida ishlaydi (test bilan tekshiradi)'
+    : 'Kodlash rejimi o‘chirildi');
 }
 
 /* ---------------- attachments ---------------- */
@@ -2127,6 +2151,9 @@ function openSettings() {
   els.transTarget.value = tr.target || 'uzn_Latn';
   els.transResult.textContent = '';
   els.connectResult.textContent = '';
+  // v5.6: Kodlash rejimi va Lokal AI holati Sozlamalarda ham ko'rinadi.
+  if (els.codingModeToggle) els.codingModeToggle.checked = !!cfg.config.codingMode;
+  if (currentSetTab === 'localai') refreshModelsSummary().catch(() => {});
   openSetTab(currentSetTab);
   els.settingsModal.classList.remove('hidden');
 }
@@ -2433,7 +2460,10 @@ els.settingsSave.addEventListener('click', async () => {
 /* ---------- 3-bosqich: yangi bo'limlar va provayder ulash oqimi ---------- */
 els.setTabs.addEventListener('click', (e) => {
   const b = e.target.closest('.set-tab');
-  if (b) openSetTab(b.dataset.tab);
+  if (!b) return;
+  openSetTab(b.dataset.tab);
+  // Lokal AI bo‘limiga o‘tilganda apparat/o‘rnatilgan modellar xulosasi bir marta olinadi.
+  if (b.dataset.tab === 'localai') refreshModelsSummary().catch(() => {});
 });
 els.connectTestBtn.addEventListener('click', async () => {
   const id = els.providerSelect.value;
@@ -2810,7 +2840,7 @@ function renderHwProfile() {
 function modelRow(it) {
   const p = it.progress;
   const active = p && (p.state === 'downloading' || p.state === 'extracting');
-  const cls = ['mdl-row', it.installed ? 'installed' : '', it.verdict.state === 'blocked' ? 'blocked' : ''].filter(Boolean).join(' ');
+  const cls = ['mdl-row', it.installed ? 'installed' : '', it.verdict.state === 'warn' ? 'warn' : ''].filter(Boolean).join(' ');
   const badge = it.installed
     ? '<span class="mdl-badge on">o‘rnatilgan</span>'
     : `<span class="mdl-badge ${escapeHtml(it.verdict.state)}">${escapeHtml(it.verdict.fit)}</span>`;
@@ -3115,6 +3145,52 @@ async function generateLocalImageHere() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modelsMgr.open) closeModels(); });
   // CDP/smoke sinovlari uchun ilgak (faqat ko‘rsatish/so‘rov — xatti-harakatga ta’sir yo‘q).
   window.__modelsHook = { open: openModels, close: closeModels, refresh: refreshModels, state: () => modelsMgr };
+})();
+
+/* Sozlamalar → Lokal AI: apparat darajasi va o‘rnatilgan modellar xulosasi. */
+async function refreshModelsSummary() {
+  if (!els.setModelsSummary) return;
+  els.setModelsSummary.textContent = 'o‘qilmoqda…';
+  const data = await api.modelsCatalog().catch(() => null);
+  if (!data || !Array.isArray(data.items)) {
+    els.setModelsSummary.textContent = 'Model katalogi o‘qilmadi — qayta urinib ko‘ring.';
+    return;
+  }
+  const hw = data.hardware || {};
+  const installed = data.items.filter((x) => x.installed).length;
+  const remote = data.remote ? ' · admin tavsiflari yuklangan' : '';
+  els.setModelsSummary.textContent =
+    `Matn darajasi ${modelsStars(hw.textLevel)} · Rasm darajasi ${modelsStars(hw.imageLevel)}`
+    + ` · o‘rnatilgan: ${installed}/${data.items.length}`
+    + (hw.ramGb ? ` · RAM ${hw.ramGb} GB${hw.diskFreeGb != null ? `, disk ${hw.diskFreeGb} GB bo‘sh` : ''}` : '')
+    + remote;
+}
+
+/* v5.6: Kodlash rejimi tugmasi + menyudan kelgan buyruqlar (Lokal AI modali, Kod rejimi). */
+(function wireCodingAndMenu() {
+  if (els.codeBtn) els.codeBtn.addEventListener('click', () => {
+    setCodingMode(!(cfg && cfg.config && cfg.config.codingMode)).catch(() => {});
+  });
+  if (els.codingModeToggle) els.codingModeToggle.addEventListener('change', () => {
+    setCodingMode(els.codingModeToggle.checked).catch(() => {});
+  });
+  if (els.setOpenModels) els.setOpenModels.addEventListener('click', () => {
+    els.settingsModal.classList.add('hidden');
+    openModels().catch(() => {});
+  });
+  if (els.setOpenModelsInstalled) els.setOpenModelsInstalled.addEventListener('click', () => {
+    els.settingsModal.classList.add('hidden');
+    openModels('installed').catch(() => {});
+  });
+  // Menyu: «Lokal AI → Lokal AI menejeri» (Ctrl+Shift+M) shu yerda modalni ochadi.
+  if (api.onOpenModels) api.onOpenModels((d) => {
+    els.settingsModal.classList.add('hidden');
+    openModels((d && d.tab) || undefined).catch(() => {});
+  });
+  // Menyudagi «Kodlash rejimi» belgisi o'zgarganda tugma holati ham yangilanadi.
+  if (api.onCodingMode) api.onCodingMode((d) => {
+    if (cfg && cfg.config) { cfg.config.codingMode = !!(d && d.on); syncCodingMode(); }
+  });
 })();
 
 /* ---------------- boot ---------------- */

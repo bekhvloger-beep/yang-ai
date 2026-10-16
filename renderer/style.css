@@ -807,6 +807,8 @@ body { font-size: 13px; }
 }
 .mdl-row.installed { border-color: rgba(53, 195, 154, .42); }
 .mdl-row.blocked { opacity: .62; }
+/* «Ishlamaydi» holati olib tashlandi: endi faqat ogohlantirish (yuklab olish mumkin). */
+.mdl-row.warn { border-color: rgba(217, 160, 63, .45); }
 .mdl-top { display: flex; align-items: center; gap: 8px; }
 .mdl-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
 .mdl-stars { color: #e8c266; letter-spacing: 1px; font-size: 12px; }
@@ -818,6 +820,7 @@ body { font-size: 13px; }
 .mdl-badge.borderline { border-color: rgba(217, 160, 63, .5); color: var(--warn); }
 .mdl-badge.heavy { border-color: rgba(226, 143, 78, .5); color: #e28f4e; }
 .mdl-badge.blocked { border-color: rgba(229, 99, 111, .5); color: var(--danger); }
+.mdl-badge.warn { border-color: rgba(217, 160, 63, .5); color: var(--warn); }
 .mdl-meta { margin-top: 5px; font-size: 11px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .mdl-note { margin-top: 4px; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; }
 .mdl-reasons { margin-top: 4px; font-size: 11px; color: var(--muted); line-height: 1.45; }

@@ -1,0 +1,20 @@
+
+> yang-ai@5.6.0 test:pin
+> node agent/test_pin_failover.mjs
+
+PASS  0. Sovuq holat: lokal server javob bermayapti
+      → GET http://127.0.0.1:8082/v1/models → ECONNREFUSED
+PASS  A1. pinMode=true → zanjirda faqat pin qilingan model
+      → buildChain → 1 juftlik [localmini::qwen3-instruct]
+PASS  A2. Lokal model ishlamasa pin rejim zaxiraga o‘tmaydi (notislar)
+      → notislar: ["🔒 Faqat tanlangan model: localmini · qwen3-instruct — zaxiraga o‘tilmaydi","⏳ Lokal model yuklanmoqda — tayyor bo‘lishini kutyapman…","Lokal AI serveri javob bermayapti — pin rejim yoqilgani uchun zaxiraga o‘tilmaydi","Lokal AI (offline) · qwen3-instruct javob bermadi (pin rejim — zaxira yo‘q)"]
+PASS  A3. Run aniq xato bilan tugadi va zaxira provayder sinab ko‘rilmadi
+      → xato: "Barcha provayderlar ishlamadi: | Lokal AI (offline) · qwen3-instruct: fetch failed" · provider_used=null · 46828 ms
+PASS  B1. pinMode=false → zanjirda zaxira provayderlar bor
+      → buildChain → 4 juftlik [localmini::qwen3-instruct, localmini::qwen2.5-0.5b-instruct, kilo::kilo-auto/free, pollinations::openai-fast]
+PASS  B2. Tayyorlik bloki pin OFF rejimida zaxiraga o‘tishni e’lon qiladi
+      → notislar: ["⏳ Lokal model yuklanmoqda — tayyor bo‘lishini kutyapman…","Lokal AI serveri javob bermayapti — zaxira provayderga o‘taman…","Lokal AI (offline) · qwen3-instruct javob bermadi — boshqa modelga o‘taman…"]
+PASS  B3. Birinchi juftlik yiqilganda «boshqa modelga o‘taman» notisi chiqdi (zaxiraga o‘tish boshlandi)
+      → switch notisi=true · provider_used=null · 6 ms
+
+XULOSA: 7/7 PASS (46835 ms)

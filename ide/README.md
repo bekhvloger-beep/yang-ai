@@ -57,6 +57,16 @@ median_bug) har modelni ikki rejimda sinaydi: `one-shot` (bir marta yozadi) va `
 
 To‘liq jadval, xato chiqishlari va tavsiya: `reports/local_ai/local-ai-hisobot.md`.
 
+### v5.6 — menejer hamma joyda, cheklovsiz va admin boshqaradi
+
+| Nima | Qayerda |
+|---|---|
+| Menejerni ochish | Menyu qatori **«Lokal AI»** → «Lokal AI menejeri» (**Ctrl+Shift+M**), «Kompyuterda bor AI», «Lokal rasm modellari», «Ovoz modeli»; **Sozlamalar → Lokal AI** bo‘limi; yon paneldagi «Lokal AI» tugmasi |
+| Cheklov | **«Ishlamaydi» holati OLIB TASHLANDI**: resurs yetmasa `warn` + «baribir yuklab olish mumkin», moslik yulduzi kamida 1 (`ide/ide_models.js`) |
+| Kod rejimi (Kod AI) | Sozlamalar → Lokal AI, pastdagi **«Kod»** tugmasi yoki menyu belgisi → `agent/engine.js` `CODING_MODE_EXTRA` (to‘liq fayl, ishga tushirib tekshirish, minimal o‘zgarish) |
+| Model tavsifi (relizsiz) | Admin Desk → **«🧠 Lokal AI»** → model qo‘shish/o‘chirish/tahrirlash → **⬆ Nashr qilish**; ilova 30 daqiqada GitHub’dagi `local-ai/catalog.json` ni olib, paketdagi katalog **ustiga** qo‘yadi (`agent/remote_catalog.js`) |
+| Model tavsifi MAHALLIY | Har bir yozuvdagi `notes`/`strength`/`measured` — `local-ai/catalog.json` da; «O‘lchash» tugmasi o‘lchangan natijani `%APPDATA%/yang-ai/models/measured.json` ga yozadi |
+
 **Tanlash tartibi `ide/ide_host.js` da (v5.5.1 da o‘zgardi).** Ilgari qattiq ro‘yxat bor edi
 (qwen3.5-2B → 1.7B → 4B → 0.5B) va foydalanuvchi «Lokal AI» menyusidan 7B yuklab olsa ham u
 **ishlatilmasdan** qolardi — ro‘yxatning birinchi (kichik) fayli topilardi. Endi mavjud

@@ -253,12 +253,12 @@ try {
   // kutib o‘lchaydi), shuning uchun matn uzunligi talabi unga qo‘yilmaydi.
   const tabOk = tabNames.length === 5
     && tabNames.every((t) => tabs[t].active && (t === 'installed' || tabs[t].text > 20));
-  // Katalogda 5 matn + 3 rasm + 2 dvigatel + 1 ovoz = 11 yozuv; TURKUM tablari ularni
-  // to‘liq qamrashi kerak. «Kompyuterda bor» — turkum emas, HAQIQIY skan (uni 7-tekshiruv
-  // alohida o‘lchaydi), shuning uchun qamrov hisobiga kirmaydi.
+  // Katalogda 6 matn (5.6 da ilova ichidagi 1.7B ham qo‘shildi) + 3 rasm + 2 dvigatel +
+  // 1 ovoz = 12 yozuv; TURKUM tablari ularni to‘liq qamrashi kerak. «Kompyuterda bor» —
+  // turkum emas, HAQIQIY skan (uni 7-tekshiruv alohida o‘lchaydi), qamrovga kirmaydi.
   const catalogRows = (tabs.text.rows || 0) + (tabs.image.rows || 0) + (tabs.runtime.rows || 0) + (tabs.voice.rows || 0);
-  check('6. Barcha 5 turkum almashinadi va katalogdagi 11 yozuv to‘liq ko‘rinadi',
-    tabOk && catalogRows === 11,
+  check('6. Barcha 5 turkum almashinadi va katalogdagi 12 yozuv to‘liq ko‘rinadi',
+    tabOk && catalogRows === 12,
     `${tabNames.map((t) => `${t}:${tabs[t].rows} qator / ${tabs[t].text} belgi`).join(' · ')} · jami=${catalogRows}`);
 
   // 7. «Kompyuterda bor» turkumi HAQIQIY skanni ko'rsatadi (Ollama va/yoki HF keshi).
@@ -299,6 +299,57 @@ try {
   })()`);
   check('9. «✕» modalni yopadi (holat ham yangilanadi)', closed.hidden === true && closed.state === false,
     `yopiq=${closed.hidden} · modelsMgr.open=${closed.state}`);
+
+  // 11. Sozlamalar → «Lokal AI» bo'limi (v5.6): ko'rinadi va «Kod» tugmasi rejimni SAQLAYDI.
+  const code = await ev(`(async () => {
+    document.getElementById('settingsBtn').click();
+    const tab = [...document.querySelectorAll('.set-tab')].find((b) => b.dataset.tab === 'localai');
+    if (tab) tab.click();
+    const pane = document.querySelector('.set-pane[data-pane=\"localai\"]');
+    const before = await window.api.getConfig();
+    document.getElementById('codeBtn').click();
+    await new Promise((r) => setTimeout(r, 700));
+    const after = await window.api.getConfig();
+    return {
+      tab: !!tab,
+      paneVisible: !!pane && !pane.classList.contains('hidden'),
+      wasOn: !!(before.config && before.config.codingMode),
+      nowOn: !!(after.config && after.config.codingMode),
+      btnOn: document.getElementById('codeBtn').classList.contains('on'),
+      toggle: document.getElementById('codingModeToggle').checked,
+      bridge: typeof (window.api && window.api.onOpenModels) === 'function' && typeof (window.api && window.api.onCodingMode) === 'function',
+    };
+  })()`);
+  check('11. Sozlamalar → «Lokal AI» bo‘limi ko‘rinadi va «Kod» tugmasi rejimni saqlaydi (sozlama kanal orqali yoziladi)',
+    code.tab === true && code.paneVisible === true && code.nowOn === !code.wasOn && code.btnOn === code.nowOn
+    && code.toggle === code.nowOn && code.bridge === true,
+    `tab=${code.tab} · panel ko‘rinadi=${code.paneVisible} · codingMode ${code.wasOn}→${code.nowOn} · tugma on=${code.btnOn} · sozlama belgisi=${code.toggle} · menyu ko‘prigi=${code.bridge}`);
+
+  // 12. «Lokal AI» sozlamasidagi tugma menejerni AYNAN kerakli turkum bilan ochadi.
+  const fromSettings = await ev(`(async () => {
+    document.getElementById('codeBtn').click();          // rejim o‘z holiga qaytadi
+    document.getElementById('settingsBtn').click();
+    const tab = [...document.querySelectorAll('.set-tab')].find((b) => b.dataset.tab === 'localai');
+    if (tab) tab.click();
+    for (let i = 0; i < 25; i += 1) {
+      if (/daraja/.test((document.getElementById('setModelsSummary').textContent || ''))) break;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    const summary = (document.getElementById('setModelsSummary').textContent || '').trim();
+    document.getElementById('setOpenModelsInstalled').click();
+    await new Promise((r) => setTimeout(r, 600));
+    const active = document.querySelector('#modelsTabs button.active');
+    return {
+      summary,
+      open: !document.getElementById('modelsModal').classList.contains('hidden'),
+      settingsHidden: document.getElementById('settingsModal').classList.contains('hidden'),
+      activeTab: active ? active.dataset.tab : null,
+    };
+  })()`);
+  check('12. «Kompyuterda bor AI» tugmasi menejerni o‘sha turkum bilan ochadi va xulosa haqiqiy raqamlar beradi',
+    fromSettings.open === true && fromSettings.settingsHidden === true && fromSettings.activeTab === 'installed'
+    && /daraja/.test(fromSettings.summary) && /o‘rnatilgan/.test(fromSettings.summary),
+    `modal ochiq=${fromSettings.open} · sozlamalar yopildi=${fromSettings.settingsHidden} · faol tab=${fromSettings.activeTab} · xulosa=«${fromSettings.summary.slice(0, 120)}»`);
 
   // 10. Renderer tomonda JS xatosi yo'q (CDP istisnolari).
   check('10. Konsol/renderer xatolari yo‘q', session.jsErrors.length === 0,

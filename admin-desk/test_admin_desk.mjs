@@ -170,6 +170,29 @@ try {
   check('6. «Reliz holati» bo‘limi chiziladi (versiya manbalari ko‘rinadi)',
     !!releaseText && releaseText.length > 60 && /versiya|Versiya|reliz|Reliz/i.test(releaseText),
     `bo‘lim matni (${String(releaseText || '').length} belgi): ${String(releaseText || '').replace(/\s+/g, ' ').slice(0, 220)}`);
+  // v5.6: «Lokal AI» bo‘limi — katalog boshqaruvi (qo‘shish/o‘chirish/tahrirlash + nashr)
+  // chiziladimi va mahalliy katalog HAQIQATAN o‘qiladimi (yangi IPC ishlayaptimi).
+  await ev('(() => { const b = [...document.querySelectorAll("#nav .nav-btn")].find((x) => x.dataset.tab === "models"); if (b) b.click(); return true; })()');
+  await sleep(1500);
+  const modelsSec = await ev(`(() => {
+    const sec = document.getElementById('tab-models');
+    return {
+      active: !!sec && sec.classList.contains('active'),
+      list: !!document.getElementById('modelsList'),
+      pull: !!document.getElementById('modelsPullBtn'),
+      add: !!document.getElementById('modelsAddBtn'),
+      push: !!document.getElementById('modelsPushBtn'),
+      preview: !!document.getElementById('modelsPreview'),
+      text: ((sec && sec.innerText) || '').replace(/\\s+/g, ' ').slice(0, 180),
+    };
+  })()`);
+  const localCat = await ev('window.api.catalogLocal()', 20000).catch((e) => ({ error: e.message }));
+  let catItems = -1;
+  try { catItems = JSON.parse(localCat.text).items.length; } catch { /* o‘qilmadi */ }
+  check('7. «Lokal AI» bo‘limi chiziladi va mahalliy katalogni haqiqatan o‘qiy oladi',
+    !!(modelsSec && modelsSec.active && modelsSec.list && modelsSec.pull && modelsSec.add && modelsSec.push && modelsSec.preview)
+    && !!(localCat && !localCat.error && localCat.valid && catItems > 0),
+    `bo‘lim=${!!modelsSec.active} · ro‘yxat=${!!modelsSec.list} · tugmalar=${modelsSec.pull && modelsSec.add && modelsSec.push} · katalog yozuvlari=${catItems} (${localCat && localCat.valid ? 'JSON to‘g‘ri' : 'JSON XATO'})`);
 } catch (e) {
   check('umumiy oqim', false, `xato: ${e && e.message}`);
 } finally {

@@ -1,8 +1,8 @@
 {
   "name": "yang-admin-desk",
   "productName": "YANG Admin Desk",
-  "version": "1.3.0",
-  "description": "YANG AI admin boshqaruv paneli — savollar, javoblar, bloklash, reklama, statistika, reliz holati (versiya manbalari + majburiy/qo‘shimcha fayllar) va app-config.json nashri",
+  "version": "1.4.0",
+  "description": "YANG AI admin boshqaruv paneli — savollar, javoblar, bloklash, reklama, statistika, reliz holati (versiya manbalari + majburiy/qo‘shimcha fayllar), app-config.json nashri va lokal AI katalogini boshqarish (qo‘shish/o‘chirish/tahrirlash)",
   "type": "module",
   "main": "main.js",
   "author": "AICOMP.UZ",

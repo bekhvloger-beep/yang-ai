@@ -2476,7 +2476,7 @@ function modelRow(it) {
   const inst = it.installed;
   const p = it.progress;
   const active = p && (p.state === 'downloading' || p.state === 'extracting');
-  const cls = ['mdl-row', inst ? 'installed' : '', it.verdict.state === 'blocked' ? 'blocked' : ''].filter(Boolean).join(' ');
+  const cls = ['mdl-row', inst ? 'installed' : '', it.verdict.state === 'warn' ? 'warn' : ''].filter(Boolean).join(' ');
   const badge = inst
     ? `<span class="mdl-badge on">o‘rnatilgan</span>`
     : `<span class="mdl-badge ${it.verdict.state}">${esc(it.verdict.fit)}</span>`;

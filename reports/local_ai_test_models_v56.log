@@ -1,0 +1,38 @@
+
+> yang-ai@5.5.3 test:ide:models
+> electron ide/test_local_ai_models.cjs
+
+
+userData: C:\Users\behru\AppData\Local\Temp\yang-models-ud-yNZY3L
+modellar papkasi: C:\Users\behru\AppData\Local\Temp\yang-models-ud-yNZY3L\models
+
+PASS  1. Apparat profili haqiqiy o‘lchanadi (RAM, yadro, disk, daraja)
+      → RAM 11.9/11.9 GB · 6 yadro · disk 3.5 GB · GPU "AMD Radeon RX 580 2048SP" 4 GB · matn 3★ · rasm 3★
+PASS  2. Katalog ko‘rinishi: har bir modelda talablar, kuch yulduzi va moslik bahosi bor
+      → 11 model · muammoli=0 · xato yo‘q
+PASS  3. Moslik qoidasi: resurs yetarli bo‘lsa 7B «mos», yetmasa ogohlantirish (blok YO‘Q), 128 GB ham bloklanmaydi
+      → 0.5B=Mos keladi · 7B(qoida)=Mos keladi · 7B(shu mashina)=Ogohlantirish [disk 3.5 GB < 5.5 GB] · 128GB=Ogohlantirish (RAM 11.9 GB — kerak 128 GB (sekin ishlashi mumkin, lekin ishga tushirish mumkin))
+PASS  4. O‘rnatilgan model va rasm dvigateli holati aniqlanadi
+      → ilova ichidagi 2B=true · rasm dvigateli=true (vulkan) · v1-5-pruned-emaonly-fp16.safetensors
+PASS  5. Kompyuterdagi tashqi AI topiladi (Ollama va/yoki HuggingFace keshi)
+      → Ollama=o‘rnatilgan, server ishlayapti, 6 model · HF keshi=12 repo · ilova papkalari=4
+PASS  6. Yuklab olish oqim bilan boradi, arxiv ochiladi va fayl paydo bo‘ladi
+      → holat=done · 205 progress hodisasi · 17 MB · <userData>\models\sd\cpu\sd-cli.exe mavjud=true
+PASS  7. O‘rnatilgan modelni o‘chirish ishlaydi (savatga yuboriladi)
+      → o‘chirildi: <userData>\models\sd\cpu\sd-cli.exe
+PASS  8. Yuklab olishni bekor qilish ishlaydi va yarim fayl qolmaydi
+      → yuklangan bayt ko‘rindi=true · qolgan .part=0 · to‘liq fayl yo‘q=true
+PASS  9. Lokal rasm generatsiyasi ishlaydi (API va internetsiz, stable-diffusion.cpp)
+      → 14.5s · Lokal · stable-diffusion.cpp (vulkan) · v1-5-pruned-emaonly-fp16.safetensors · 256×256 · magic=89504e47
+PASS  10. Rasm yaratilmayotganda «To‘xtatish» xato bermaydi (holat xabar beriladi)
+      → rasm yaratilmayapti
+PASS  12. «O‘lchash» yurishi boshlanadi, holat xabarlari keladi, ikkinchi urinish bloklanadi
+      → boshlandi=true · holat hodisalari=3 · ikkinchi urinish: "o‘lchov allaqachon ketmoqda: Qwen3.5 2B (Q4_K_M) (0 s)" · natija=ok
+PASS  13. O‘lchangan natija `measured.json` ga saqlanadi (ball FORMULA bo‘yicha)
+      → 4/4 · one-shot 2 · 50s · ball 41.4 · model-qwen3.5-2b-q4_k_m.gguf · measured.json
+PASS  14. Kuch reytingi O‘LCHANGAN ball bilan yangilanadi (yulduz, level va izoh)
+      → ★4 (level 4) · ball 41.4 · allaqachon o‘rnatilgan
+PASS  11. disposeModels() tozalaydi (bekor qilingan ish topilmaydi)
+      → yuklab olish topilmadi
+
+XULOSA: 14/14 PASS

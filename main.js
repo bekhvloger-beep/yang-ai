@@ -20,6 +20,11 @@ import {
 // YANG IDE yadrosi — to'liq IDE oynasi SHU jarayonda ochiladi, ya'ni IDE asosiy
 // ilova o'rnatuvchisi bilan birga keladi (alohida exe shart emas).
 import { registerIdeIpc, openIdeWindow, disposeIde, ideWindow } from './ide/ide_host.js';
+// Admin Desk tahrirlagan lokal AI katalogi (GitHub'dagi `local-ai/catalog.json`)
+// paketdagi katalog USTIGA qo'yiladi — tavsif/yulduz/yangi modellar relizsiz ko'rinadi.
+import { setRemoteCatalog } from './agent/remote_catalog.js';
+// Katalog keshini bekor qilish uchun (remote nusxa kelganda darhol ko'rinishi kerak).
+import { invalidateCatalog } from './ide/ide_models.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname);
@@ -215,6 +220,8 @@ function env_path_safe() {
 // Admin (sen) GitHub'dagi app-config.json faylini tahrirlaysan — barcha ilovalar
 // 30 daqiqada bir marta tortib oladi: reklama, e'lon, minimal versiya va h.k.
 const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/bekhvloger-beep/yang-ai/main/app-config.json';
+// Admin Desk shu faylni tahrirlaydi (model tavsifi, yulduz, minimal talablar, yangi modellar).
+const REMOTE_CATALOG_URL = 'https://raw.githubusercontent.com/bekhvloger-beep/yang-ai/main/local-ai/catalog.json';
 let remoteConfig = null;
 
 async function fetchRemoteConfig() {
@@ -229,6 +236,21 @@ async function fetchRemoteConfig() {
     }
   } catch {
     // internet yo'q / fayl yo'q — jimgina o'tamiz
+  }
+}
+
+// Lokal AI katalogining admin nusxasini tortib oladi (tarmoq yo'q bo'lsa — paketdagi qoladi).
+async function fetchRemoteCatalog() {
+  try {
+    const res = await fetch(REMOTE_CATALOG_URL, { signal: AbortSignal.timeout(10000), cache: 'no-store' });
+    if (!res.ok) return;
+    const j = await res.json();
+    if (!setRemoteCatalog(j)) return;
+    invalidateCatalog();                       // keyingi so'rovda birlashgan katalog o'qiladi
+    broadcast('remote_catalog', { updated: j.updated || null, count: (j.items || []).length });
+    console.log(`[init] lokal AI katalogi admin nusxasi bilan yangilandi (${(j.items || []).length} yozuv)`);
+  } catch {
+    // internet yo'q / fayl yo'q — jimgina paketdagi katalogni ishlatamiz
   }
 }
 
@@ -990,6 +1012,20 @@ async function smokeTest() {
 // ---------- menyu: YANG IDE ni bir bosishda ochish ----------
 // Ilovada menyu yo'q edi: foydalanuvchi IDE ni faqat yon paneldagi tugmadan
 // topa olardi. Endi «Fayl → YANG IDE oynasi» (Ctrl+Shift+I) ham bor.
+// Asosiy oynaning «Lokal AI» modalini menyudan ochish (ko‘rinadigan menyu qatori).
+function openModelsUi(tab) {
+  broadcast('ui:open-models', { tab: tab || 'text' });
+}
+
+// Kodlash rejimi (Kod AI) — sozlamaga yoziladi, engine uni system promptga qo‘shadi.
+async function setCodingMode(on) {
+  if (!cfg) return;
+  cfg.config.codingMode = !!on;
+  try { await saveConfig(userDataDir(), cfg.config); } catch { /* saqlanmasa ham sessiyada ishlaydi */ }
+  broadcast('coding_mode', { on: !!on });
+  try { buildMenu(); } catch { /* menyu qurilmadi */ }
+}
+
 function buildMenu() {
   const openIde = () => {
     activeWorkspace()
@@ -1019,6 +1055,22 @@ function buildMenu() {
         { role: 'zoomOut', label: 'Kichiklashtirish' },
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'To‘liq ekran' },
+      ],
+    },
+    {
+      label: 'Lokal AI',
+      submenu: [
+        { label: 'Lokal AI menejeri — model bozori', accelerator: 'CmdOrCtrl+Shift+M', click: () => openModelsUi('text') },
+        { label: 'Kompyuterda bor AI (Ollama / LM Studio)', click: () => openModelsUi('installed') },
+        { label: 'Lokal rasm modellari', click: () => openModelsUi('image') },
+        { label: 'Ovoz modeli (o‘zbekcha nutq)', click: () => openModelsUi('voice') },
+        { type: 'separator' },
+        {
+          type: 'checkbox',
+          label: 'Kodlash rejimi (Kod AI)',
+          checked: !!(cfg && cfg.config && cfg.config.codingMode),
+          click: (mi) => { setCodingMode(!!mi.checked).catch(() => {}); },
+        },
       ],
     },
     { role: 'windowMenu', label: 'Oyna' },
@@ -1059,7 +1111,9 @@ app.whenReady().then(async () => {
   ensureTranslator();
   ensureLocalAI();
   fetchRemoteConfig();
+  fetchRemoteCatalog();
   setInterval(fetchRemoteConfig, 30 * 60 * 1000);
+  setInterval(fetchRemoteCatalog, 30 * 60 * 1000);
   setupAutoUpdate();
   if (process.env.AGENT_SMOKE === '1') smokeTest();
 });

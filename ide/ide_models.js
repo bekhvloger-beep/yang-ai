@@ -30,6 +30,7 @@ import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { configureSd, sdStatus, findSdBinary, generateLocalImage } from '../agent/local_sd.js';
 import { benchStars, measuredFromReport } from '../agent/bench_score.js';
+import { mergeCatalog } from '../agent/remote_catalog.js';
 
 const CH = 'yide';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -80,6 +81,9 @@ export function loadCatalog() {
     raw = { version: 0, items: [], error: `catalog.json o‘qilmadi (${path.basename(file)}): ${e.message}` };
   }
   if (!Array.isArray(raw.items)) raw.items = [];
+  // Admin panel (YANG Admin Desk) GitHub'dagi `local-ai/catalog.json` ni tahrirlaydi:
+  // tavsif, yulduz, minimal talablar va YANGI modellar reliz chiqarmasdan ko'rinadi.
+  raw = mergeCatalog(raw);
   applyMeasuredResults(raw);
   catalogCache = raw;
   catalogCacheAt = Date.now();
@@ -373,11 +377,13 @@ export async function hardwareProfile({ refresh = false } = {}) {
 }
 
 /* ------------------------------------------------------- moslik bahosi va yulduz */
+// Moslik yorliqlari. DIQQAT: «Ishlamaydi» YO'Q — resurs yetmasa ham model yuklab olinadi
+// va ishlatiladi, faqat ogohlantiriladi (cheklov foydalanuvchi iltimosiga ko'ra olib tashlandi).
 const FIT_LABEL = {
   ok: 'Mos keladi',
   borderline: 'Mos (chegarada)',
   heavy: 'Sekin ishlaydi',
-  blocked: 'Ishlamaydi',
+  warn: 'Ogohlantirish',
 };
 
 function verdictFor(item, hw, installed) {
@@ -386,13 +392,15 @@ function verdictFor(item, hw, installed) {
   const rec = item.recommend || {};
   let state = 'ok';
 
+  // CHEKLOV YO'Q: joy/RAM yetmasa ham yuklab olish va ishlatish mumkin — faqat
+  // ogohlantiramiz. Ilgari bu holat «Ishlamaydi» bo'lib, foydalanuvchini to'sardi.
   if (need.diskGb && hw.diskFreeGb != null && hw.diskFreeGb < need.diskGb * 1.1) {
-    state = 'blocked';
-    reasons.push(`diskda ${hw.diskFreeGb} GB bo‘sh, kerak ~${need.diskGb} GB`);
+    state = 'warn';
+    reasons.push(`diskda ${hw.diskFreeGb} GB bo‘sh, kerak ~${need.diskGb} GB — joy bo‘shatib olsangiz tezroq; baribir yuklab olish mumkin`);
   }
   if (need.ramGb && hw.ramGb < need.ramGb * 0.9) {
-    state = 'blocked';
-    reasons.push(`RAM ${hw.ramGb} GB — kerak ${need.ramGb} GB`);
+    state = 'warn';
+    reasons.push(`RAM ${hw.ramGb} GB — kerak ${need.ramGb} GB (sekin ishlashi mumkin, lekin ishga tushirish mumkin)`);
   } else if (rec.ramGb && hw.ramGb < rec.ramGb - 0.5) {
     // 0,5 GB bag'rikenglik: 11,9 GB li mashina «12 GB tavsiya» uchun chegarada emas —
     // o'lchov shuni ko'rsatdi (o'sha mashinada 7B 4/4 vazifa o'tdi).
@@ -433,10 +441,15 @@ export function strengthStars(item) {
   return Math.max(1, Math.min(5, Math.round(base)));
 }
 
-/** SHU kompyuterda kutiladigan natija — model kuchi × moslik. */
+/** SHU kompyuterda kutiladigan natija — model kuchi × moslik.
+ *
+ * «0 yulduz» (ishlamaydi) holati YO'Q: cheklov olib tashlanganidan keyin resurs yetmasa
+ * ham kamida 1 yulduz ko'rsatiladi va ogohlantirish sababi yoziladi — modelni yuklab
+ * olish/ishlatish taqiqlanmaydi. */
 export function machineStars(item, verdict) {
-  if (verdict.state === 'blocked') return 0;
-  const factor = verdict.state === 'ok' ? 1 : verdict.state === 'borderline' ? 0.8 : 0.5;
+  // «warn» — talab qilingan resurs yo'q: 1 yulduz (ishlatish mumkin, lekin kutish katta).
+  if (verdict.state === 'warn') return 1;
+  const factor = verdict.state === 'ok' ? 1 : verdict.state === 'borderline' ? 0.8 : 0.5;   // 0.5 — heavy
   return Math.max(1, Math.min(5, Math.round(strengthStars(item) * factor)));
 }
 

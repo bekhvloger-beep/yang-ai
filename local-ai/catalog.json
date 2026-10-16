@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "updated": "2026-10-15",
-  "note": "Har bir yozuvdagi `bytes` va `url` 2026-10-15 da HTTP HEAD bilan tekshirilgan (200 javob). `measured` maydonidagi raqamlar haqiqiy o'lchovdan olingan — reports/local_ai/local-ai-hisobot.md (4 vazifa: factorial, slugify, fizzbuzz, median_bug). `measured` bo'lmasa model shu mashinada o'lchanmagan deb hisoblanadi va yulduzlar taxminiy emas, faqat parametr hajmiga qarab ko'rsatiladi (level: 'O‘lchanmagan').",
+  "updated": "2026-10-17",
+  "note": "Har bir yozuvdagi `bytes` va `url` 2026-10-15 da HTTP HEAD bilan tekshirilgan (200 javob). `measured` maydonidagi raqamlar 5.6 reliz oldidan bir xil 4 vazifa (factorial, slugify, fizzbuzz, median_bug) va ikki rejim (one-shot + IDE halqasi) bilan HAQIQIY o‘lchangan — manba: reports/local_ai/bench_all/bench_summary.md (har bir yozuvning `source` maydonida ham yozilgan). Yulduz va ball — yagona formuladan (agent/bench_score.js): idePass*10 + min(3, 60/avg) + oneShot*0.1. `measured` bo'lmasa model o'lchanmagan va yulduzlar taxminiy (level: 'O‘lchanmagan'). Bu katalogni admin YANG Admin Desk → «🧠 Lokal AI» bo‘limida tahrirlaydi va nashr qiladi — ilova shu tavsifni yangi relizsiz oladi.",
+  "measure_note": "5.6 o‘lchovi (2026-10-17, 6 yadro · 11,9 GB RAM · Radeon RX 580): o‘lchangan ball — qwen2.5-coder:7b 42.03 (IDE 4/4), qwen2.5:latest 41.15 (4/4), qwen3-4B 40.74 (4/4, lekin sekin ~136 s), coder:3b 31.20 (3/4), 1.7B 31.13 (3/4), 2B 31.01 (3/4), 0.5B 0 (0/4), deepseek-r1:8b 0 (0/4 — 8.2B shu mashinada har vazifada 120 s limitdan oshdi).",
   "levels": {
     "1": "Boshlang‘ich — faqat suhbat/izoh",
     "2": "Yaxshi — sodda kod, tushuntirish",
@@ -10,6 +11,23 @@
     "5": "Eng kuchli (bulut darajasi) — lokal modelda uchramaydi"
   },
   "items": [
+    {
+      "id": "text-local-1_7b-gguf",
+      "kind": "text",
+      "bundled": true,
+      "name": "Qwen3 1.7B (ilova ichida)",
+      "file": "model-1.7b.gguf",
+      "bytes": 1107409472,
+      "url": "",
+      "backend": "llama.cpp",
+      "min": { "ramGb": 4, "diskGb": 1.2 },
+      "recommend": { "ramGb": 6, "vramGb": 0 },
+      "measured": { "source": "5.6 o‘lchovi · ilova ichida · 4 vazifa · IDE halqasi", "idePass": 3, "tasks": 4, "oneShot": 2, "avgSeconds": 64.6, "score": 31.13 },
+      "strength": { "code": 3, "general": 3, "speed": 4, "uzbek": 3 },
+      "level": 3,
+      "langs": ["Python", "JavaScript", "Markdown", "JSON", "Bash"],
+      "notes": "5.6 o‘lchovi (bir xil 4 vazifa, o‘rtacha 65 s): factorial, slugify va fizzbuzz IDE halqasi bilan o‘tdi (3/4); median_bug (xatoni tuzatish) 3 urinishda tuzalmadi. Tez va yengil (1,1 GB, 4 GB RAM dan) — kichik skript va qisqa izoh uchun yaxshi, murakkab tuzatish uchun emas."
+    },
     {
       "id": "text-qwen35-2b-q4km",
       "kind": "text",
@@ -21,11 +39,11 @@
       "backend": "llama.cpp",
       "min": { "ramGb": 4, "diskGb": 1.3 },
       "recommend": { "ramGb": 6, "vramGb": 0 },
-      "measured": { "source": "ilova ichida (o‘lchandi)", "idePass": 3, "tasks": 4, "oneShot": 3, "avgSeconds": 99.6, "score": 30.9 },
-      "strength": { "code": 3, "general": 3, "speed": 3, "uzbek": 4 },
+      "measured": { "source": "5.6 o‘lchovi · ilova ichida · 4 vazifa · IDE halqasi", "idePass": 3, "tasks": 4, "oneShot": 2, "avgSeconds": 73.8, "score": 31.01 },
+      "strength": { "code": 3, "general": 3, "speed": 4, "uzbek": 4 },
       "level": 3,
       "langs": ["Python", "JavaScript", "TypeScript", "HTML/CSS", "SQL", "Bash", "JSON"],
-      "notes": "Ilova (exe) ichida allaqachon keladi — yuklab olish shart emas. O‘zbek tilida yaxshi javob beradi, 12 GB RAM li kompyuterda ~100 s."
+      "notes": "Ilova (exe) ichida allaqachon keladi — yuklab olish shart emas. 5.6 o‘lchovi (bir xil 4 vazifa, o‘rtacha 74 s): factorial, slugify va median_bug IDE halqasi bilan o‘tdi (3/4); fizzbuzz (JavaScript) yiqildi va 3 urinishda ham tuzalmadi — JS vazifalarida natijani tekshirib ko‘ring. O‘zbek tilida yaxshi javob beradi, 12 GB RAM li kompyuterda tez."
     },
     {
       "id": "text-qwen25-coder-7b-q4km",
@@ -37,11 +55,11 @@
       "backend": "llama.cpp",
       "min": { "ramGb": 8, "diskGb": 5 },
       "recommend": { "ramGb": 12, "vramGb": 0 },
-      "measured": { "source": "Ollama qwen2.5-coder:7b (o‘lchandi)", "idePass": 4, "tasks": 4, "oneShot": 2, "avgSeconds": 75.0, "score": 41 },
-      "strength": { "code": 5, "general": 4, "speed": 3, "uzbek": 3 },
+      "measured": { "source": "5.6 o‘lchovi · Ollama qwen2.5-coder:7b · 4 vazifa · IDE halqasi", "idePass": 4, "tasks": 4, "oneShot": 4, "avgSeconds": 36.9, "score": 42.03 },
+      "strength": { "code": 5, "general": 4, "speed": 4, "uzbek": 3 },
       "level": 4,
       "langs": ["Python", "JavaScript", "TypeScript", "Java", "C++", "Go", "Rust", "PHP", "Ruby", "SQL", "HTML/CSS", "Bash"],
-      "notes": "Eng yaxshi lokal kod modeli: barcha 4 vazifa o‘tdi (IDE halqasi bilan). Bo‘sh RAM kamida 8 GB bo‘lishi kerak — 12 GB li kompyuterda ~75 s."
+      "notes": "ENG YAXSHI lokal kod modeli (5.6 o‘lchovi): barcha 4 vazifa IDE halqasi bilan ham, bir marta yozib ham o‘tdi (4/4 + 4/4) va eng tez — o‘rtacha 37 s, ball 42.03. Xatoni o‘zi tuzatadi (tuzatish qadami kerak bo‘lmadi). Bo‘sh RAM kamida 8 GB kerak; 12 GB li kompyuterda ham bemalol ishlaydi. Kodlash uchun birinchi tanlov."
     },
     {
       "id": "text-qwen25-coder-3b-q4km",
@@ -53,11 +71,11 @@
       "backend": "llama.cpp",
       "min": { "ramGb": 6, "diskGb": 2.2 },
       "recommend": { "ramGb": 8, "vramGb": 0 },
-      "measured": { "source": "Ollama qwen2.5-coder:3b (o‘lchandi)", "idePass": 3, "tasks": 4, "oneShot": 2, "avgSeconds": 93.4, "score": 30.84 },
+      "measured": { "source": "5.6 o‘lchovi · Ollama qwen2.5-coder:3b · 4 vazifa · IDE halqasi", "idePass": 3, "tasks": 4, "oneShot": 3, "avgSeconds": 66.6, "score": 31.2 },
       "strength": { "code": 4, "general": 3, "speed": 3, "uzbek": 3 },
       "level": 3,
       "langs": ["Python", "JavaScript", "TypeScript", "Java", "C++", "Go", "PHP", "SQL", "HTML/CSS", "Bash"],
-      "notes": "Yengil kompyuter uchun eng yaxshi muvozanat: 2.1 GB, 6 GB RAM dan boshlab ishlaydi."
+      "notes": "Yengil kompyuter uchun eng yaxshi muvozanat: 2,1 GB, 6 GB RAM dan boshlab ishlaydi. 5.6 o‘lchovi (o‘rtacha 67 s): factorial, slugify va fizzbuzz o‘tdi (3/4 + bir martada 3/4); xatoni tuzatish (median_bug) 3 urinishda tuzalmadi. 7B uchun RAM yetmasa — shu modelni tanlang."
     },
     {
       "id": "text-qwen25-coder-1_5b-q4km",
@@ -85,11 +103,11 @@
       "backend": "llama.cpp",
       "min": { "ramGb": 2, "diskGb": 0.5 },
       "recommend": { "ramGb": 4, "vramGb": 0 },
-      "measured": { "source": "Ollama qwen2.5:0.5b (o‘lchandi)", "idePass": 0, "tasks": 4, "oneShot": 0, "avgSeconds": 26.6, "score": 0 },
+      "measured": { "source": "5.6 o‘lchovi · Ollama qwen2.5:0.5b va ilova ichidagi model.gguf · 4 vazifa", "idePass": 0, "tasks": 4, "oneShot": 0, "avgSeconds": 68.7, "score": 0 },
       "strength": { "code": 1, "general": 2, "speed": 5, "uzbek": 2 },
       "level": 1,
       "langs": ["Python", "JavaScript"],
-      "notes": "O‘lchovda 4/4 vazifa YIQILDI. Kod yozish uchun emas — faqat suhbat, tarjima va qisqa izoh uchun. Ilovadagi zaxira model sifatida turadi."
+      "notes": "5.6 o‘lchovida 4/4 vazifa YIQILDI (Ollama nusxasi ba'zi so‘rovlarda bo‘sh javob ham qaytardi). Kod yozish uchun emas — faqat suhbat, tarjima va qisqa izoh uchun. Ilovadagi zaxira model sifatida turadi."
     },
     {
       "id": "image-sd15-fp16",
