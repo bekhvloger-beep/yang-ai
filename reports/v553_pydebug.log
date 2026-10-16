@@ -1,0 +1,24 @@
+
+> yang-ai@5.5.3 test:ide:pydebug
+> electron ide/test_python_debug.cjs
+
+
+[0.0s] ide_debug.js yuklandi
+[0.0s] IPC kanallari ushlandi
+[0.0s] ilova tayyor — debug-start chaqirilyapti
+[6.8s] debug-start qaytdi: {"ok":true,"port":null,"file":"ekub.py","language":"python"}
+[7.2s] to‘xtash keldi
+PASS  1. Python debugger ishga tushdi va nuqtada to‘xtadi
+      → language=python; to‘xtash=ekub.py:3
+PASS  2. To‘xtash qatori va chaqiruv zanjiri to‘g‘ri
+      → qator=3, chaqiruvlar=[ekub@3, <module>@6, _run_code@88, _run_module_as_main@198]
+PASS  3. Lokal o‘zgaruvchilar ko‘rindi (a=48, b=18)
+      → o‘zgaruvchilar=[a=48, b=18]
+PASS  4. Qadam (step over) ishladi — yangi to‘xtash keldi
+      → yangi to‘xtash: qator 2
+PASS  5. `evaluate` javob berdi
+      → 1 + 1 = 2
+PASS  6. To‘xtatilgandan keyin sessiya yopildi
+      → running=false
+
+XULOSA: 6/6 PASS

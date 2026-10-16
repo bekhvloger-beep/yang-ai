@@ -1,0 +1,45 @@
+
+> yang-ai@5.5.3 test:ide:e2e
+> node ide/test_embedded_e2e.mjs
+
+nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-ide-e2e-h2dBLz
+ish papkasi: C:\Users\behru\AppData\Local\Temp\yang-ide-ws-VA3FHj
+CDP port 9345
+[18:19:07] YANG AI ishga tushirildi
+[18:19:08] asosiy oyna CDP'da · __ready=true · sarlavha="YANG AI"
+PASS  1. Asosiy oynada «YANG IDE» tugmasi ko‘rinadi va ko‘prik ulangan
+      → matn="YANG IDE", ko'rinadi=true, window.api.openIde=function
+[18:19:08] tugma bosildi — IDE oynasi kutilmoqda
+PASS  2. «YANG IDE» tugmasi IDE oynasini ochadi (alohida oyna, o‘z renderer’i)
+      → sarlavha="YANG IDE", muharrir=true, terminal=true, AI panel=true
+PASS  3. IDE yadrosi YANG AI jarayonida ishlaydi (embedded=true)
+      → embedded=true, versiya=5.5.0, electron=34.0.0, ram=12215 MB
+PASS  4. Fayl tizimi: papka ochish, daraxt, o‘qish va saqlash
+      → papka=yang-ide-ws-VA3FHj, daraxt=[C:/Users/behru/AppData/Local/Temp/yang-ide-extra-COFOGG, bad.js, hello.js, hello.txt], saqlandi=true, qayta o‘qildi=yangi qator
+PASS  5. Xavfsizlik: `..` va absolyut yo‘l rad etiladi
+      → "../" → yo‘l tashqarida yoki papka tanlanmagan; absolyut → yo‘l tashqarida yoki papka tanlanmagan
+PASS  6. Terminal: faylni ishga tushirib chiqishini ko‘rsatadi
+      → buyruq=""C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe" "C:\Users\behru\AppData\Local\Temp\yang-ide-ws-VA3FHj\hello.js""; chiqishda "IDE_TERM_OK" bor; chiqish hodisasi=code 0
+PASS  7. Diagnostika: buzuq `bad.js` uchun qator raqamli sintaksis xatosi
+      → 1-qator: SyntaxError: Function statements require a function name
+PASS  8. AI qatlami: agent modullari dinamik import bo‘ladi (paketda ham)
+      → provayder=groq model=— · 15 provayder · sozlamalar=C:\Users\behru\AppData\Local\Temp\yang-ide-e2e-h2dBLz
+PASS  9. Haqiqiy terminal (PTY): interaktiv dastur isatty=true ko‘radi (vim/top/ssh mumkin)
+      → shell=C:\WINDOWS\system32\cmd.exe; isatty natijasi=TTY_OK (haqiqiy psevdo-terminal)
+PASS  10. Til xizmati: semantik xato + haqiqiy ta’rif + havolalar + hover
+      → tsserver=true; semantik xato: Ln 4: Cannot find name 'yoqFunksiya'.; F12 → lsp.js:1; Shift+F12 → 3 havola; hover="function salomlash(nom: any): string"
+PASS  11. Debugger: nuqtada to‘xtadi, chaqiruv zanjiri va o‘zgaruvchilar ko‘rindi
+      → start=port 52113; to‘xtadi: dbg.js:2; chaqiruvlar=9; o‘zgaruvchilar=[a, b, natija, global, clearImmediate, setImmediate]
+PASS  12. Tarix (log): yurish buyruq/chiqish kodi bilan saqlanadi (AI tuzatishi uchun asos)
+      → kod=1; logda: kod 1, Node.js v20.18.1; oxirgi xato=buzuq.js
+PASS  13. Tahrir chegarasi yo‘q: 3 MB fayl ochiladi, muharrirga tushadi, tahrir qilinadi va saqlanadi
+      → diskda=3.00 MB · o‘qildi=3145805 belgi (truncated=false) · muharrirda=3145805 belgi · saqlangandan keyin=3.00 MB
+PASS  13b. Ko‘p ildizli workspace: qo‘shimcha papka chip sifatida ko‘rinadi, daraxtdan ochiladi va saqlanadi
+      → papkalar=[yang-ide-ws-VA3FHj, yang-ide-extra-COFOGG✕] · daraxtdan ochildi=true; muharrirda=fayl matni; saqlash=ishladi · diskda="export const qiymat = 43;"
+PASS  14. IDE oynasi yopilsa asosiy ilova ishlashda davom etadi
+      → asosiy oyna sarlavhasi="YANG AI" (kutilgan "YANG AI"), IDE target yopildi=true
+PASS  15. Asosiy oynaning yon paneli: haqiqiy terminal (xterm + PTY) buyruqni bajaradi
+      → ptyInfo.available=true; xterm o‘rnatildi=true; sessiyalar=1; echo=SIDE_TTY_OK
+
+XULOSA: 16/16 PASS

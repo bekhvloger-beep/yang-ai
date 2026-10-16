@@ -1,0 +1,26 @@
+
+> yang-ai@5.5.3 test:ide:pytypes
+> electron ide/test_python_types.cjs
+
+
+[0.1s] ide_lsp.js yuklandi
+[0.1s] LSP IPC kanallari ushlandi
+[0.1s] ilova tayyor — rejim: full
+[0.8s] status.python.engine=mypy · pyflakes=true
+PASS  1. Til xizmati kuchli Python dvigatelini tanladi (mypy yoki pyright)
+      → engine=mypy
+[1.3s] buzuq.py tahlil qilindi: 2 ta muammo (0.5s)
+        · 5:1 [mypy] Incompatible types in assignment (expression has type "int", variable has type "str") [assignment]
+        · 6:1 [mypy] Name "yoqFunksiya" is not defined [name-defined]
+PASS  2. Diagnostika dvigateli holat bilan bir xil
+      → diagnostika engine=mypy, status engine=mypy
+PASS  3. TUR XATOSI topildi (`natija: str = ikki(2)` — int→str)
+      → 5:1 Incompatible types in assignment (expression has type "int", variable has type "str") [assignment]
+PASS  4. Aniqlanmagan nom ham topildi (pyflakes buni ham topardi — zinapoya pasaymadi)
+      → 6:1 Name "yoqFunksiya" is not defined [name-defined]
+PASS  5. Qator/ustun raqamlari 1-asosli, fayl ichida va manba belgilangan
+      → qatorlar=[5:1, 6:1], manba=[mypy]
+PASS  6. To‘g‘ri fayl uchun YOLG‘ON xato chiqmaydi
+      → items=0
+
+XULOSA: 6/6 PASS (rejim: full)

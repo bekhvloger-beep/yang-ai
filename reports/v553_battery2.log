@@ -1,0 +1,13 @@
+### dev_e2e
+dev_e2e EXIT=0
+XULOSA: 16/16 PASS
+### fixloop
+fixloop EXIT=0
+XULOSA: 3/3 PASS
+### pytypes
+pytypes EXIT=0
+XULOSA: 6/6 PASS (rejim: full)
+### pydebug
+pydebug EXIT=0
+XULOSA: 6/6 PASS
+BATAREYA-2 TUGADI

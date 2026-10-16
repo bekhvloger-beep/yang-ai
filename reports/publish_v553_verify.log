@@ -1,0 +1,27 @@
+✓ Repo topildi: bekhvloger-beep/yang-ai
+✓ Izoh fayli: docs/v5.5.3-chiqarish.md (7923 belgi)
+✓ Release v5.5.3 allaqachon bor — izoh yangilanadi, assetlar ustiga yoziladi
+✓ Izoh yangilandi
+= O‘zgarmagan: YANG-AI-Setup-5.5.3.exe — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG-AI-Setup-5.5.3.exe.blockmap — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG-AI-Portable-5.5.3.exe — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: latest.yml — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG Admin Desk 1.3.0.exe — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG Admin Desk Setup 1.3.0.exe — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG-IDE-Portable-1.0.0.exe — qayta yuklanmadi (sha256 mos)
+= O‘zgarmagan: YANG-IDE-Setup-1.0.0.exe — qayta yuklanmadi (sha256 mos)
+
+— Tekshiruv (lokal fayl ↔ GitHub asset) —
+  ✓ YANG-AI-Setup-5.5.3.exe — hajm mos, sha256 mos
+  ✓ YANG-AI-Setup-5.5.3.exe.blockmap — hajm mos, sha256 mos
+  ✓ YANG-AI-Portable-5.5.3.exe — hajm mos, sha256 mos
+  ✓ latest.yml — hajm mos, sha256 mos
+  ✓ YANG Admin Desk 1.3.0.exe — hajm mos, sha256 mos · GitHub nomi: YANG.Admin.Desk.1.3.0.exe
+  ✓ YANG Admin Desk Setup 1.3.0.exe — hajm mos, sha256 mos · GitHub nomi: YANG.Admin.Desk.Setup.1.3.0.exe
+  ✓ YANG-IDE-Portable-1.0.0.exe — hajm mos, sha256 mos
+  ✓ YANG-IDE-Setup-1.0.0.exe — hajm mos, sha256 mos
+  → 8/8 asset tasdiqlandi
+
+Tayyor: https://github.com/bekhvloger-beep/yang-ai/releases/tag/v5.5.3
+Foydalanuvchilarda ilova o‘zi yangi versiyani aniqlab o‘rnatadi.
+PUBLISH_EXIT=0

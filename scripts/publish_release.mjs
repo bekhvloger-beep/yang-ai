@@ -208,10 +208,19 @@ async function uploadOnce(file, name) {
   return true;
 }
 
+// GitHub asset nomini O'ZI tozalaydi: bo'shliqni nuqtaga almashtiradi
+// (`YANG Admin Desk 1.3.0.exe` → `YANG.Admin.Desk.1.3.0.exe` — o'lchandi). Shu sababli lokal
+// fayl nomi bilan to'g'ridan-to'g'ri solishtirish yetarli emas: ilgari relizda bor asset
+// «topilmadi» deb xato chiqarardi va skript uni o'chirib qayta yuklardi. Endi IKKALA tomon
+// bir xil kalitga keltiriladi (nuqta — GitHub'ning kanonik ko'rinishi).
+const ghAssetName = (s) => String(s).replace(/ /g, '.');
+const assetKey = (s) => ghAssetName(String(s || '')).toLowerCase();
+
 async function deleteAssetByName(name) {
   const cur = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
+  const want = assetKey(name);
   for (const a of (cur.json && cur.json.assets) || []) {
-    if (a.name === name) await gh('DELETE', `/repos/${OWNER}/${REPO}/releases/assets/${a.id}`);
+    if (assetKey(a.name) === want) await gh('DELETE', `/repos/${OWNER}/${REPO}/releases/assets/${a.id}`);
   }
 }
 
@@ -232,7 +241,8 @@ function sha256File(file) {
 // Faqat hajmni solishtirish yetarli emas: ikki xil yig‘ilgan o‘rnatuvchi bir necha yuz bayt
 // farq qilishi mumkin, o‘shanda hajm boshqa, xesh boshqa bo‘ladi.
 const currentRelease = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
-const uploadedAssets = new Map((((currentRelease.json || {}).assets) || []).map((a) => [a.name, a]));
+const uploadedAssets = new Map();
+for (const a of (((currentRelease.json || {}).assets) || [])) uploadedAssets.set(assetKey(a.name), a);
 
 for (const file of assets) {
   if (!fs.existsSync(file)) {
@@ -241,7 +251,7 @@ for (const file of assets) {
   }
   const name = path.basename(file);
   const sizeNow = fs.statSync(file).size;
-  const prev = uploadedAssets.get(name);
+  const prev = uploadedAssets.get(assetKey(name));
   if (prev && prev.size === sizeNow) {
     const localDigest = await sha256File(file);
     if (!prev.digest || prev.digest === localDigest) {
@@ -274,11 +284,12 @@ let checked = 0;
 let bad = 0;
 {
   const after = await gh('GET', `/repos/${OWNER}/${REPO}/releases/${release.id}`);
-  const byName = new Map((((after.json || {}).assets) || []).map((a) => [a.name, a]));
+  const byName = new Map();
+  for (const a of (((after.json || {}).assets) || [])) byName.set(assetKey(a.name), a);
   for (const file of assets) {
     if (!fs.existsSync(file)) continue;
     const name = path.basename(file);
-    const asset = byName.get(name);
+    const asset = byName.get(assetKey(name));
     if (!asset) {
       console.log(`  ✗ ${name} — relizda topilmadi`);
       bad++;
@@ -287,7 +298,8 @@ let bad = 0;
     const localSize = fs.statSync(file).size;
     const digest = await sha256File(file);
     const ok = asset.size === localSize && (!asset.digest || asset.digest === digest);
-    console.log(`  ${ok ? '✓' : '✗'} ${name} — ${asset.size === localSize ? 'hajm mos' : `hajm farq: ${asset.size} ≠ ${localSize}`}, sha256 ${asset.digest === digest ? 'mos' : `farq (asset ${asset.digest || '—'})`}`);
+    console.log(`  ${ok ? '✓' : '✗'} ${name} — ${asset.size === localSize ? 'hajm mos' : `hajm farq: ${asset.size} ≠ ${localSize}`}, sha256 ${asset.digest === digest ? 'mos' : `farq (asset ${asset.digest || '—'})`}`
+      + (asset.name === name ? '' : ` · GitHub nomi: ${asset.name}`));
     checked++;
     if (!ok) bad++;
   }
