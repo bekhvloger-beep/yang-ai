@@ -179,12 +179,30 @@ try {
   const coder7 = names.find((n) => /7B/i.test(n));
   const tiny = names.find((n) => /0\.5B/i.test(n));
   const starCount = (s) => (String(s || '').match(/★/g) || []).length;
-  check('4. Baho modelga qarab farq qiladi (7B kod modeli > 0.5B suhbat modeli)',
+  // Bu kompyuterda 7B HAQIQATAN sig'adimi? Ilovaning bahosiga ishonmaymiz — sinov
+  // diskni O'ZI o'lchaydi (katalogdagi talab bilan solishtiradi). Joy yetarli bo'lsa
+  // 7B «→ ★★☆» dan past bo'lmasligi SHART; joy yetmasa bahoni «Ishlamaydi» qilib,
+  // sababini aynan yetmagan resurs bilan aytishi shart. Shu tariqa sinov ham mashina
+  // holatiga bog'lanib qolmaydi, ham zaiflashmaydi (nosoz sabab qabul qilinmaydi).
+  const cat7 = JSON.parse(fs.readFileSync(path.join(ROOT, 'local-ai', 'catalog.json'), 'utf8'))
+    .items.find((x) => x.id === 'text-qwen25-coder-7b-q4km') || {};
+  const needDiskGb = ((cat7.min || {}).diskGb) || 5;
+  let freeDiskGb = null;
+  try {
+    const st = fs.statfsSync(os.homedir());       // APPDATA shu diskda — model shu yerga tushadi
+    freeDiskGb = (st.bavail * st.bsize) / 1024 ** 3;
+  } catch { /* o'lchanmadi */ }
+  const diskShort = freeDiskGb != null && freeDiskGb < needDiskGb * 1.1;
+  const blockedNow = starCount(byName[coder7].stars[1]) === 0;
+  const machineGradeOk = blockedNow
+    ? diskShort && /diskda/.test(byName[coder7].reasons || '') && /Ishlamaydi/.test(byName[coder7].badge || '')
+    : starCount(byName[coder7].stars[1]) >= 3;
+  check('4. Baho modelga qarab farq qiladi va «shu kompyuterdagi natija» sababi bilan asoslanadi',
     !!coder7 && !!tiny
     && starCount(byName[coder7].stars[0]) > starCount(byName[tiny].stars[0])
-    && starCount(byName[coder7].stars[1]) >= 3,
+    && machineGradeOk,
     coder7 && tiny
-      ? `${coder7}: ${byName[coder7].stars.join(' ')} (${byName[coder7].badge}) vs ${tiny}: ${byName[tiny].stars.join(' ')} (${byName[tiny].badge})`
+      ? `${coder7}: ${byName[coder7].stars.join(' ')} (${byName[coder7].badge}) · bo‘sh disk ${freeDiskGb == null ? '?' : freeDiskGb.toFixed(1)} GB / kerak ${(needDiskGb * 1.1).toFixed(1)} GB · sabab="${String(byName[coder7].reasons || '').slice(0, 70)}" | ${tiny}: ${byName[tiny].stars.join(' ')}`
       : `7B=${!!coder7} 0.5B=${!!tiny}`);
 
   /* 5) «Kompyuterda bor» turkumi o'rnatilgan AI ni topadi (Ollama) va ulashni taklif qiladi */

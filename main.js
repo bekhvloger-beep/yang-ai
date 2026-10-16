@@ -11,6 +11,7 @@ import { TeamRunner } from './agent/team.js';
 import { getAllProviders, getProviderKey, isProviderEnabled, fetchQuota, scanLocalProviders, fetchModelList, PROVIDER_PRESETS, localEndpoint } from './agent/providers.js';
 import { classifyFile, extractText } from './agent/formats.js';
 import { generateImage } from './agent/imagegen.js';
+import { configureSd } from './agent/local_sd.js';
 import { translatorUp, translateSettings, translateText } from './agent/translate.js';
 import {
   loadConfig, saveConfig, importKeysFromEnv,
@@ -498,16 +499,52 @@ function registerIpc() {
     if (r.startsWith('..') || path.isAbsolute(r)) return null;
     return real;
   };
+  // ---------- v5.4: ko‘p ildizli workspace (multi-root) ----------
+  // Foydalanuvchi asosiy ish papkasidan tashqari qo'shimcha papkalar ham qo'sha oladi
+  // (masalan umumiy kutubxona yoki yonidagi repo). Qamoq O'ZGARMAYDI: ruxsat etilgan
+  // ildizlar ro'yxati kengayadi, xolos — har bir yo'l baribir haqiqiy (realpath) yo'l
+  // bo'yicha shu ro'yxat ichida ekani tekshiriladi. Ro'yxat config.json'da saqlanadi.
+  const extraRoots = () => {
+    const list = cfg && cfg.config && Array.isArray(cfg.config.extraRoots) ? cfg.config.extraRoots : [];
+    return list.filter((x) => typeof x === 'string' && x.trim());
+  };
+  // Faol ish papkasi + qo'shimcha papkalar: takrorlanmaydigan haqiqiy yo'llar ro'yxati.
+  const workspaceRoots = async (extra = []) => {
+    const primary = await activeWorkspace();
+    const out = [];
+    const seen = new Set();
+    for (const p of [primary, ...extraRoots(), ...extra]) {
+      if (!p) continue;
+      const abs = realOrNull(p) || path.resolve(String(p));
+      if (!abs) continue;
+      const key = abs.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(abs);
+    }
+    return out;
+  };
+  // Yo'l ruxsat etilgan ildizlardan BIRORTASI ichidami? Ichida bo'lsa haqiqiy yo'lni qaytaradi.
+  const insideAnyRoot = (roots, abs) => {
+    for (const root of roots) {
+      const real = insideWorkspace(root, abs);
+      if (real) return real;
+    }
+    return null;
+  };
+  // Yo'l ildizning O'ZIGA tengmi (papkani fayl sifatida yozish/o'chirishni bloklaymiz).
+  const isRootItself = (roots, abs) => roots.some((r) => path.resolve(r).toLowerCase() === path.resolve(abs).toLowerCase());
+  // Renderer uchun ildizlar ro'yxati (nom + asosiy belgisi bilan).
+  const rootsView = (roots) => roots.map((p, i) => ({ path: p, name: path.basename(p) || p, primary: i === 0 }));
+
   // ---------- v5: IDE IPC ----------
   // workspace ichidagi faylni o'qish (IDE ko'ruvchi). PATH'dan chiqmaydi — xavfsizlik uchun.
   ipcMain.handle('ide:read-file', async (_e, { path: p, maxBytes }) => {
     try {
-      const ws = await activeWorkspace();
-      if (!ws) return { error: 'Ish papkasi tanlanmagan' };
-      const abs = path.resolve(ws, String(p || ''));
-      const rel = path.relative(path.resolve(ws), abs);
-      if (rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
-      const real = insideWorkspace(ws, abs);
+      const roots = await workspaceRoots();
+      if (!roots.length) return { error: 'Ish papkasi tanlanmagan' };
+      const abs = path.resolve(roots[0], String(p || ''));
+      const real = insideAnyRoot(roots, abs);
       if (!real) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
       const st = await fsp.stat(real);
       if (!st.isFile()) return { error: 'Bu fayl emas' };
@@ -524,13 +561,13 @@ function registerIpc() {
   // workspace'dan chiqish, symlink va abs yo'l bloklanadi.
   ipcMain.handle('ide:save-file', async (_e, { path: p, content }) => {
     try {
-      const ws = await activeWorkspace();
-      if (!ws) return { error: 'Ish papkasi tanlanmagan' };
-      const abs = path.resolve(ws, String(p || ''));
-      const rel = path.relative(path.resolve(ws), abs);
-      if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
-      const target = insideWorkspace(ws, abs);
+      const roots = await workspaceRoots();
+      if (!roots.length) return { error: 'Ish papkasi tanlanmagan' };
+      const abs = path.resolve(roots[0], String(p || ''));
+      if (isRootItself(roots, abs)) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
+      const target = insideAnyRoot(roots, abs);
       if (!target) return { error: 'Faqat ish papkasi ichidagi fayllar yoziladi' };
+      const rel = path.relative(roots.find((r) => insideWorkspace(r, abs)) || roots[0], target);
       if (typeof content !== 'string') return { error: 'mazmun matn bo‘lishi kerak' };
       if (content.length > 4 * 1024 * 1024) return { error: 'juda katta (>4 MB)' };
       // Fayl mavjud bo‘lsa yozishdan oldin .bak zaxira (bir marta, .bak ustiga yozmaymiz).
@@ -552,12 +589,11 @@ function registerIpc() {
   // v5.1: faylni tizim standart ilovasi bilan ochish (shell.openPath) — guard bilan.
   ipcMain.handle('ide:open-external', async (_e, { path: p }) => {
     try {
-      const ws = await activeWorkspace();
-      if (!ws) return { error: 'Ish papkasi tanlanmagan' };
-      const abs = path.resolve(ws, String(p || ''));
-      const rel = path.relative(path.resolve(ws), abs);
-      if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
-      const openTarget = insideWorkspace(ws, abs);
+      const roots = await workspaceRoots();
+      if (!roots.length) return { error: 'Ish papkasi tanlanmagan' };
+      const abs = path.resolve(roots[0], String(p || ''));
+      if (isRootItself(roots, abs)) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
+      const openTarget = insideAnyRoot(roots, abs);
       if (!openTarget) return { error: 'Faqat ish papkasi ichidagi fayllar ochiladi' };
       const st = await fsp.stat(openTarget);
       if (!st.isFile()) return { error: 'Bu fayl emas' };
@@ -571,12 +607,10 @@ function registerIpc() {
   });
   // IDE terminal: buyruqni bevosita bajarish (faol chat workspace'da).
   ipcMain.handle('ide:run-command', async (_e, { command, cwd }) => {
-    const ws = await activeWorkspace();
-    if (!ws || !command) return { error: 'papka/buyruq yo‘q' };
-    const cwdResolved = path.resolve(ws, String(cwd || '.'));
-    const rel = path.relative(path.resolve(ws), cwdResolved);
-    if (rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'cwd ish papkasidan chiqib ketdi' };
-    const cwdAbs = insideWorkspace(ws, cwdResolved) || realOrNull(path.resolve(ws));
+    const roots = await workspaceRoots();
+    if (!roots.length || !command) return { error: 'papka/buyruq yo‘q' };
+    const cwdResolved = path.resolve(roots[0], String(cwd || '.'));
+    const cwdAbs = insideAnyRoot(roots, cwdResolved) || realOrNull(roots[0]);
     if (!cwdAbs) return { error: 'cwd ish papkasidan chiqib ketdi' };
     return new Promise((resolve) => {
       exec(String(command), { cwd: cwdAbs, timeout: 120000, maxBuffer: 4 * 1024 * 1024, windowsHide: true, env: { ...process.env, FORCE_COLOR: '0' } }, (err, stdout, stderr) => {
@@ -590,18 +624,19 @@ function registerIpc() {
   });
   // IDE fayl daraxti (2 qadamli).
   ipcMain.handle('ide:list-tree', async (_e, { rel = '.', depth = 2 }) => {
-    const ws = await activeWorkspace();
-    if (!ws) return { error: 'papka yo‘q' };
-    const root = path.resolve(ws, String(rel));
-    const relChk = path.relative(path.resolve(ws), root);
-    if (relChk.startsWith('..') || path.isAbsolute(relChk)) return { error: 'yo‘l tashqarida' };
-    const wsReal = realOrNull(path.resolve(ws)) || path.resolve(ws);
-    // Har bir ko'rsatilgan fayl ham workspace ichida qolishini tekshiramiz — havolani
-    // ham hisobga olgan holda (`insideWorkspace` realpath bo'yicha qaraydi).
-    const safeRel = (p) => {
-      const real = insideWorkspace(ws, p);
-      if (!real) return null;
-      return path.relative(wsReal, real).replace(/\\/g, '/');
+    const roots = await workspaceRoots();
+    if (!roots.length) return { error: 'papka yo‘q' };
+    const primary = roots[0];
+    const startReal = insideAnyRoot(roots, path.resolve(primary, String(rel)));
+    if (!startReal) return { error: 'yo‘l tashqarida' };
+    const rootOf = (abs) => roots.find((r) => insideWorkspace(r, abs)) || primary;
+    const relIn = (root, abs) => path.relative(root, abs).replace(/\\/g, '/');
+    // Ko'rsatiladigan yo'l: asosiy ildizda nisbiy (eski xatti-harakat), qo'shimcha
+    // ildizlarda ABSOLYUT — shunda o'sha yo'l bilan faylni ochish/yozish ham ishlaydi
+    // (guard abs yo'lni ham qabul qiladi, chunki u ruxsat etilgan ildiz ichida).
+    const showPath = (abs) => {
+      const r = rootOf(abs);
+      return r.toLowerCase() === primary.toLowerCase() ? relIn(r, abs) : path.resolve(abs);
     };
     const out = [];
     const walk = async (dir, d) => {
@@ -610,23 +645,58 @@ function registerIpc() {
       for (const e of entries.slice(0, 200)) {
         if (e.name.startsWith('.') || e.name === 'node_modules') continue;
         const full = path.join(dir, e.name);
-        const relPath = safeRel(full);
-        if (!relPath) continue;
+        // Har bir yozuv ruxsat etilgan ildizlardan birida qolishi shart — havolani
+        // ham hisobga olgan holda (`insideWorkspace` realpath bo'yicha qaraydi).
+        const real = insideAnyRoot(roots, full);
+        if (!real) continue;
+        const r0 = rootOf(real);
         if (e.isDirectory()) {
-          out.push({ path: relPath, dir: true });
-          // Havola orqali tashqariga chiqadigan papkaga KIRMAYMIZ: aks holda daraxt
-          // ish papkasidan tashqaridagi nomlarni o'qib ko'rsatardi.
-          const realDir = insideWorkspace(ws, full);
-          if (d < depth && realDir && realDir !== wsReal) await walk(full, d + 1);
+          out.push({ path: showPath(real), rel: relIn(r0, real), root: r0, dir: true });
+          // Havola orqali tashqariga chiqadigan (yoki ildizning o'ziga qaytadigan)
+          // papkaga KIRMAYMIZ: daraxt begona nomlarni ko'rsatmasin va aylanmasin.
+          const realDir = realOrNull(full);
+          const isRootDir = realDir && realDir.toLowerCase() === path.resolve(r0).toLowerCase();
+          if (realDir && !isRootDir && d < depth) await walk(full, d + 1);
         } else {
           let size = 0;
-          try { size = (await fsp.stat(full)).size; } catch {}
-          out.push({ path: relPath, dir: false, size });
+          try { size = (await fsp.stat(real)).size; } catch {}
+          out.push({ path: showPath(real), rel: relIn(r0, real), root: r0, dir: false, size });
         }
       }
     };
-    await walk(root, 0);
-    return { entries: out };
+    await walk(startReal, 0);
+    // Asosiy ildiz ko'rsatilganda qo'shimcha papkalar ham daraxt tepasida ko'rinadi.
+    if (roots.length > 1 && startReal.toLowerCase() === primary.toLowerCase()) {
+      const heads = roots.slice(1).map((r) => ({
+        path: r, rel: '', root: r, dir: true, external: true, name: path.basename(r) || r,
+      }));
+      out.unshift(...heads);
+    }
+    return { entries: out, roots: rootsView(roots) };
+  });
+  // Ko'p ildizli workspace: ro'yxat, qo'shish (papka tanlash oynasi), olib tashlash.
+  ipcMain.handle('ide:roots-list', async () => ({ roots: rootsView(await workspaceRoots()) }));
+  ipcMain.handle('ide:roots-add', async () => {
+    const r = await dialog.showOpenDialog(win, { properties: ['openDirectory', 'createDirectory', 'multiSelections'] });
+    if (r.canceled || !r.filePaths.length) return { canceled: true, roots: rootsView(await workspaceRoots()) };
+    const primary = (await workspaceRoots())[0] || '';
+    const keep = extraRoots().slice();
+    for (const p of r.filePaths) {
+      const real = realOrNull(p) || path.resolve(String(p));
+      if (!real) continue;
+      if (primary && real.toLowerCase() === primary.toLowerCase()) continue;
+      if (keep.some((x) => (realOrNull(x) || path.resolve(x)).toLowerCase() === real.toLowerCase())) continue;
+      keep.push(real);
+    }
+    cfg.config.extraRoots = keep;
+    await saveConfig(userDataDir(), cfg.config);
+    return { roots: rootsView(await workspaceRoots()) };
+  });
+  ipcMain.handle('ide:roots-remove', async (_e, { path: p }) => {
+    const want = String(p || '').toLowerCase();
+    cfg.config.extraRoots = extraRoots().filter((x) => (realOrNull(x) || path.resolve(x)).toLowerCase() !== want);
+    await saveConfig(userDataDir(), cfg.config);
+    return { roots: rootsView(await workspaceRoots()) };
   });
   // ---------- v5.3: to'liq YANG IDE oynasi ----------
   // IDE o'z jarayonida emas, AYNAN SHU jarayonda ochiladi: shuning uchun alohida
@@ -634,7 +704,8 @@ function registerIpc() {
   // desktop bilan bir xil yondashuv). Ish papkasi faol chatdan olinadi.
   ipcMain.handle('ide:open-window', async () => {
     try {
-      await openIdeWindow({ workspace: await activeWorkspace() });
+      const roots = await workspaceRoots();
+      await openIdeWindow({ workspace: roots[0] || (await activeWorkspace()), extraRoots: roots.slice(1) });
       return { ok: true };
     } catch (e) {
       return { error: String((e && e.message) || e) };
@@ -974,6 +1045,14 @@ app.whenReady().then(async () => {
   }
   await firstRunImport();
   registerIpc();
+  // LOKAL rasm dvigateli (stable-diffusion.cpp) qidiriladigan papkalar: foydalanuvchi
+  // «Lokal AI» menyusidan yuklagan joy (`%APPDATA%/yang-ai/models/sd`) va ilova bilan
+  // kelgan nusxa (`resources/local-ai/sd`). Busiz `generateImage()` lokal rasmni topa
+  // olmaydi va bulut zanjiriga (kvota/kalit) tushib qoladi.
+  configureSd([
+    path.join(app.getPath('userData'), 'models', 'sd'),
+    app.isPackaged ? path.join(process.resourcesPath, 'local-ai', 'sd') : path.join(ROOT, 'local-ai', 'sd'),
+  ]);
   registerIdeIpc();   // to'liq IDE yadrosi (yide:* kanallari) — asosiy ilova ichida
   buildMenu();
   await createWindow();

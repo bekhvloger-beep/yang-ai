@@ -1,0 +1,22 @@
+
+> yang-ai@5.5.3 test:desk
+> node admin-desk/test_admin_desk.mjs
+
+PASS  1. Admin Desk oynasi ochiladi va ko‘prik (contextBridge) ulanadi
+      → sarlavha="(bo‘sh)", #app/#deskVersion=true, window.api.deskInfo=true
+PASS  1b. Ochilishda panelni to‘sadigan MODAL oyna chiqmaydi (renderer javob beradi)
+      → modal oyna yo‘q · 1+1=2
+PASS  2. `desk:info` haqiqiy versiyalarni beradi (qattiq yozilgan matn emas)
+      → Desk=1.3.0 (package.json: 1.3.0) · ilova=5.5.3 (package.json: 5.5.3) · bekhvloger-beep/yang-ai (main)
+PASS  2b. GitHub bilan aloqa ishlaydi (reliz holati javob beradi)
+      → 1740 ms · teg=v5.5.0 · fayllar=8
+PASS  3. `release:verify` kutilgan shaklda javob beradi (versiya manbalari ajratilgan)
+      → repo=3.9.7 · lokal=5.5.3 · paketlardan=1.0.0 · manba=repo package.json · upToDate=false · majburiy=3 · ixtiyoriy=2 · mahalliy fayllar=10 · kalitlar=[repoVersion, localVersion, artifactVersion, versionSource, localArtifacts, ok, authorized, authProblem, tag, tagVersion, upToDate, expectedVersion, publishedAt, url, required, optional, requiredMissing, autoUpdateOk, distribution, hasDistribution, assets] · 1652 ms
+PASS  4. Versiya noma’lum bo‘lsa SOXTA fayl nomi yasalmaydi (eski xato tuzatilgan)
+      → nomlar=[YANG-AI-Setup-3.9.7.exe, YANG-AI-Setup-3.9.7.exe.blockmap, latest.yml, YANG-AI-Portable-3.9.7.exe, YANG AI-3.9.7-win.zip, YANG-IDE-Portable-1.0.0.exe]
+PASS  5. Yon paneldagi versiya HAQIQIY manbadan (Desk + ilova versiyasi)
+      → yozuv="Desk v1.3.0 · ilova v5.5.3 · bekhvloger-beep/yang-ai (main)" (kutilgan: 1.3.0 va 5.5.3)
+PASS  6. «Reliz holati» bo‘limi chiziladi (versiya manbalari ko‘rinadi)
+      → bo‘lim matni (974 belgi): 🚀 Reliz holati 🔄 Tekshirish tekshirilmoqda… Tekshiruv uchta savolga javob beradi: (1) versiya qaysi manbadan olinadi (repo package.json, lokal nusxa yoki yig‘ilgan paket nomi); (2) oxirgi reliz tegi shu versiyaga mos k
+
+XULOSA: 8/8 PASS

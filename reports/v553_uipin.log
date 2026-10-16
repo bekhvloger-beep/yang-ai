@@ -1,0 +1,24 @@
+
+> yang-ai@5.5.3 test:ui
+> node scripts/ui_pin_test.mjs
+
+nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-pin-ui-aCZ2Jb · boshlang'ich pinMode=false · CDP port 9333
+[17:46:00] ilova ishga tushirildi (1-nusxa)
+[17:46:02] CDP ulandi · window.__ready=true
+PASS  1. Sozlamalar ochilganda pinModelToggle saqlangan holatni o‘qiydi
+      → modal ochiq=true, toggle.checked=false, disabled=false; config.json.pinMode=false
+PASS  2. ON + Saqlash → config.json da pinMode === true
+      → toggle.click() → checked=true; saqlash → modal yopildi=true; config.json.pinMode=true (130 ms)
+PASS  3. Yopib qayta ochganda tugma checked ko‘rinadi
+      → yopildi=true → qayta ochildi=true, toggle.checked=true
+PASS  4. OFF + Saqlash → config.json da pinMode === false
+      → toggle.click() → checked=false; saqlash → pinMode=false (132 ms); qayta ochilganda checked=false
+[17:46:02] 5-qadam uchun pinMode=true saqlandi — ilova qayta ishga tushiriladi
+[17:46:03] 1-nusxa yopildi; 2-nusxa ishga tushiriladi (eski target 2546D659 chetlab o‘tiladi, yangi port 9334)
+[17:46:04] 2-nusxa CDP: target=D2945547 · ready=true · sahifa yoshi 927 ms
+PASS  5. Ilova qayta ishga tushganda pin holati saqlangan (checked)
+      → saglashdan oldin pinMode=true; qayta ishga tushgach toggle.checked=true
+eslatma: llama-server testdan oldin ham ishlayotgan edi — to‘xtatilmadi
+
+XULOSA: 5/5 PASS

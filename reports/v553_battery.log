@@ -1,0 +1,35 @@
+### contract
+contract EXIT=0
+### gitpanel
+gitpanel EXIT=0
+XULOSA: 11/11 PASS
+### voice
+voice EXIT=0
+      → 4 yo‘l hujumi → null
+XULOSA: 16/16 PASS
+### benchscore
+benchscore EXIT=0
+PASS  D3. Natija yo‘q bo‘lsa — aniq xato qaytadi (jimgina yolg‘on ball yozilmaydi)
+XULOSA: hammasi o‘tdi (0 xato)
+### manager
+manager EXIT=1
+FAIL  3. Apparat profili o‘lchanadi (CPU/RAM/video/disk + 2 daraja)
+FAIL  4. Matn modellari ro‘yxati katalogdan chiziladi (har birida 2 yulduz bloki + talablar)
+FAIL  umumiy oqim
+XULOSA: 0/5 PASS
+### desk
+desk EXIT=0
+XULOSA: 8/8 PASS
+### modes
+modes EXIT=0
+XULOSA: 4/4 PASS
+### pin
+pin EXIT=0
+XULOSA: 7/7 PASS (46717 ms)
+### uipin
+uipin EXIT=0
+XULOSA: 5/5 PASS
+### security
+security EXIT=0
+XULOSA: 14/14 hujum bloklandi
+BATAREYA TUGADI

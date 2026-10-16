@@ -39,4 +39,21 @@ translator/runtime/
 translator/__pycache__/
 local-ai/*.gguf
 local-ai/lc/
+# Rasm dvigateli (stable-diffusion.cpp) va rasm modellari — ham og'ir, ham qayta yuklanadi.
+# `local-ai/catalog.json` esa KOD: u commit qilinadi (katalog + minimal talablar + kuch reytingi).
+local-ai/sd/
 
+# GitHub reliz tokeni (hech qachon commit qilinmaydi)
+.gh-token
+admin-config.json
+
+# Agent/tool ish papkalari (repoga tushmasin)
+.freebuff/
+.agents/
+.mimosa/
+.video_agent/
+reports/scratch/
+reports/*probe*.cjs
+reports/*probe*.js
+reports/*probe*.log
+.env.*

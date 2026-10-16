@@ -1,0 +1,349 @@
+{
+  "generatedAt": "2026-10-16T17:23:38.497Z",
+  "host": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpus": 6,
+    "totalRamMb": 12215
+  },
+  "turns": 22,
+  "maxSteps": 2,
+  "contextTokens": 8192,
+  "safetyTokens": 80,
+  "wroteFiles": [
+    "modul_1.py",
+    "modul_2.py",
+    "modul_4.py",
+    "modul_5.py",
+    "modul_7.py",
+    "modul_8.py",
+    "modul_10.py",
+    "modul_11.py",
+    "modul_13.py",
+    "modul_14.py",
+    "modul_16.py",
+    "modul_17.py",
+    "modul_19.py",
+    "modul_20.py",
+    "modul_22.py"
+  ],
+  "fitNotice": "✂️ So‘rov lokal model kontekstiga (8192 token) sig‘dirildi — eski tarix qisqartirildi",
+  "perTurn": [
+    {
+      "turn": 1,
+      "kind": "yozish",
+      "seconds": 39.5,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 1253,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "kind": "yozish",
+      "seconds": 70,
+      "calls": 3,
+      "usagePromptTokens": null,
+      "measuredTokens": 3054,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file",
+        "write_file"
+      ]
+    },
+    {
+      "turn": 3,
+      "kind": "savol",
+      "seconds": 29.9,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 4161,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 4,
+      "kind": "yozish",
+      "seconds": 38.7,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 3103,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 5,
+      "kind": "yozish",
+      "seconds": 44.5,
+      "calls": 3,
+      "usagePromptTokens": null,
+      "measuredTokens": 4161,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 6,
+      "kind": "savol",
+      "seconds": 24.7,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3364,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 7,
+      "kind": "yozish",
+      "seconds": 45,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4199,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 8,
+      "kind": "yozish",
+      "seconds": 45.2,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4068,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 9,
+      "kind": "savol",
+      "seconds": 25.2,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3163,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 10,
+      "kind": "yozish",
+      "seconds": 42.9,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4097,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 11,
+      "kind": "yozish",
+      "seconds": 51,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4075,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 12,
+      "kind": "savol",
+      "seconds": 23.2,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3204,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 13,
+      "kind": "yozish",
+      "seconds": 41.5,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4136,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 14,
+      "kind": "yozish",
+      "seconds": 50.9,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4077,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 15,
+      "kind": "savol",
+      "seconds": 22.8,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3209,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 16,
+      "kind": "yozish",
+      "seconds": 59.9,
+      "calls": 3,
+      "usagePromptTokens": null,
+      "measuredTokens": 4141,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file",
+        "read_file"
+      ]
+    },
+    {
+      "turn": 17,
+      "kind": "yozish",
+      "seconds": 206.4,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 3427,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 18,
+      "kind": "savol",
+      "seconds": 45.1,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3440,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 19,
+      "kind": "yozish",
+      "seconds": 45,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 3110,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 20,
+      "kind": "yozish",
+      "seconds": 50.9,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4214,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 21,
+      "kind": "savol",
+      "seconds": 24.9,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 3337,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 22,
+      "kind": "yozish",
+      "seconds": 68.6,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 4331,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    }
+  ],
+  "totals": {
+    "seconds": 1095.8,
+    "requests": 40,
+    "errors": 0,
+    "maxMeasuredTokens": 4331,
+    "maxUsagePromptTokens": 0
+  },
+  "checks": [
+    {
+      "name": "A1. 🧭 Server HAQIQIY kontekst bilan ko‘tarildi (/props → n_ctx)",
+      "ok": true
+    },
+    {
+      "name": "B1. 🧵 Har navbat QABUL QILINDI — HTTP 400 «exceeds the available context size» yo‘q",
+      "ok": true
+    },
+    {
+      "name": "B2. 💬 Har navbatda model javob berdi (matn yoki tool chaqiruvi)",
+      "ok": true
+    },
+    {
+      "name": "C1. 📏 Yuborilgan so‘rov hajmi kontekstdan OSHMADI (server /tokenize bilan o‘lchandi)",
+      "ok": true
+    },
+    {
+      "name": "D1. 📚 Suhbat tarixi kontekstdan KATTA bo‘ldi (sinov haqiqiy yuklama berdi)",
+      "ok": true
+    },
+    {
+      "name": "D2. ✂️ Ilova tarixni qisqartirdi va bu foydalanuvchiga AYTILDI",
+      "ok": true
+    },
+    {
+      "name": "E1. 📄 Suhbat oxirigacha ISHLADI — model fayl yozdi",
+      "ok": true
+    },
+    {
+      "name": "F1. ⏱️ Vaqt o‘lchandi (har navbat o‘rtacha)",
+      "ok": true
+    }
+  ],
+  "verdict": "8/8 PASS"
+}

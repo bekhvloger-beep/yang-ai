@@ -1,6 +1,6 @@
 {
   "name": "yang-ai",
-  "version": "5.4.0",
+  "version": "5.5.3",
   "description": "YANG AI by AICOMP.UZ — professional desktop agentic assistant",
   "type": "module",
   "main": "main.js",
@@ -13,9 +13,21 @@
     "dist": "electron-builder --win --publish never",
     "predist:ide": "node scripts/sync_ide_vendor.mjs",
     "dist:ide": "electron-builder --win --publish never --config electron-builder.ide.json",
+    "dist:release": "node scripts/build_and_release.mjs",
     "prestart:ide": "node scripts/sync_ide_vendor.mjs",
     "start:ide": "electron ide/main.js",
     "test:ide": "node ide/test_ide_contract.mjs",
+    "test:ide:models": "electron ide/test_local_ai_models.cjs",
+    "test:ide:git": "node ide/test_git_panel.mjs",
+    "test:voice": "node agent/test_local_voice.mjs",
+    "test:bench:score": "node agent/test_bench_score.mjs",
+    "test:ai:manager": "node scripts/ui_models_manager.mjs",
+    "test:ide:modelsui": "node ide/test_local_ai_ui.mjs",
+    "test:ide:pytypes": "electron ide/test_python_types.cjs",
+    "test:ide:pydebug": "electron ide/test_python_debug.cjs",
+    "test:ide:pkg": "node ide/test_ide_packaged.mjs",
+    "test:desk": "node admin-desk/test_admin_desk.mjs",
+    "test:modes": "node agent/test_modes_complex.mjs",
     "test:ide:e2e": "node ide/test_embedded_e2e.mjs",
     "test:ide:fix": "node ide/test_fix_loop_live.mjs",
     "release": "node scripts/publish_release.mjs",
@@ -36,16 +48,16 @@
   },
   "build": {
     "appId": "uz.aicomp.yang",
-  "productName": "YANG AI",
-  "npmRebuild": false,
-  "directories": {
-    "output": "dist"
-  },
+    "productName": "YANG AI",
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist"
+    },
     "files": [
-    "main.js",
-    "preload.cjs",
-    "node_modules/@homebridge/node-pty-prebuilt-multiarch/build/**/*",
-    "agent/**/*",
+      "main.js",
+      "preload.cjs",
+      "node_modules/@homebridge/node-pty-prebuilt-multiarch/build/**/*",
+      "agent/**/*",
       "!agent/test_*",
       "!agent/bench_result.json",
       "!agent/lru_ref/**",
@@ -78,6 +90,10 @@
       {
         "from": "local-ai/lc",
         "to": "local-ai/lc"
+      },
+      {
+        "from": "local-ai/catalog.json",
+        "to": "local-ai/catalog.json"
       }
     ],
     "win": {
@@ -102,6 +118,11 @@
         "owner": "bekhvloger-beep",
         "repo": "yang-ai"
       }
+    ],
+    "compression": "maximum",
+    "electronLanguages": [
+      "en-US",
+      "ru"
     ]
   }
 }

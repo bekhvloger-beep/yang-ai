@@ -6,7 +6,16 @@
   "directories": {
     "output": "dist-ide"
   },
-  "asar": false,
+  "compression": "maximum",
+  "electronLanguages": [
+    "en-US",
+    "ru"
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "node_modules/@homebridge/node-pty-prebuilt-multiarch/**",
+    "agent/bench_ide_assisted.mjs"
+  ],
   "extraMetadata": {
     "name": "yang-ide",
     "productName": "YANG IDE",
@@ -21,6 +30,8 @@
     "agent/**/*",
     "!agent/test_*",
     "!agent/bench_*",
+    "agent/bench_ide_assisted.mjs",
+    "agent/bench_score.js",
     "!agent/benchmark_*",
     "!agent/compare_*",
     "!agent/lru_ref/**",
@@ -36,6 +47,10 @@
     {
       "from": "local-ai/model-qwen3.5-2b-q4_k_m.gguf",
       "to": "local-ai/model-qwen3.5-2b-q4_k_m.gguf"
+    },
+    {
+      "from": "local-ai/catalog.json",
+      "to": "local-ai/catalog.json"
     }
   ],
   "win": {

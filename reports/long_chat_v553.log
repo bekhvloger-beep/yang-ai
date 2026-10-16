@@ -1,0 +1,49 @@
+workspace: C:\Users\behru\AppData\Local\Temp\yang-longchat-cpAhOq
+navbatlar: 22 · port: 8082
+
+llama-server jurnali: D:\loyiha\ChatDev-main\reports\local_ai\long_chat\llama-model-1.7b.gguf.log
+lokal server: model-1.7b.gguf
+
+PASS  A1. 🧭 Server HAQIQIY kontekst bilan ko‘tarildi (/props → n_ctx)
+      → n_ctx = 8192 token (model-1.7b.gguf)
+  ✓  1-navbat yozish · 39.5s · so‘rov 2 ta · o‘lchandi 1253 token · tool: write_file
+  ✓  2-navbat yozish · 70.0s · so‘rov 3 ta · o‘lchandi 3054 token · tool: write_file,write_file
+  ✓  3-navbat savol  · 29.9s · so‘rov 1 ta · o‘lchandi 4161 token
+  ✓  4-navbat yozish · 38.7s · so‘rov 2 ta · o‘lchandi 3103 token · tool: write_file
+  ✓  5-navbat yozish · 44.5s · so‘rov 3 ta · o‘lchandi 4161 token · tool: write_file
+  ✓  6-navbat savol  · 24.7s · so‘rov 1 ta · o‘lchandi 3364 token
+  ✓  7-navbat yozish · 45.0s · so‘rov 2 ta · o‘lchandi 4199 token · tool: write_file
+  ✓  8-navbat yozish · 45.2s · so‘rov 2 ta · o‘lchandi 4068 token · tool: write_file
+  ✓  9-navbat savol  · 25.2s · so‘rov 1 ta · o‘lchandi 3163 token
+  ✓ 10-navbat yozish · 42.9s · so‘rov 2 ta · o‘lchandi 4097 token · tool: write_file
+  ✓ 11-navbat yozish · 51.0s · so‘rov 2 ta · o‘lchandi 4075 token · tool: write_file
+  ✓ 12-navbat savol  · 23.2s · so‘rov 1 ta · o‘lchandi 3204 token
+  ✓ 13-navbat yozish · 41.5s · so‘rov 2 ta · o‘lchandi 4136 token · tool: write_file
+  ✓ 14-navbat yozish · 50.9s · so‘rov 2 ta · o‘lchandi 4077 token · tool: write_file
+  ✓ 15-navbat savol  · 22.8s · so‘rov 1 ta · o‘lchandi 3209 token
+  ✓ 16-navbat yozish · 59.9s · so‘rov 3 ta · o‘lchandi 4141 token · tool: write_file,read_file
+  ✓ 17-navbat yozish · 206.4s · so‘rov 2 ta · o‘lchandi 3427 token · tool: write_file
+  ✓ 18-navbat savol  · 45.1s · so‘rov 1 ta · o‘lchandi 3440 token
+  ✓ 19-navbat yozish · 45.0s · so‘rov 2 ta · o‘lchandi 3110 token · tool: write_file
+  ✓ 20-navbat yozish · 50.9s · so‘rov 2 ta · o‘lchandi 4214 token · tool: write_file
+  ✓ 21-navbat savol  · 24.9s · so‘rov 1 ta · o‘lchandi 3337 token
+  ✓ 22-navbat yozish · 68.6s · so‘rov 2 ta · o‘lchandi 4331 token · tool: write_file
+PASS  B1. 🧵 Har navbat QABUL QILINDI — HTTP 400 «exceeds the available context size» yo‘q
+      → 22/22 navbat xatosiz (pin rejim — zaxira provayder yo‘q edi)
+PASS  B2. 💬 Har navbatda model javob berdi (matn yoki tool chaqiruvi)
+      → barcha 22 navbatda javob bor
+PASS  C1. 📏 Yuborilgan so‘rov hajmi kontekstdan OSHMADI (server /tokenize bilan o‘lchandi)
+      → eng katta so‘rov: 4331 token · kontekst 8192
+PASS  D1. 📚 Suhbat tarixi kontekstdan KATTA bo‘ldi (sinov haqiqiy yuklama berdi)
+      → tarix (qisqartirilmagan) = 106719 token · kontekst 8192 — 13.0× katta
+PASS  D2. ✂️ Ilova tarixni qisqartirdi va bu foydalanuvchiga AYTILDI
+      → notis: "✂️ So‘rov lokal model kontekstiga (8192 token) sig‘dirildi — eski tarix qisqartirildi"
+PASS  E1. 📄 Suhbat oxirigacha ISHLADI — model fayl yozdi
+      → yozilgan fayllar: modul_1.py, modul_2.py, modul_4.py, modul_5.py, modul_7.py, modul_8.py, modul_10.py, modul_11.py, modul_13.py, modul_14.py, modul_16.py, modul_17.py, modul_19.py, modul_20.py, modul_22.py (15 ta)
+PASS  F1. ⏱️ Vaqt o‘lchandi (har navbat o‘rtacha)
+      → 22 navbat · jami 18.3 daqiqa · o‘rtacha 49.8 s/navbat · eng sekin 206.4 s
+
+Hisobot: reports\local_ai\long_chat\long_chat.md
+
+XULOSA: 8/8 PASS
+LONGCHAT_EXIT=0

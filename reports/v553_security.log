@@ -1,0 +1,31 @@
+nishon: dev rejim · ish papkasi: C:\Users\behru\AppData\Local\Temp\yang-attack-ws-TBnXli · havola: yaratildi
+PASS  1. `readFile` yo‘l chiqishini rad etadi (9 xil ko‘rinish)
+      → hammasi rad etildi (shu jumladan absolyut, UNC, %2e%2e, «....//»)
+PASS  2. Havola (junction) orqali ish papkasidan chiqish ham bloklanadi
+      → rad etildi: {"error":"yo‘l tashqarida yoki papka tanlanmagan"}
+PASS  3. Yozish/yaratish/qayta nomlash/o‘chirish ish papkasidan tashqariga chiqmaydi
+      → yozish=rad, yaratish=rad, qayta nomlash=rad, o‘chirish=rad; normal.txt joyida=true, tashqi fayl joyida=true
+PASS  5. Terminal ish papkasidan tashqarida ham ochilmaydi
+      → rad etildi yoki ish papkasiga qaytarildi: cwd=— (ish papkasidan tashqarida terminal ochilmaydi)
+PASS  6. Debugger va til xizmati tashqi yo‘lni rad etadi
+      → debug=rad, lsp=rad
+PASS  7. «Tashqi ilovada ochish» ish papkasidan tashqariga chiqmaydi
+      → {"error":"yo‘l tashqarida"}
+PASS  8. Asosiy ilovaning yengil paneli ham tashqi yo‘lni rad etadi
+      → o‘qish=rad, daraxt=rad
+PASS  9. G‘alati kirishlarga o‘qiladigan javob (ilova yiqilmaydi)
+      → javoblar=["rad","rad","rad","javob","javob"]; asosiy oyna="YANG AI"
+PASS  10. Qo‘shimcha papka ruxsat etilgan ildizlar ro‘yxatida ko‘rinadi
+      → ildizlar=[yang-attack-ws-TBnXli (asosiy), yang-attack-extra-iSopXd]
+PASS  11. Qo‘shimcha papkadagi fayl o‘qiladi (yangi ruxsat haqiqatan ishlaydi)
+      → o‘qildi=26 belgi
+PASS  12. Iqkinchi ildiz ham qamoqni ochmaydi: undan tashqariga chiqish bloklanadi
+      → IDE (4 xil): rad, rad, rad, rad · yengil panel: o‘qish=rad, daraxt=rad
+PASS  13. Ikkinchi ildiz orqali tashqariga YOZISH ham bloklanadi (hech narsa yaratilmadi)
+      → IDE yozish=rad, yengil panel yozish=rad, tashqi fayl joyida=true, yaratilgan fayl=yo‘q
+PASS  14. Yengil panel ham o‘sha ro‘yxatni ko‘radi va qo‘shimcha papkani o‘qiy oladi
+      → yengil panel ildizlari=[behru, yang-attack-extra-iSopXd] · o‘qish=ishladi
+PASS  15. «Ro‘yxatdan olib tashlash» xavfsiz: begona yo‘l hech narsani olib tashlamaydi, haqiqiy yo‘l esa ro‘yxatdan chiqadi
+      → begona yo‘ldan keyin=2, haqiqiy olib tashlashdan keyin=1 (avval 2), qolganlar=[behru]
+
+XULOSA: 14/14 hujum bloklandi

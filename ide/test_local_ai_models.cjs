@@ -78,14 +78,28 @@ const benchEvents = [];
     !cat.error && cat.items.length >= 8 && badItems.length === 0 && new Set(ids).size === ids.length,
     `${cat.items.length} model · muammoli=${badItems.length} · ${cat.error || 'xato yo‘q'}`);
 
-  /* 3) SHU kompyuter uchun baho: yengil model mos, imkonsiz model «ishlamaydi» */
+  /* 3) SHU kompyuter uchun baho: yengil model mos, imkonsiz model «ishlamaydi».
+     Baho QOIDASI mashinaning bugungi holatiga bog'lanib qolmasligi kerak: shuning uchun
+     yetarli resursli sinov profili beriladi (qoida «mos» deyishi shart) va alohida —
+     haqiqiy apparatdagi baho o'sha qoidadan chiqqanini tekshiramiz. Mashinada joy
+     yetmasa baho «ishlamaydi» bo'lib, sababini aynan yetmagan resurs aytishi shart. */
   const light = cat.items.find((x) => x.id === 'text-qwen25-0_5b-q4km');
   const heavy = cat.items.find((x) => x.id === 'text-qwen25-coder-7b-q4km');
   const impossible = mod.verdictOf({ id: 'x', kind: 'text', file: 'x.gguf', min: { ramGb: 128, diskGb: 1 }, recommend: { ramGb: 256 }, strength: { code: 5 } }, hw);
-  check('3. Moslik bahosi: 0.5B mos keladi, 7B ham shu mashinada mos, 128 GB talab qilgani — yo‘q',
-    light && light.verdict.state === 'ok' && heavy && heavy.verdict.state === 'ok'
+  const roomy = { ...hw, ramGb: 32, ramFreeGb: 24, diskFreeGb: 500, vramGb: 8, gpu: 'sinov-gpu' };
+  const heavyRule = mod.verdictOf(heavy, roomy);
+  const heavyReasons = String((heavy.verdict.reasons || []).join(' '));
+  const diskShort = Number.isFinite(hw.diskFreeGb) && hw.diskFreeGb < (heavy.min.diskGb || 0) * 1.1;
+  const ramShort = hw.ramGb < (heavy.min.ramGb || 0) * 0.9;
+  const heavyReal = (diskShort || ramShort)
+    ? heavy.verdict.state === 'blocked' && (diskShort ? /diskda/.test(heavyReasons) : /RAM/.test(heavyReasons))
+    : heavy.verdict.state === 'ok';
+  check('3. Moslik qoidasi: resurs yetarli bo‘lsa 7B «mos», yetmasa sababi bilan «ishlamaydi», 128 GB — yo‘q',
+    !!(light && light.verdict.state === 'ok') && heavyRule.state === 'ok' && heavyReal
     && impossible.state === 'blocked' && mod.machineStars({ kind: 'text', strength: { code: 5 } }, impossible) === 0,
-    `0.5B=${light && light.verdict.fit} · 7B=${heavy && heavy.verdict.fit} · 128GB=${impossible.fit} (${impossible.reasons[0]})`);
+    `0.5B=${light && light.verdict.fit} · 7B(qoida)=${heavyRule.fit} · 7B(shu mashina)=${heavy.verdict.fit}`
+    + ` [${diskShort ? `disk ${hw.diskFreeGb} GB < ${((heavy.min.diskGb || 0) * 1.1).toFixed(1)} GB` : ramShort ? `RAM ${hw.ramGb} GB qisqa` : 'joy yetarli'}]`
+    + ` · 128GB=${impossible.fit} (${impossible.reasons[0]})`);
 
   /* 4) O'rnatilgan holat: ilova bilan kelgan model va rasm dvigateli topiladi */
   const sdx = await call('yide:image-status');

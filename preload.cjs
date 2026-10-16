@@ -36,8 +36,14 @@ contextBridge.exposeInMainWorld('api', {
   readWorkspaceFile: (p, maxBytes) => ipcRenderer.invoke('ide:read-file', { path: p, maxBytes }),
   // v5 IDE: terminal buyrug'ini bevosita bajarish (IDE terminal paneli).
   ideRunCommand: (command, cwd) => ipcRenderer.invoke('ide:run-command', { command, cwd }),
-  // v5 IDE: workspace fayl daraxti.
+  // v5 IDE: workspace fayl daraxti. `rel` nisbiy (asosiy papkaga) yoki ABSOLYUT
+  // (qo'shimcha papka ichidagi yo'l) bo'lishi mumkin — main jarayon baribir realpath
+  // bo'yicha ruxsat etilgan ildizlar ichida ekanini tekshiradi.
   ideListTree: (rel, depth) => ipcRenderer.invoke('ide:list-tree', { rel, depth }),
+  // v5.5 ko'p ildizli workspace: qo'shimcha papkalar ro'yxati / qo'shish / olib tashlash.
+  ideRootsList: () => ipcRenderer.invoke('ide:roots-list'),
+  ideRootsAdd: () => ipcRenderer.invoke('ide:roots-add'),
+  ideRootsRemove: (p) => ipcRenderer.invoke('ide:roots-remove', { path: p }),
   // v5.1 IDE tahrirlovchi: workspace faylini saqlash + tashqari ilovada ochish.
   ideSaveFile: (p, content) => ipcRenderer.invoke('ide:save-file', { path: p, content }),
   ideOpenExternal: (p) => ipcRenderer.invoke('ide:open-external', { path: p }),
@@ -53,6 +59,39 @@ contextBridge.exposeInMainWorld('api', {
   ptyResize: (id, cols, rows) => ipcRenderer.invoke('yide:pty-resize', { id, cols, rows }),
   ptyClose: (id) => ipcRenderer.invoke('yide:pty-close', { id }),
   ptyList: () => ipcRenderer.invoke('yide:pty-list'),
+  // ---------------------------------------------------------------- LOKAL AI menejeri (v5.6)
+  // Model bozori, apparat profili, yuklab olish, kompyuterda bor AI skani, «O'lchash»
+  // (4 haqiqiy vazifa) va lokal rasm generatsiyasi. Mantiq IDE bilan UMUMIY modulda
+  // (`ide/ide_models.js`) va asosiy jarayonda allaqachon ro'yxatga olingan:
+  // `main.js` → `registerIdeIpc()` → `registerModelsIpc(...)`. Shu sabab bu yerda faqat
+  // ko'prik ochiladi va kanallar qayta e'lon QILINMAYDI (ikkinchi `handle` xato beradi).
+  hardware: (refresh = false) => ipcRenderer.invoke('yide:hw-profile', { refresh }),
+  modelsCatalog: () => ipcRenderer.invoke('yide:models-catalog'),
+  modelsDownload: (id) => ipcRenderer.invoke('yide:models-download', { id }),
+  modelsCancel: (id) => ipcRenderer.invoke('yide:models-cancel', { id }),
+  modelsRemove: (id) => ipcRenderer.invoke('yide:models-remove', { id }),
+  modelsReveal: (id) => ipcRenderer.invoke('yide:models-reveal', { id }),
+  modelsExternal: () => ipcRenderer.invoke('yide:models-external'),
+  modelsAttach: (provider, model, base) => ipcRenderer.invoke('yide:models-attach', { provider, model, base }),
+  modelsMeasure: (id, tasks) => ipcRenderer.invoke('yide:models-measure', { id, tasks }),
+  modelsBenchState: () => ipcRenderer.invoke('yide:models-bench-state'),
+  imageStatus: () => ipcRenderer.invoke('yide:image-status'),
+  imageGenerate: (opts) => ipcRenderer.invoke('yide:image-generate', opts || {}),
+  imageStop: () => ipcRenderer.invoke('yide:image-stop'),
+  // Progress hodisalari yadro tomonidan IDE oynasiga yuboriladi; asosiy oyna holatni
+  // SO'ROV bilan (modelsCatalog/modelsBenchState) yangilaydi — lekin hodisa kelsa
+  // ham qabul qilamiz (kelajakda yadro manzilni kengaytirsa, qo'shimcha o'zgarish kerak emas).
+  onModelProgress: (cb) => {
+    const listener = (_e, data) => cb(data);
+    ipcRenderer.on('yide:model-progress', listener);
+    return () => ipcRenderer.removeListener('yide:model-progress', listener);
+  },
+  onModelBench: (cb) => {
+    const listener = (_e, data) => cb(data);
+    ipcRenderer.on('yide:model-bench', listener);
+    return () => ipcRenderer.removeListener('yide:model-bench', listener);
+  },
+
   // v5 rasm menyu: o'zbekcha prompt bo'lsa inglizchaga o'giriladi, so'ng rasm chiziladi.
   imageStudio: (promptUz, quality) => ipcRenderer.invoke('image:studio', { prompt: promptUz, quality }),
   translateStatus: () => ipcRenderer.invoke('translate:status'),

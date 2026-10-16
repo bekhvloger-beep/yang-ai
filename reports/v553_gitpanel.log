@@ -1,0 +1,29 @@
+
+> yang-ai@5.5.3 test:ide:git
+> node ide/test_git_panel.mjs
+
+PASS  0. Vaqtinchalik git repo yaratildi
+      → git init → 0 · isRepo(yang-gitpanel-AUlKNM) = true
+PASS  A1. Yangi fayl `??` (kuzatilmagan) sifatida ko‘rinadi
+      → fayllar=[??:birinchi.txt] · hisob={"staged":0,"unstaged":0,"untracked":1}
+PASS  B1. `gitStage` faylni indeksga qo‘yadi (stage holati yangilanadi)
+      → ok=true · index='A' · staged=true · hisob={"staged":1,"unstaged":0,"untracked":0}
+PASS  C1. Staged diff yangi fayl qatorlarini ko‘rsatadi (+)
+      → diff qatorlari=8 · +salom=true · truncated=false
+PASS  D1. `gitCommit` commit yaratadi va `gitLog` uni ko‘rsatadi
+      → hash=2002290 · log[0]="birinchi fayl qo‘shildi" · muallif=YANG Sinov · commit'dan keyingi hisob={"staged":0,"unstaged":0,"untracked":0}
+PASS  E1. O‘zgargan fayl «M» va diff’da -/+ qatorlari bor
+      → worktree='M' · staged=false · +xayr=true
+PASS  F1. `gitUnstage` faylni indeksdan chiqaradi (o‘zgarish diskda qoladi)
+      → staged=false · worktree='M' · diskda "xayr" bor=true
+PASS  G1. Ish papkasidan chiqadigan har qanday yo‘l RAD etiladi (5 ta urinish)
+      → ../birinchi.txt: yo‘l ish papkasi ichida emas: ../birinchi.txt | ../../etc/passwd: yo‘l ish papkasi ichida emas: ../../etc/passwd | ..\..\Windows\win.ini: yo‘l ish papkasi ichida emas: ..\..\Windows\win.ini | C:\Windows\win.ini: absolyut yo‘l ruxsat etilmaydi: C:\Windows\win.ini | /etc/passwd (diff): absolyut yo‘l ruxsat etilmaydi: /etc/passwd
+PASS  H1. Bo‘sh xabar, o‘zgarishsiz commit va repo bo‘lmagan papka — aniq xato qaytadi
+      → bo‘sh xabar="commit xabari bo‘sh" · o‘zgarishsiz="commit uchun o‘zgarish yo‘q (avval fayllarni belgilang)" · repo emas="bu papka Git repozitori emas"
+PASS  I1. 5000 qatordan katta diff kesiladi (`truncated: true`)
+      → qatorlar=5000 · truncated=true · bayt=73798
+PASS  J1. `gitLog` chegarasi (1..200) ushlab turiladi
+      → commits=2 (limit=1000 → 200 ga cheklandi) · eng yangisi="05978b6 katta fayl"
+
+XULOSA: 11/11 PASS
+

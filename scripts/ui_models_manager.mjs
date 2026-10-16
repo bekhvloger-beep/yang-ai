@@ -134,6 +134,22 @@ const watchdog = setTimeout(() => {
 }, 240000);
 
 log(`nishon: ${useExe ? EXE : 'dev rejim (electron .)'}`);
+// O‘RNATILGAN nusxa manba koddan ESKI bo‘lishi mumkin. U holda preload ko‘prigi va oqim shunchaki
+// yo‘q bo‘ladi va sinov «menejer ishlamaydi» degan NOTO‘G‘RI taassurot beradi (o‘lchandi: shunday
+// bo‘lgan). Shuning uchun nishonni manba bilan solishtirib, ochiq ogohlantiramiz.
+if (useExe && !process.env.YANG_APP_EXE) {
+  const srcNewest = ['main.js', 'preload.cjs', 'renderer/app.js', 'agent/engine.js']
+    .map((f) => { try { return fs.statSync(path.join(ROOT, f)).mtimeMs; } catch { return 0; } })
+    .reduce((a, b) => Math.max(a, b), 0);
+  const exeMs = (() => { try { return fs.statSync(EXE).mtimeMs; } catch { return 0; } })();
+  if (srcNewest && exeMs && srcNewest > exeMs) {
+    const days = ((srcNewest - exeMs) / 86400000).toFixed(1);
+    log(`⚠️  O‘RNATILGAN nusxa manba koddan ${days} kun eski`
+      + ` (${new Date(exeMs).toISOString().slice(0, 10)} < ${new Date(srcNewest).toISOString().slice(0, 10)})`);
+    log('    Yangi paketni tekshirish kerak: YANG_APP_EXE="dist/win-unpacked/YANG AI.exe" bering'
+      + ' yoki yangi o‘rnatuvchini o‘rnating — aks holda quyidagi natijalar ESKI nusxaga tegishli.');
+  }
+}
 log(`user-data: ${UD}`);
 const hadLlama = spawnSync('tasklist', ['/FI', 'IMAGENAME eq llama-server.exe'], { encoding: 'utf8' }).stdout.includes('llama-server.exe');
 

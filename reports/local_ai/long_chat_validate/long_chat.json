@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-10-16T17:05:13.481Z",
+  "host": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpus": 6,
+    "totalRamMb": 12215
+  },
+  "turns": 4,
+  "maxSteps": 2,
+  "contextTokens": 8192,
+  "safetyTokens": 80,
+  "wroteFiles": [
+    "modul_1.py",
+    "modul_2.py",
+    "modul_4.py"
+  ],
+  "fitNotice": "✂️ So‘rov lokal model kontekstiga (8192 token) sig‘dirildi — eski tarix qisqartirildi",
+  "perTurn": [
+    {
+      "turn": 1,
+      "kind": "yozish",
+      "seconds": 33.1,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 1253,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    },
+    {
+      "turn": 2,
+      "kind": "yozish",
+      "seconds": 44.8,
+      "calls": 3,
+      "usagePromptTokens": null,
+      "measuredTokens": 3071,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file",
+        "run_command"
+      ]
+    },
+    {
+      "turn": 3,
+      "kind": "savol",
+      "seconds": 32.8,
+      "calls": 1,
+      "usagePromptTokens": null,
+      "measuredTokens": 4178,
+      "error": null,
+      "answered": true,
+      "toolCalls": []
+    },
+    {
+      "turn": 4,
+      "kind": "yozish",
+      "seconds": 34.2,
+      "calls": 2,
+      "usagePromptTokens": null,
+      "measuredTokens": 3104,
+      "error": null,
+      "answered": true,
+      "toolCalls": [
+        "write_file"
+      ]
+    }
+  ],
+  "totals": {
+    "seconds": 144.9,
+    "requests": 8,
+    "errors": 0,
+    "maxMeasuredTokens": 4178,
+    "maxUsagePromptTokens": 0
+  },
+  "checks": [
+    {
+      "name": "A1. 🧭 Server HAQIQIY kontekst bilan ko‘tarildi (/props → n_ctx)",
+      "ok": true
+    },
+    {
+      "name": "B1. 🧵 Har navbat QABUL QILINDI — HTTP 400 «exceeds the available context size» yo‘q",
+      "ok": true
+    },
+    {
+      "name": "B2. 💬 Har navbatda model javob berdi (matn yoki tool chaqiruvi)",
+      "ok": true
+    },
+    {
+      "name": "C1. 📏 Yuborilgan so‘rov hajmi kontekstdan OSHMADI (server /tokenize bilan o‘lchandi)",
+      "ok": true
+    },
+    {
+      "name": "D1. 📚 Suhbat tarixi kontekstdan KATTA bo‘ldi (sinov haqiqiy yuklama berdi)",
+      "ok": true
+    },
+    {
+      "name": "D2. ✂️ Ilova tarixni qisqartirdi va bu foydalanuvchiga AYTILDI",
+      "ok": true
+    },
+    {
+      "name": "E1. 📄 Suhbat oxirigacha ISHLADI — model fayl yozdi",
+      "ok": true
+    },
+    {
+      "name": "F1. ⏱️ Vaqt o‘lchandi (har navbat o‘rtacha)",
+      "ok": true
+    }
+  ],
+  "verdict": "8/8 PASS"
+}

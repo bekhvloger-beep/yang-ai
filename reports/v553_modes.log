@@ -1,0 +1,21 @@
+
+> yang-ai@5.5.3 test:modes
+> node agent/test_modes_complex.mjs
+
+model: qwen2.5-coder:7b · rejimlar: solo + team
+PASS  SOLO rejimi: loyiha fayllari yozildi
+      → 3 fayl: [index.js, lib/ekub.js, lib/ortacha.js] · write_file=3 · agentlar=0 · 78.8s
+PASS  SOLO rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → exit=0
+      → SOLO jami: 78.8s · fayllar=[index.js, lib/ekub.js, lib/ortacha.js]
+PASS  TEAM rejimi: loyiha fayllari yozildi
+      → 3 fayl: [index.js, lib/ekub.js, lib/ortacha.js] · write_file=14 · agentlar=6 · 596.2s
+PASS  TEAM rejimi: natija HAQIQATDA ishlaydi (`node index.js` → 0 + «HAMMASI TOGRI»)
+      → exit=0
+      → TEAM jami: 596.2s · fayllar=[index.js, lib/ekub.js, lib/ortacha.js]
+
+--- xulosa ---
+solo   ISHLADI · 78.8s · 3 fayl
+team   ISHLADI · 596.2s · 3 fayl
+
+XULOSA: 4/4 PASS

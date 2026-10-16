@@ -1,0 +1,20 @@
+
+> yang-ai@5.5.3 test:ai:manager
+> node scripts/ui_models_manager.mjs
+
+nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-models-ui-to1K74
+CDP ulandi · __ready=true
+FAIL  1. preload ko‘prigi: menejer API si to‘liq (13 nom, IDE bilan bir xil)
+      → 0/13 · yetishmaydi=[hardware, modelsCatalog, modelsDownload, modelsCancel, modelsRemove, modelsReveal, modelsExternal, modelsAttach, modelsMeasure, modelsBenchState, imageStatus, imageGenerate, imageStop]
+FAIL  2. Yon paneldagi «Lokal AI» tugmasi menejerni ochadi
+      → tugma=false · modal ochiq=undefined
+FAIL  3. Apparat profili o‘lchanadi (CPU/RAM/video/disk + 2 daraja)
+      → «» · yulduz bloklari=0
+FAIL  4. Matn modellari ro‘yxati katalogdan chiziladi (har birida 2 yulduz bloki + talablar)
+      → qatorlar=0 · yulduz bloklari=0 (kutilgan ≥0) · talab bloklari=0
+FAIL  umumiy oqim
+      → xato: JS xato: {"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of undefined (reading 'click')\n    at <anonymous>:4:8\n    at <anonymous>:9:5","objectId":"4221861778968323698.1.2"}
+
+XULOSA: 0/5 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ui_models_manager.log
