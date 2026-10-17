@@ -1,6 +1,11 @@
 // «Lokal AI» MENYU QATORI — asosiy jarayon inspektori orqali (o‘rnatilgan nusxa yoki paket).
 //   node scripts/ui_menu_row.mjs
 //   YANG_APP_EXE="dist/win-unpacked/YANG AI.exe" node scripts/ui_menu_row.mjs
+//   YANG_DEV=1 node scripts/ui_menu_row.mjs      # o‘rnatilgan nusxa bo‘lsa ham manbadan
+//
+// Nishon tanlash: `YANG_APP_EXE` → o‘rnatilgan nusxa → `electron .` (dev). O‘rnatilgan nusxa
+// bo‘lmasa (CI) sinov SKIP qilinmaydi — manba koddan ko‘tariladi, chunki menyu asosiy
+// jarayonda quriladi va inspektor orqali tekshiruv baribir haqiqiy.
 //
 // Nega alohida sinov: renderer CDP native menyuni KO‘RMAYDI, shuning uchun menyu qatori
 // (v5.6 da qo‘shilgan «Lokal AI» bo‘limi) faqat `--inspect` orqali tekshiriladi:
@@ -25,6 +30,11 @@ const log = (s) => {
 
 const INSTALLED = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'YANG AI', 'YANG AI.exe');
 const EXE = process.env.YANG_APP_EXE || INSTALLED;
+// O‘rnatilgan nusxa bo‘lmasa (masalan CI’da) manba koddan `electron .` ko‘tariladi — menyu
+// asosiy jarayonda quriladi, shuning uchun inspektor orqali tekshiruv baribir HAQIQIY.
+const FORCE_DEV = process.env.YANG_DEV === '1';
+const useExe = !FORCE_DEV && fs.existsSync(EXE);
+const ELECTRON_BIN = useExe ? null : (await import('electron')).default;
 const UD = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-menu-'));
 const RP = Number(process.env.YANG_CDP_PORT || 9364);
 const IP = Number(process.env.YANG_INSPECT_PORT || 9374);
@@ -35,11 +45,7 @@ const check = (name, ok, ev) => {
   log(`${ok ? 'PASS' : 'FAIL'}  ${name}\n      → ${ev}`);
 };
 
-if (!fs.existsSync(EXE)) {
-  log(`SKIP: ilova topilmadi — ${EXE}\n      YANG_APP_EXE bering yoki 5.6.0 ni o‘rnating`);
-  process.exit(0);
-}
-log(`nishon: ${EXE}\nuser-data: ${UD}\n`);
+log(`nishon: ${useExe ? EXE : 'dev rejim (electron .)'}\nuser-data: ${UD}\n`);
 
 // Asosiy jarayonda `await import()` ishlamaydi (inspektor kontekstida dinamik import
 // callback yo‘q), shuning uchun `electron` modulini bir necha yo‘l bilan olamiz.
@@ -58,24 +64,30 @@ function __electronMenu() {
 `;
 
 // Oldingi nusxa hali yopilayotgan bo‘lsa, yangi jarayon singleton qulfi tufayli darhol
-// chiqib ketadi — shuning uchun avval tozalab, tugashini kutamiz.
-spawnSync('taskkill', ['/F', '/IM', 'YANG AI.exe'], { stdio: 'ignore' });
-for (let i = 0; i < 40; i += 1) {
-  const alive = spawnSync('tasklist', ['/FI', 'IMAGENAME eq YANG AI.exe'], { encoding: 'utf8' }).stdout.includes('YANG AI.exe');
-  if (!alive) break;
-  await sleep(250);
+// chiqib ketadi — shuning uchun avval tozalab, tugashini kutamiz. Dev rejimda esa
+// foydalanuvchining ochiq ilovasini o‘ldirmaymiz (user-data papkasi alohida — qulf yo‘q).
+if (useExe) {
+  spawnSync('taskkill', ['/F', '/IM', 'YANG AI.exe'], { stdio: 'ignore' });
+  for (let i = 0; i < 40; i += 1) {
+    const alive = spawnSync('tasklist', ['/FI', 'IMAGENAME eq YANG AI.exe'], { encoding: 'utf8' }).stdout.includes('YANG AI.exe');
+    if (!alive) break;
+    await sleep(250);
+  }
+  await sleep(1200);
 }
-await sleep(1200);
 
 let out = '';
-const child = spawn(EXE, [`--remote-debugging-port=${RP}`, `--inspect=${IP}`, `--user-data-dir=${UD}`], {
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const args = [`--remote-debugging-port=${RP}`, `--inspect=${IP}`, `--user-data-dir=${UD}`];
+const child = useExe
+  ? spawn(EXE, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+  : spawn(ELECTRON_BIN, ['.', ...args], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
 child.stdout.on('data', (d) => { out += String(d); });
 child.stderr.on('data', (d) => { out += String(d); });
 
 const cleanup = () => {
-  spawnSync('taskkill', ['/F', '/IM', 'YANG AI.exe'], { stdio: 'ignore' });
+  // Dev rejimda jarayon nomi electron.exe — faqat o‘zimiz ko‘targan daraxtni yopamiz.
+  if (useExe) spawnSync('taskkill', ['/F', '/IM', 'YANG AI.exe'], { stdio: 'ignore' });
+  else if (child.pid) spawnSync('taskkill', ['/F', '/T', '/PID', String(child.pid)], { stdio: 'ignore' });
   try { fs.rmSync(UD, { recursive: true, force: true }); } catch { /* */ }
 };
 

@@ -39,7 +39,8 @@ async function pickFreePort(start) {
 
 const INSTALLED = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'YANG AI', 'YANG AI.exe');
 const EXE = process.env.YANG_APP_EXE || INSTALLED;
-const useExe = fs.existsSync(EXE);
+// `YANG_DEV=1` — o‘rnatilgan nusxa bo‘lsa ham manbadan ko‘tarish (CI va dev tekshiruvi uchun).
+const useExe = process.env.YANG_DEV !== '1' && fs.existsSync(EXE);
 const ELECTRON_BIN = useExe ? EXE : (await import('electron')).default;
 const UD = fs.mkdtempSync(path.join(os.tmpdir(), 'yang-models-ui-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

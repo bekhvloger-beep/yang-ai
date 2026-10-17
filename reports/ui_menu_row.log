@@ -1,5 +1,5 @@
-nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
-user-data: C:\Users\behru\AppData\Local\Temp\yang-menu-C40MlM
+nishon: dev rejim (electron .)
+user-data: C:\Users\behru\AppData\Local\Temp\yang-menu-qlFu7B
 
 PASS  1. Menyu qatorida «Lokal AI» bor va 5 band ko‘rinadi (Ctrl+Shift+M bilan)
       → yuqori qatorlar=[Fayl | Tahrir | Ko‘rinish | Lokal AI | Oyna | Yordam] · bandlar=[Lokal AI menejeri — model bozori | Kompyuterda bor AI (Ollama / LM Studio) | Lokal rasm modellari | Ovoz modeli (o‘zbekcha nutq) | Kodlash rejimi (Kod AI)]
