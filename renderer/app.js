@@ -1758,6 +1758,9 @@ function imgStudioInit() {
     $('imgStudioGo').disabled = false;
     if (r.error) {
       status.textContent = '⚠ ' + r.error + (r.promptEn ? '\n(natija prompti: ' + r.promptEn + ')' : '');
+      // Rasm endi FAQAT lokal: dvigatel/model yo‘q bo‘lsa menejerni darhol ochamiz —
+      // foydalanuvchi «nega ishlamayapti?» degan savol bilan qolmasin.
+      if (r.needsEngine) openModels('runtime').catch(() => {});
       return;
     }
     status.innerHTML = `rasm tayyor: ${r.path}\nProvayder: ${r.via} · ${r.size}\n(natija prompti: ${r.promptEn})`;
@@ -2859,6 +2862,12 @@ function modelRow(it) {
       '<div class="mdl-bar"><div class="mdl-bar-fill" style="width:' + (p.percent || 0) + '%"></div></div>' +
       `<span class="mdl-pct">${p.state === 'extracting' ? 'arxiv ochilmoqda…' : `${p.percent || 0}%`}</span>` +
       `<button class="btn btn-ghost" data-act="cancel" data-id="${escapeHtml(it.id)}">Bekor</button></div>`;
+  } else if (p && p.state === 'error') {
+    // Xato ILGARI KO‘RINMASDI: qator jimgina «O‘rnatish» tugmasiga qaytardi va
+    // foydalanuvchi nima bo‘lganini bilmasdi. Endi sabab va «Qayta urinish» ko‘rinadi.
+    actions = '<div class="mdl-actions">' +
+      `<span class="mdl-err">⚠️ ${escapeHtml(p.error || 'yuklab olish uzildi')}</span>` +
+      `<button class="btn btn-primary" data-act="download" data-id="${escapeHtml(it.id)}">Qayta urinish</button></div>`;
   } else if (it.installed) {
     actions = '<div class="mdl-actions">' +
       `<button class="btn btn-ghost" data-act="reveal" data-id="${escapeHtml(it.id)}">Papkada ko‘rsatish</button>` +
@@ -3190,6 +3199,25 @@ async function refreshModelsSummary() {
   // Menyudagi «Kodlash rejimi» belgisi o'zgarganda tugma holati ham yangilanadi.
   if (api.onCodingMode) api.onCodingMode((d) => {
     if (cfg && cfg.config) { cfg.config.codingMode = !!(d && d.on); syncCodingMode(); }
+  });
+  // Yuklab olish progressi — JONLI hodisa. Poll (900 ms) zaxira bo‘lib qoladi, lekin
+  // ekran endi hodisaga tayanadi: foiz qotib qolmaydi va xato darhol ko‘rinadi.
+  if (api.onModelProgress) api.onModelProgress((p) => {
+    try {
+      if (!p || !p.id || !modelsMgr.data) return;
+      const it = (modelsMgr.data.items || []).find((x) => x.id === p.id);
+      if (!it) return;
+      it.progress = p;
+      if (p.state === 'downloading' || p.state === 'extracting') modelsMgr.active.add(p.id);
+      else modelsMgr.active.delete(p.id);
+      renderModels();
+      if (p.state === 'done') {
+        activityLine('', `✅ Yuklab olindi: ${it.name} — endi o‘rnatilgan`);
+        refreshModels().catch(() => {});
+      } else if (p.state === 'error') {
+        activityLine('', `⚠️ ${it.name}: ${p.error || 'yuklab olish uzildi'}`);
+      }
+    } catch (e) { catchLog('model progressi (hodisa)', e); }
   });
 })();
 

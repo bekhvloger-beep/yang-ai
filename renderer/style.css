@@ -830,6 +830,8 @@ body { font-size: 13px; }
 .mdl-bar { flex: 1; height: 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border-2); overflow: hidden; }
 .mdl-bar-fill { height: 100%; background: var(--accent); width: 0; transition: width .25s ease; }
 .mdl-pct { font-size: 11px; color: var(--text-dim); min-width: 118px; text-align: right; }
+/* Yuklab olish xatosi: sabab qator ichida ko‘rinadi (ilgari jimgina yo‘qolardi). */
+.mdl-err { flex: 1; font-size: 11px; color: #ff9b9b; line-height: 1.45; }
 
 /* Lokal rasm generatsiyasi (stable-diffusion.cpp) */
 .models-image { border: 1px solid var(--border-2); border-radius: 10px; padding: 9px; background: var(--bg-2); }

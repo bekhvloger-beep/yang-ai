@@ -1,0 +1,19 @@
+nishon: dev rejim (electron .)
+user-data: C:\Users\behru\AppData\Local\Temp\yang-dl-KD6g1r
+
+CDP ulandi
+PASS  1. Katalog o‘qiladi (12 yozuv) va har birida holat bor
+      → yozuvlar=12 · o‘rnatilgan=[yo‘q]
+PASS  2. «Yuklab olish» boshlanadi
+      → job={"id":"runtime-sd-cpu","state":"downloading","received":0,"total":17574585,"percent":0,"mbps":0,"seconds":0,"error":""}
+PASS  3. Yuklab olish TUGAYDI va progress 100% gacha o‘sadi
+      → namunalar=[downloading 0% → downloading 2.5% → downloading 6.8% → downloading 8.9% → downloading 10.3% → downloading 11.7% → downloading 12.5% → downloading 13.4% → downloading 14.4% → downloading 15.5% → downloading 16.4% → downloading 17.4% → downloading 18.5% → downloading 19.9% → downloading 20.9% → downloading 21.9% → downloading 22.9% → downloading 24.1% → downloading 24.9% → downloading 25.6% → downloading 26.6% → downloading 27.7% → downloading 28.7% → downloading 30% → downloading 31% → downloading 32.2% → downloading 33.5% → downloading 34.9% → downloading 36.3% → downloading 37.8% → downloading 39% → downloading 40.1% → downloading 41.2% → downloading 42.4% → downloading 43.7% → downloading 44.9% → downloading 46.2% → downloading 47.7% → downloading 49.4% → downloading 51.3% → downloading 53.3% → downloading 55.7% → downloading 58.5% → downloading 60.6% → downloading 62.3% → downloading 64.2% → downloading 66.3% → downloading 68.7% → downloading 70.8% → downloading 73% → downloading 75.4% → downloading 77% → downloading 78.5% → downloading 80.1% → downloading 81.7% → downloading 83.8% → downloading 86.1% → downloading 88.3% → downloading 90.4% → downloading 92.7% → downloading 95.2% → downloading 97.2% → downloading 99.1% → extracting 100%] · fayl=models\sd\cpu\sd-cli.exe · o‘sdi
+PASS  4. Dvigatel fayli diskda (sd-cli.exe)
+      → models\sd\cpu\sd-cli.exe · 649 KB
+PASS  5. «O‘chirish» dvigatelni olib tashlaydi (holat yangilanadi)
+      → xato=«» · installed=false · fayl=yo‘q
+PASS  6. O‘chirilgan dvigatelni QAYTA o‘rnatish ishlaydi
+      → boshlandi=true · o‘rnatildi=true
+
+XULOSA: 6/6 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ai_download.log

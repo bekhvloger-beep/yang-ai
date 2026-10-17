@@ -15,7 +15,7 @@ YANG AI — foydalanuvchi kompyuterida ishlaydigan ZCode/Codex-uslubidagi agenti
 - 👁 **Vision** — skrinshot va rasm tahlili
 - 🔍 **Ollama / LM Studio skan** — kompyuteringizdagi lokal AI serverlarni topadi, har bir modelning hajmi va taxminiy RAM iste'molini ko'rsatadi, va siz xohlagan lokal modelni bitta bosishda asosiy AI qiladi. Faqat localhost serverlar API kalitsiz ulanadi.
 - 🖥 **IDE paneli (5.0)** — o'ng panelda fayl daraxti, terminal va "Faoliyat" jurnali: agent aynan qaysi faylni ochdi, yozdi, o'zgartirdi, ishga tushirilgan buyruq va natijasi jonli ko'rinadi. Har qanday AI yozgan kodni IDE ichida ishlatib, xatoni aniqlashtirib AI ga kaytarib bermisiz.
-- 🎨 **Rasm studiyasi (5.0)** — o'zbekcha prompt avtomatik inglizchaga tarjima qilinadi, sifat tanlanadi (1080 / 2K / 4K) va rasm generatsiya qilinadi.
+- 🎨 **Rasm studiyasi (5.0)** — o'zbekcha prompt avtomatik inglizchaga tarjima qilinadi va rasm **kompyuteringizda** chiziladi: `stable-diffusion.cpp` + SD1.5 (API kaliti, kvota va internet shart emas). O'lcham 512×512, «sifat» qadam soni (20/30/45). Dvigatel yoki model bo'lmasa studiya menejerni ochib, nima yuklash kerakligini aytadi.
 - 🔄 **Avtomatik yangilanish** — GitHub Releases orqali
 - 🔒 **Xavfsizlik** — buyruqlar uchun ruxsat so'rovi (approval tizimi)
 

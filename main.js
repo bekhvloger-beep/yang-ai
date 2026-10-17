@@ -10,7 +10,7 @@ import { AgentEngine } from './agent/engine.js';
 import { TeamRunner } from './agent/team.js';
 import { getAllProviders, getProviderKey, isProviderEnabled, fetchQuota, scanLocalProviders, fetchModelList, PROVIDER_PRESETS, localEndpoint } from './agent/providers.js';
 import { classifyFile, extractText } from './agent/formats.js';
-import { generateImage } from './agent/imagegen.js';
+import { generateImage, imageEngineStatus } from './agent/imagegen.js';
 import { configureSd } from './agent/local_sd.js';
 import { translatorUp, translateSettings, translateText } from './agent/translate.js';
 import {
@@ -24,7 +24,7 @@ import { registerIdeIpc, openIdeWindow, disposeIde, ideWindow } from './ide/ide_
 // paketdagi katalog USTIGA qo'yiladi — tavsif/yulduz/yangi modellar relizsiz ko'rinadi.
 import { setRemoteCatalog } from './agent/remote_catalog.js';
 // Katalog keshini bekor qilish uchun (remote nusxa kelganda darhol ko'rinishi kerak).
-import { invalidateCatalog } from './ide/ide_models.js';
+import { invalidateCatalog, onModelProgress } from './ide/ide_models.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname);
@@ -746,17 +746,27 @@ function registerIpc() {
       const t = await translateText(cfg.config, s, { target: 'eng_Latn' });
       if (t) promptEn = t;
     }
-    const sizeByQ = { '1080': '1024x1024', '2160': '2048x2048', '4320': '4096x4096' };
-    const size = sizeByQ[String(quality)] || '1024x1024';
+    // LOKAL rasm: SD1.5/SD-Turbo 512 px da o‘rgatilgan, shuning uchun «sifat» o‘lcham
+    // emas — QADAM soni. 1024/2048/4096 o‘lcham faqat bulut modellari uchun mantiqiy edi.
+    const stepsByQ = { '1080': 20, '2160': 30, '4320': 45 };
+    const size = '512x512';
+    const steps = stepsByQ[String(quality)] || 20;
     try {
-      const result = await generateImage({ prompt: promptEn, config: cfg.config, registerChildSignal: null, size });
+      const result = await generateImage({
+        prompt: promptEn,
+        config: { ...cfg.config, imagegen: { ...((cfg.config && cfg.config.imagegen) || {}), size, steps } },
+        registerChildSignal: null,
+        size,
+      });
       const outName = `image_${Date.now()}.png`;
       const ws = (await activeWorkspace()) || app.getPath('pictures');
       const outPath = path.isAbsolute(ws) ? path.join(ws, outName) : path.join(app.getPath('pictures'), outName);
       await fsp.writeFile(outPath, result.buffer);
-      return { path: outPath, via: result.via, promptEn, size };
+      return { path: outPath, via: result.via, promptEn, size: `${result.width}×${result.height}`, steps: result.steps };
     } catch (e) {
-      return { error: e.message || String(e), promptEn };
+      // `needsEngine` faqat dvigatel/model haqiqatan yo‘q bo‘lsa — boshqa xatoda
+      // menejerni ochish chalg‘itadi (masalan tarjima xatosi).
+      return { error: e.message || String(e), promptEn, needsEngine: !imageEngineStatus().available };
     }
   });
   ipcMain.handle('providers:fetch-models', async (_e, { base, key }) => {
@@ -1106,6 +1116,10 @@ app.whenReady().then(async () => {
     app.isPackaged ? path.join(process.resourcesPath, 'local-ai', 'sd') : path.join(ROOT, 'local-ai', 'sd'),
   ]);
   registerIdeIpc();   // to'liq IDE yadrosi (yide:* kanallari) — asosiy ilova ichida
+  // Yuklab olish progressi ASOSIY oynaga ham jonli yuboriladi. Ilgari yadro hodisani
+  // faqat IDE oynasiga yuborardi, asosiy oyna esa 900 ms poll bilan kuzatardi — bitta
+  // uzilishda foiz «qotib» qolardi (o‘lchandi: 75% da 30 daqiqa).
+  onModelProgress((view) => broadcast('yide:model-progress', view));
   buildMenu();
   await createWindow();
   ensureTranslator();

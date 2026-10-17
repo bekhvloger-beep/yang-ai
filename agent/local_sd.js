@@ -41,7 +41,9 @@ export function resolveSdDirs(extra = []) {
   if (process.env.YANG_SD_DIR) push(process.env.YANG_SD_DIR);
   configuredDirs.forEach(push);
   (Array.isArray(extra) ? extra : [extra]).forEach(push);
-  push(DEV_FALLBACK);
+  // `YANG_SD_NO_DEV=1` — sinovda «dvigatel yo‘q» holatini tekshirish uchun repo zaxirasi
+  // hisobga olinmaydi (aks holda dev muhitda u doim topilib, xato yo‘li sinalmaydi).
+  if (process.env.YANG_SD_NO_DEV !== '1') push(DEV_FALLBACK);
   return out;
 }
 
@@ -56,6 +58,30 @@ export function findSdBinary(dirs = resolveSdDirs()) {
     }
   }
   return null;
+}
+
+/** Muayyan backend bo‘yicha binar: `vulkan` (ggml-vulkan.dll bor) yoki `cpu` (yo‘q).
+ * 4 GB video kartada katta model sig‘masa, CPU nusxa bilan qayta urinish uchun kerak. */
+export function findSdBinaryFor(dirs = resolveSdDirs(), backend = '') {
+  const want = String(backend || '').toLowerCase();
+  for (const d of dirs) {
+    for (const sub of EXE_SUBDIRS) {
+      const dir = path.join(d, sub);
+      const hasVulkan = fs.existsSync(path.join(dir, 'ggml-vulkan.dll'));
+      if (want === 'vulkan' && !hasVulkan) continue;
+      if (want === 'cpu' && hasVulkan) continue;
+      for (const name of EXE_NAMES) {
+        const p = path.join(dir, name);
+        try { if (fs.statSync(p).isFile()) return { exe: p, dir, backend: hasVulkan ? 'vulkan' : 'cpu' }; } catch { /* yo‘q */ }
+      }
+    }
+  }
+  return null;
+}
+
+/** Video xotirasi yetmaganini bildiruvchi sd-cli xabarlari. */
+function isOutOfVram(message) {
+  return /OutOfDeviceMemory|Device memory allocation of size .* failed|out of memory|backend buffer failed|failed during weight preparation/i.test(String(message || ''));
 }
 
 /** Rasm modelini izlaydi. `preferName` berilsa — avval o'sha. */
@@ -155,16 +181,17 @@ export async function generateLocalImage({
   if (Number(threads) > 0) args.push('-t', String(threads));
 
   const startedAt = Date.now();
-  const log = [];
-  await new Promise((resolve, reject) => {
-    const child = spawn(st.exe, args, { cwd: st.dir, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+
+  const runOnce = (bin) => new Promise((resolve, reject) => {
+    const log = [];
+    const child = spawn(bin.exe, args, { cwd: bin.dir, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
     let settled = false;
     const finish = (err) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
       if (signal) signal.removeEventListener('abort', onAbort);
-      if (err) reject(err); else resolve();
+      if (err) reject(err); else resolve(log);
     };
     const timer = setTimeout(() => {
       try { child.kill(); } catch { /* o'lgan */ }
@@ -192,6 +219,30 @@ export async function generateLocalImage({
     });
   });
 
+  // `YANG_SD_BACKEND=cpu|vulkan` — backendni majburan tanlash (sinov va 4 GB VRAM holati).
+  let bin = st;
+  const forced = String(process.env.YANG_SD_BACKEND || '').toLowerCase();
+  if (forced === 'cpu' || forced === 'vulkan') {
+    const b = findSdBinaryFor(dirs, forced);
+    if (b && path.resolve(b.exe) !== path.resolve(st.exe)) bin = { ...st, exe: b.exe, dir: b.dir, backend: b.backend };
+  }
+
+  let log = [];
+  let usedCpuFallback = false;
+  try {
+    log = await runOnce(bin);
+  } catch (e) {
+    // 4 GB video karta + katta model (SD-Turbo fp32) → Vulkan OOM. CPU nusxa bo‘lsa,
+    // o‘sha bilan bir marta qayta urinamiz — foydalanuvchi «neye ishlamayapti» deb
+    // qolmasin, rasm baribir chiqadi (sekinroq).
+    const cpu = bin.backend === 'vulkan' ? findSdBinaryFor(dirs, 'cpu') : null;
+    if (!isOutOfVram(e.message) || !cpu || path.resolve(cpu.exe) === path.resolve(bin.exe)) throw e;
+    usedCpuFallback = true;
+    bin = { ...st, exe: cpu.exe, dir: cpu.dir, backend: 'cpu' };
+    log = await runOnce(bin);
+    log.push('video xotirasi yetmadi — CPU dvigatel bilan qayta urinildi');
+  }
+
   let buffer;
   try {
     buffer = await fsp.readFile(outPath);
@@ -206,7 +257,7 @@ export async function generateLocalImage({
     mime: 'image/png',
     seconds: Number(((Date.now() - startedAt) / 1000).toFixed(1)),
     path: outPath,
-    via: `Lokal · stable-diffusion.cpp (${st.backend}) · ${st.model.file}`,
+    via: `Lokal · stable-diffusion.cpp (${bin.backend}${usedCpuFallback ? ', CPU zaxira' : ''}) · ${st.model.file}`,
     width,
     height,
     steps: useSteps,

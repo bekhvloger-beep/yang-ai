@@ -1,0 +1,15 @@
+server: http://127.0.0.1:55924/model.bin
+katalog: C:\Users\behru\AppData\Local\Temp\yang-catalog-stall-1792256782189.json
+user-data: C:\Users\behru\AppData\Local\Temp\yang-stall-g4Nq3J
+
+PASS  1. Jim qotish ANIQLANADI: xato beriladi (abadiy osilib qolmaydi)
+      → holat=error · 16 s · xato=«yuklab olish 15 s davomida to‘xtab qoldi — qayta urinib ko‘ring (1 MB saqlandi, davom etadi)»
+PASS  2. Qotishda `.part` SAQLANADI (yuklangan qism yo‘qolmaydi)
+      → part=1024 KB · yakuniy fayl=yo‘q
+PASS  3. Qayta urinishda HTTP Range bilan DAVOM etadi (noldan emas)
+      → so‘rov=bytes=1048576- · oldingi part=1024 KB
+PASS  4. Davom ettirib yuklab olish TUGAYDI va fayl to‘liq
+      → holat=done · hajm=3145728 / 3145728
+
+XULOSA: 4/4 PASS · qotgan socket=1
+jurnal: D:\loyiha\ChatDev-main\reports\ai_download_stall.log

@@ -258,6 +258,20 @@ check('ide_models.js: apparat profili, moslik bahosi va tashqi AI skani mavjud',
 check('Yuklab olish: oqim (progress), bekor qilish va hajm tekshiruvi bor',
   /function startDownload/.test(modelsSrc) && /model-progress/.test(modelsSrc)
   && /controller\.abort/.test(modelsSrc) && /hajm mos emas/.test(modelsSrc));
+check('Yuklab olish jim uzilishda QOTMAYDI: watchdog + `.part` saqlanadi + Range bilan davom etadi',
+  /IDLE_MS/.test(modelsSrc) && /job\.stalled/.test(modelsSrc) && /content-range/i.test(modelsSrc)
+  && /Range: `bytes=\$\{resumeFrom\}-`/.test(modelsSrc) && /if \(canceled && job\.part\)/.test(modelsSrc)
+  && /flags: resumed \? 'a' : 'w'/.test(modelsSrc));
+const imagegenSrc = fs.readFileSync(path.join(HERE, '..', 'agent', 'imagegen.js'), 'utf8');
+check('Rasm generatsiyasi FAQAT lokal: bulut/AI API zanjiri yo‘q',
+  /generateLocalImage/.test(imagegenSrc) && /faqat LOKAL/.test(imagegenSrc)
+  && !/generativelanguage\.googleapis|api\.openai\.com|openrouter\.ai|ai-gateway\.vercel\.sh/.test(imagegenSrc));
+const mainAppSrc = fs.readFileSync(path.join(HERE, '..', 'main.js'), 'utf8');
+// Diqqat: `appSrc` — IDE renderer'i; ASOSIY oynaniki `renderer/app.js`.
+const mainWindowSrc = fs.readFileSync(path.join(HERE, '..', 'renderer', 'app.js'), 'utf8');
+check('Progress asosiy oynaga JONLI hodisa bilan boradi (poll qotib qolmaydi)',
+  /onModelProgress\(\(view\) => broadcast\('yide:model-progress'/.test(mainAppSrc)
+  && /api\.onModelProgress/.test(mainWindowSrc));
 check('Modellar yozsa bo‘ladigan papkaga tushadi (userData/models), ilova nusxasi saqlanadi',
   /app\.getPath\('userData'\), 'models'/.test(modelsSrc) && /export function modelDirs/.test(modelsSrc)
   && /resourcesPath, 'local-ai'/.test(modelsSrc));

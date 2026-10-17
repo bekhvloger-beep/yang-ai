@@ -1,0 +1,108 @@
+models dir: D:/yang-ai-e2e-models
+user-data: C:\Users\behru\AppData\Local\Temp\yang-img-nwrB0q (YANG_IGNORE_BUNDLED=1)
+
+PASS  1. Katalogda rasm modellari va dvigatellar ro‘yxati
+      → image-sd15-fp16 (2033.9 MB) · image-dreamshaper8 (2033.8 MB) · image-sd-turbo-fp32 (4973.0 MB) · runtime-sd-vulkan (28.8 MB) · runtime-sd-cpu (16.8 MB)
+      … Rasm dvigateli — stable-diffusion.cpp (Vulkan, AMD/NVIDIA/Intel): downloading 0% 0 MB/s
+PASS  2. Dvigatel yuklandi: runtime-sd-vulkan
+      → 41 s · 85.6 MB diskda
+FAIL  3. Dvigatel holati «tayyor» (sd-cli + model topildi)
+      → {"available":false,"backend":"vulkan","exe":"sd-cli.exe","reason":"rasm modeli (.safetensors) topilmadi"}
+
+--- Stable Diffusion 1.5 (fp16, 512×512) (2033.9 MB) ---
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 0% 0 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 0.2% 4.03 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 0.6% 3.05 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 0.7% 3.02 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 0.9% 2.73 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 25.3% 3.3 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 25.6% 3.31 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 25.9% 3.31 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 50.2% 3.35 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 50.3% 3.35 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 50.6% 3.34 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 50.9% 3.35 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 75% 3.37 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 75.2% 3.36 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 75.4% 3.36 MB/s
+      … Stable Diffusion 1.5 (fp16, 512×512): downloading 75.6% 3.36 MB/s
+PASS  4. Yuklab olindi: Stable Diffusion 1.5 (fp16, 512×512)
+      → 616 s
+PASS  5. Rasm yaratdi: Stable Diffusion 1.5 (fp16, 512×512)
+      → Lokal · stable-diffusion.cpp (vulkan) · v1-5-pruned-emaonly-fp16.safetensors · 17.2 s · rsm-1792254001836.png · PNG=PNG
+PASS  6. O‘chirildi: Stable Diffusion 1.5 (fp16, 512×512)
+      → xato=«» · installed=false · diskda 85.7 MB
+
+--- DreamShaper 8 (SD1.5, sifatliroq) (2033.8 MB) ---
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 0% 0 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 0.4% 3.82 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 0.6% 3.72 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 0.8% 3.37 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 25% 3.34 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 25.3% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 25.6% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 25.9% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 50.1% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 50.4% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 50.7% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 50.9% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 75.2% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 75.3% 3.35 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 75.5% 3.34 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 75.7% 3.34 MB/s
+      … DreamShaper 8 (SD1.5, sifatliroq): downloading 75.9% 3.34 MB/s
+PASS  4. Yuklab olindi: DreamShaper 8 (SD1.5, sifatliroq)
+      → 616 s
+PASS  5. Rasm yaratdi: DreamShaper 8 (SD1.5, sifatliroq)
+      → Lokal · stable-diffusion.cpp (vulkan) · DreamShaper_8_pruned.safetensors · 7.5 s · rsm-1792254625880.png · PNG=PNG
+PASS  6. O‘chirildi: DreamShaper 8 (SD1.5, sifatliroq)
+      → xato=«» · installed=false · diskda 85.6 MB
+
+--- SD-Turbo (1–4 qadam, juda tez) (4973.0 MB) ---
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0% 0 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.1% 2.29 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.2% 2.48 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.3% 2.75 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.4% 2.79 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.4% 2.85 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.6% 3.01 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.7% 3.24 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.8% 3.3 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 0.9% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25% 2.98 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.1% 2.98 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.2% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.3% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.4% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.5% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.6% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.7% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.8% 2.99 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 25.9% 3 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.1% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.2% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.3% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.4% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.5% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.6% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.7% 3.18 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 50.8% 3.19 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.2% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.3% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.4% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.5% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.6% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.7% 3.25 MB/s
+      … SD-Turbo (1–4 qadam, juda tez): downloading 75.9% 3.25 MB/s
+PASS  4. Yuklab olindi: SD-Turbo (1–4 qadam, juda tez)
+      → 1510 s
+FAIL  5. Rasm yaratdi: SD-Turbo (1–4 qadam, juda tez)
+      → xato: sd-cli 3221226505 kodi bilan tugadi — [I] clip build cached graph cut plan done (taking 8 ms) --- ggml_graph_cut.cpp:1034 | ggml_vulkan: Device memory allocation of size 1063428096 failed. | ggml_vulkan: vk::Device::allocateMemory: ErrorOutOfDeviceMemory | [E] model manager alloc params backend buffer failed, size = 1014.16MB --- model_manager.cpp:900 | [E] clip segment 1/1 (graph) failed during weight preparation --- ggml_runner.cpp:899 | D:\a\stable-diffusion.cpp\stable-diffusion.cpp\src\conditioning/conditioner.hpp:499: GGML_ASSERT(!chunk_hidden_states.empty()) failed
+PASS  6. O‘chirildi: SD-Turbo (1–4 qadam, juda tez)
+      → xato=«» · installed=false · diskda 85.6 MB
+SKIP 7. SD-Turbo (4973.0 MB): bo‘sh joy ? — yuklab olish alohida yuritiladi
+
+XULOSA: 10/12 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\image_models_e2e.log

@@ -57,14 +57,21 @@ export function bundledModelsDir() {
   return app.isPackaged ? path.join(process.resourcesPath, 'local-ai') : path.join(ROOT_APP, 'local-ai');
 }
 
+/** `YANG_IGNORE_BUNDLED=1` — sinov uchun: ilova bilan kelgan nusxa «o‘rnatilgan» deb
+ * hisoblanmaydi (CI’da og‘ir gguf/dvigatel yo‘q; download → delete oqimini toza tekshirish).
+ * Katalog baribir paketdan o‘qiladi — faqat model/dvigatel qidiriladigan ildizlar o‘zgaradi. */
+const ignoreBundled = () => process.env.YANG_IGNORE_BUNDLED === '1';
+
 /** Model qidiriladigan papkalar: avval foydalanuvchiniki (yangiroq), keyin ilovaniki. */
 export function modelDirs() {
-  return [userModelsDir(), bundledModelsDir()];
+  return ignoreBundled() ? [userModelsDir()] : [userModelsDir(), bundledModelsDir()];
 }
 
 /** `agent/local_sd.js` uchun rasm dvigateli papkalari. */
 export function sdModelDirs() {
-  return [path.join(userModelsDir(), 'sd'), path.join(bundledModelsDir(), 'sd')];
+  return ignoreBundled()
+    ? [path.join(userModelsDir(), 'sd')]
+    : [path.join(userModelsDir(), 'sd'), path.join(bundledModelsDir(), 'sd')];
 }
 
 /* ------------------------------------------------------------------ katalog */
@@ -73,7 +80,9 @@ let catalogCacheAt = 0;
 
 export function loadCatalog() {
   if (catalogCache && Date.now() - catalogCacheAt < 10000) return catalogCache;
-  const file = path.join(bundledModelsDir(), 'catalog.json');
+  // Sinovlar uchun katalogni almashtirish (masalan mahalliy HTTP server bilan uzilishni
+  // tekshirish). Oddiy ishda har doim paketdagi `local-ai/catalog.json` o‘qiladi.
+  const file = String(process.env.YANG_CATALOG_FILE || '').trim() || path.join(bundledModelsDir(), 'catalog.json');
   let raw = null;
   try {
     raw = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -501,6 +510,18 @@ export function installedInfo(item) {
 const downloads = new Map();      // id -> job
 let sendFn = () => {};
 
+// Asosiy oynada ham progress JONLI ko‘rinsin: ilgari holat faqat so‘rov bilan
+// (900 ms poll) yangilanardi va bitta uzilishda foiz «qotib» qolardi.
+const progressSubs = new Set();
+export function onModelProgress(cb) {
+  if (typeof cb !== 'function') return () => {};
+  progressSubs.add(cb);
+  return () => progressSubs.delete(cb);
+}
+
+// Tarmoq jim uzilsa (CDN ulanishni yopmaydi) oqim abadiy osilib qolmasin.
+const IDLE_MS = Math.max(15000, Number(process.env.YANG_DL_IDLE_MS) || 60000);
+
 function jobView(job) {
   return {
     id: job.item.id,
@@ -515,7 +536,9 @@ function jobView(job) {
 }
 
 function emitProgress(job) {
-  try { sendFn(`${CH}:model-progress`, jobView(job)); } catch { /* oyna yopilgan */ }
+  const view = jobView(job);
+  try { sendFn(`${CH}:model-progress`, view); } catch { /* oyna yopilgan */ }
+  for (const cb of progressSubs) { try { cb(view); } catch { /* obunachi xatosi testni to‘xtatmaydi */ } }
 }
 
 function extractZip(zipPath, destDir) {
@@ -537,37 +560,90 @@ function extractZip(zipPath, destDir) {
   }
 }
 
+async function partSize(p) {
+  try { return (await fsp.stat(p)).size; } catch { return 0; }
+}
+
 async function runDownload(job) {
   const { item } = job;
   const dir = path.join(userModelsDir(), item.subdir || '');
   await fsp.mkdir(dir, { recursive: true });
   job.dest = path.join(dir, item.file);
   job.part = `${job.dest}.part`;
-  await fsp.rm(job.part, { force: true });
 
-  const res = await fetch(item.url, { signal: job.controller.signal, redirect: 'follow' });
+  // YARIM QOLGAN FAYL: avvalgi urinish `/part` qoldirgan bo‘lsa, uni O‘CHIRMAYMIZ —
+  // HTTP Range bilan davom etamiz. 2 GB ni noldan yuklashdan ko‘ra 1,5 GB dan davom
+  // etish tez; foydalanuvchi «75% da qotdi» deganda esa yo‘qotadigan narsa qolmaydi.
+  const resumeFrom = await partSize(job.part);
+  job.received = resumeFrom;
+  job.total = Number(item.bytes) || 0;
+  if (resumeFrom > 0) emitProgress(job);
+
+  const res = await fetch(item.url, {
+    headers: resumeFrom > 0 ? { Range: `bytes=${resumeFrom}-` } : {},
+    signal: job.controller.signal,
+    redirect: 'follow',
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status} — ${item.url.slice(0, 80)}`);
-  const total = Number(res.headers.get('content-length')) || Number(item.bytes) || 0;
-  job.total = total;
+  const resumed = res.status === 206 && resumeFrom > 0;
+  if (resumeFrom > 0 && !resumed) {
+    // Server Range’ni qo‘llamadi — boshidan yozamiz (aks holda fayl aralashib buziladi).
+    job.received = 0;
+    await fsp.rm(job.part, { force: true });
+  }
+  const len = Number(res.headers.get('content-length')) || 0;
+  // `Content-Range: bytes 1048576-3145727/3145728` — bu yerda 3145728 FAYLNING TO‘LIQ
+  // hajmi, qolgan qism emas. Ilgari unga resume qismini qo‘shib yuborardim va hajm
+  // tekshiruvi soxta xato berardi (sinovda ko‘rindi).
+  const rangeTotal = Number((String(res.headers.get('content-range') || '').match(/\/(\d+)$/) || [])[1]) || 0;
+  job.total = rangeTotal || (resumed ? job.received + len : len || Number(item.bytes) || 0);
+  job.resumedFrom = resumed ? resumeFrom : 0;
 
   const startedAt = Date.now();
+  const baseReceived = job.received;
+  let lastChunkAt = Date.now();
+  // JIM UZILISH: CDN socketni yopmasa oqim abadiy osilib qolardi (o‘lchandi: foiz
+  // 75% da qotdi, xato ham bermadi). Endi ma’lumot kelmasa — aniq xato va `.part` saqlanadi.
+  const watchdog = setInterval(() => {
+    if (Date.now() - lastChunkAt > IDLE_MS) {
+      job.stalled = true;
+      try { job.controller.abort(); } catch { /* allaqachon yopilgan */ }
+    }
+  }, Math.min(5000, Math.max(1000, Math.floor(IDLE_MS / 4))));
   const counter = new Transform({
     transform(chunk, _enc, cb) {
+      lastChunkAt = Date.now();
       job.received += chunk.length;
       const now = Date.now();
       if (now - (job.lastEmit || 0) > 500) {
         job.lastEmit = now;
         const secs = (now - startedAt) / 1000;
-        job.mbps = secs > 0.5 ? round(job.received / 1048576 / secs, 2) : 0;
+        job.mbps = secs > 0.5 ? round((job.received - baseReceived) / 1048576 / secs, 2) : 0;
         emitProgress(job);
       }
       cb(null, chunk);
     },
   });
-  await pipeline(Readable.fromWeb(res.body), counter, fs.createWriteStream(job.part), { signal: job.controller.signal });
+  try {
+    await pipeline(
+      Readable.fromWeb(res.body),
+      counter,
+      fs.createWriteStream(job.part, { flags: resumed ? 'a' : 'w' }),
+      { signal: job.controller.signal },
+    );
+  } catch (e) {
+    // Watchdog abort qilganda pipeline «The operation was aborted» deb tashlaydi —
+    // foydalanuvchiga SABAB aytilishi kerak, abort kodi emas.
+    if (job.stalled) {
+      throw new Error(`yuklab olish ${Math.round(IDLE_MS / 1000)} s davomida to‘xtab qoldi — qayta urinib ko‘ring (${Math.round(job.received / 1048576)} MB saqlandi, davom etadi)`);
+    }
+    throw e;
+  } finally {
+    clearInterval(watchdog);
+  }
 
   if (job.total && Math.abs(job.received - job.total) > Math.max(4096, job.total * 0.005)) {
-    throw new Error(`hajm mos emas: ${job.received} / ${job.total} bayt (yuklab olish to‘liq bo‘lmadi)`);
+    throw new Error(`hajm mos emas: ${job.received} / ${job.total} bayt (yuklab olish to‘liq bo‘lmadi) — qayta urinib ko‘ring, davom etadi`);
   }
   await fsp.rename(job.part, job.dest);
 
@@ -605,9 +681,13 @@ function startDownload(item) {
   downloads.set(item.id, job);
   emitProgress(job);
   runDownload(job).catch((e) => {
-    job.state = job.controller.signal.aborted ? 'canceled' : 'error';
+    const canceled = job.controller.signal.aborted && !job.stalled;
+    job.state = canceled ? 'canceled' : 'error';
     job.error = String((e && e.message) || e);
-    if (job.part) fsp.rm(job.part, { force: true }).catch(() => {});
+    // BEKOR QILINGANDA `part` o‘chiriladi (foydalanuvchi xohlamadi). Xato/uzilishda
+    // esa SAQLANADI — keyingi urinish Range bilan shu yerdan davom etadi.
+    if (canceled && job.part) fsp.rm(job.part, { force: true }).catch(() => {});
+    job.mbps = 0;
     emitProgress(job);
   });
   return { ok: true, job: jobView(job) };

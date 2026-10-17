@@ -103,58 +103,31 @@ try {
   check('B. Lokal model bilan rasm', false, `xato: ${e && e.message}`);
 }
 
-// ---------- C. AI rasm (haqiqiy kalit bo'lsa) ----------
-const hasKey = !!(userKeys.gemini || userKeys.openai || userKeys.openrouter || userKeys.vercel);
-if (!hasKey) {
-  console.log('SKIP C. generate_image — AI rasm kaliti topilmadi (gemini/openai/openrouter).');
-} else {
-  try {
-    // ---------- C0. Zanjirni to'g'ridan-to'g'ri sinash (agent ishtirokisiz) ----------
-    // Gemini → OpenAI → OpenRouter → Vercel zanjiri haqiqiy rasm qaytaradimi?
-    let direct = null;
-    let directErr = '';
+// ---------- C. Lokal rasm — API YO‘Q ----------
+// Rasm generatsiyasi endi faqat lokal (stable-diffusion.cpp). Kalitlar configda bo‘lsa ham
+// `generateImage` bulutga chiqmaydi — shuning uchun bu yerda kalit shart emas.
+{
+  const { imageEngineStatus } = await import('./imagegen.js');
+  const st = imageEngineStatus();
+  if (!st.available) {
+    console.log(`SKIP C. lokal rasm dvigateli topilmadi — ${st.reason}`);
+  } else {
     try {
-      direct = await generateImage({
-        prompt: 'A red apple on a white background, simple flat illustration',
-        config,
-        signal: AbortSignal.timeout(150000),
-      });
-    } catch (e) {
-      directErr = e && e.message;
-    }
-    // Kvota/limit tugagan bo'lsa — bu kod xatosi emas, hisob holati: SKIP (sababi bilan).
-    const quotaSkip = !direct && /429|quota|exceeded|credit|Insufficient|rate limit/i.test(String(directErr));
-    if (quotaSkip) {
-      console.log(`SKIP C. AI rasm (generate_image) — provayder kvotasi/limit tugagan:\n      → ${String(directErr).slice(0, 200).replace(/\n/g, ' ')}`);
-    } else {
-      const b = direct && direct.buffer;
-      const isPng = !!b && b.subarray(0, 4).equals(PNG_SIG);
-      const isJpg = !!b && b[0] === 0xff && b[1] === 0xd8;
-      const dw = isPng ? b.readUInt32BE(16) : 0;
-      const dh = isPng ? b.readUInt32BE(20) : 0;
-      check('C0. 🔌 AI rasm zanjiri to‘g‘ridan-to‘g‘ri ishlaydi (generateImage)',
-        !!b && (isPng || isJpg) && b.length > 500 && (!isPng || (dw >= 256 && dh >= 256)),
-        b ? `${b.length} B · via=${direct.via} · png=${isPng} ${dw}x${dh}${isJpg ? ' jpg' : ''}` : `xato: ${String(directErr).slice(0, 140)}`);
-
-      // ---------- C1. Agent tool orqali (generate_image) ----------
-      const ev = [];
-      const engine = new AgentEngine({ config: { ...config, provider: 'gemini', model: 'models/gemini-3.5-flash' }, workspace, translateOutput: false, translateInput: false, maxSteps: 4 });
-      engine.on('event', (e) => ev.push(e));
       const t0 = Date.now();
-      const timeout = new Promise((_, rej) => { setTimeout(() => { try { engine.abort(); } catch {} rej(new Error('timeout (3 daqiqa)')); }, 180000); });
-      await Promise.race([
-        engine.run({ events: [], userText: 'generate_image (AI rasm) tool’ini ishlating — create_image EMAS. Olma rasmini yarating va olma.png fayliga saqlang. Prompt inglizcha yozing.' }),
-        timeout,
-      ]);
-      const tools = ev.filter((e) => e.type === 'tool_start').map((e) => e.tool);
-      const info = pngInfo(path.join(workspace, 'olma.png'));
-      const jpgOk = fs.existsSync(path.join(workspace, 'olma.png')) && !info?.png && info?.size > 500;
-      check('C1. 🎨 Agent generate_image tool’i bilan haqiqiy rasm yaratadi',
-        tools.includes('generate_image') && ((info?.png && info.w >= 256 && info.h >= 256) || jpgOk),
-        `${info ? `${info.size} B · ${info.png ? `${info.w}x${info.h}` : 'png emas'}` : 'fayl yo‘q'} · tools=[${tools.join(', ')}] · ${Math.round((Date.now() - t0) / 1000)} s`);
+      const r = await generateImage({
+        prompt: 'a red apple on a white background, flat illustration',
+        config: { ...config, imagegen: { size: '256x256', steps: 4 } },
+        signal: AbortSignal.timeout(300000),
+      });
+      const isPng = r.buffer.subarray(0, 4).equals(PNG_SIG);
+      const w = isPng ? r.buffer.readUInt32BE(16) : 0;
+      const h = isPng ? r.buffer.readUInt32BE(20) : 0;
+      check('C1. 🎨 Lokal AI rasm yaratadi (API kaliti va internet ishlatilmaydi)',
+        isPng && r.buffer.length > 1000 && w === 256 && h === 256,
+        `${r.buffer.length} B · ${w}x${h} · ${r.via} · ${Math.round((Date.now() - t0) / 1000)} s`);
+    } catch (e) {
+      check('C1. lokal rasm', false, 'xato: ' + e.message);
     }
-  } catch (e) {
-    check('C. AI generate_image', false, `xato: ${e && e.message}`);
   }
 }
 

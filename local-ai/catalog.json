@@ -153,15 +153,25 @@
       "bytes": 5214561328,
       "url": "https://huggingface.co/stabilityai/sd-turbo/resolve/main/sd_turbo.safetensors",
       "backend": "sd.cpp",
-      "subdir": "sd/models",
-      "min": { "ramGb": 8, "vramGb": 3, "diskGb": 5.3 },
-      "recommend": { "ramGb": 12, "vramGb": 6 },
-      "measured": null,
-      "strength": { "quality": 3, "speed": 5, "vramEfficiency": 3 },
+      "subdir": "sd/models",    "min": {
+      "ramGb": 8,
+      "vramGb": 4,
+      "diskGb": 5.3
+    },
+    "recommend": {
+      "ramGb": 12,
+      "vramGb": 8
+    },
+    "measured": null,
+    "strength": {
+      "quality": 3,
+      "speed": 5,
+      "vramEfficiency": 3
+    },
       "level": 3,
       "langs": ["matn → rasm (inglizcha prompt)"],
       "image": { "width": 512, "height": 512, "steps": 4, "cfgScale": 1.0 },
-      "notes": "4 qadamda rasm tayyor — CPU'da ham ~10–30 s. Narxi: fayl 5.2 GB (fp32) va 12 GB RAM tavsiya etiladi. Kuchsiz kompyuterda SD1.5 dan sekinroq bo‘lishi mumkin (katta fayl RAM'ga sig‘maydi)."
+      "notes": "4 qadamda rasm tayyor. O‘lchandi (RX 580 4 GB, 256×256 · 4 qadam): Vulkan 34 s, CPU 46 s. fp32 fayl 5,2 GB — 4 GB video kartada boshqa dasturlar ochiq bo‘lsa xotira yetmasligi mumkin (o‘lchandi: VAE decode OOM); shunda CPU dvigatel bo‘lsa ilova avtomatik o‘shanga o‘tadi."
     },
     {
       "id": "runtime-sd-vulkan",

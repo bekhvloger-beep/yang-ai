@@ -219,12 +219,15 @@
           <textarea id="imgStudioPrompt" rows="3" placeholder="masalan: tog'lar orasida quyosh chiqishi, realistik surat..."></textarea>
         </div>
         <div class="field">
-          <span>Sifat (razmer)</span>
+          <!-- Rasm FAQAT lokal (stable-diffusion.cpp): SD1.5 512×512 da o‘rgatilgan, shuning uchun
+               «1080/4K» o‘lcham emas — QADAM soni. O‘lcham 512×512 bo‘lib qoladi. -->
+          <span>Sifat (qadam soni · o‘lcham 512×512)</span>
           <div class="img-studio-quality" id="imgStudioQuality">
-            <button data-q="1080" class="active">1080 (tez)</button>
-            <button data-q="2160">2160 (2K)</button>
-            <button data-q="4320">4320 (4K)</button>
+            <button data-q="1080" class="active">20 (tez)</button>
+            <button data-q="2160">30</button>
+            <button data-q="4320">45 (sifatli)</button>
           </div>
+          <span class="dim" style="font-size:11px">Rasm kompyuteringizda yaratiladi — API, kalit va internet ishlatilmaydi. Dvigatel/model bo‘lmasa menejer ochiladi.</span>
         </div>
         <div class="field">
           <span>Tarjima va provayder holati</span>
