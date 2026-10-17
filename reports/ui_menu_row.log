@@ -1,0 +1,20 @@
+nishon: C:\Users\behru\AppData\Local\Programs\YANG AI\YANG AI.exe
+user-data: C:\Users\behru\AppData\Local\Temp\yang-menu-C40MlM
+
+PASS  1. Menyu qatorida «Lokal AI» bor va 5 band ko‘rinadi (Ctrl+Shift+M bilan)
+      → yuqori qatorlar=[Fayl | Tahrir | Ko‘rinish | Lokal AI | Oyna | Yordam] · bandlar=[Lokal AI menejeri — model bozori | Kompyuterda bor AI (Ollama / LM Studio) | Lokal rasm modellari | Ovoz modeli (o‘zbekcha nutq) | Kodlash rejimi (Kod AI)]
+PASS  2. «Lokal AI menejeri» bandini bosish modalni AYNAN matn turkumida ochadi
+      → band=«Lokal AI menejeri — model bozori» · enabled=true · modal ochiq=true · faol tab=text
+PASS  3. «Kompyuterda bor AI» bandi menejerni «Kompyuterda bor» turkumi bilan ochadi
+      → band=«Kompyuterda bor AI (Ollama / LM Studio)» · faol tab=installed
+PASS  4. Katalog to‘liq o‘qiladi (12 yozuv) va xatosiz
+      → yozuvlar=12 · updated=2026-10-17 · xato=«»
+PASS  5. Ishga tushganda GitHub’dagi admin katalogi tortilib, paket ustiga qo‘yiladi
+      → jurnal: «lokal AI katalogi admin nusxasi bilan yangilandi (12 yozuv)»
+PASS  6. Katalogda «Ishlamaydi» holati YO‘Q, resurs yetmasa faqat «Ogohlantirish» beriladi
+      → yozuvlar=12 · warn=2 · «Ishlamaydi»=0 · namuna=[{"name":"Qwen2.5-Coder 7B Instruct (Q4_K_M)","fit":"Ogohlantirish"},{"name":"SD-Turbo (1–4 qadam, juda tez)","fit":"Ogohlantirish"}]
+PASS  7. Ogohlantirilgan qatorda ham tugma BOR va o‘chirilmagan (yuklab olish bloklanmaydi)
+      → qatorlar=12 · warn yozuv=«Qwen2.5-Coder 7B Instruct (Q4_K_M)» (Ogohlantirish) · ogohlantirish qatori=text: tugma faol=true · «Ishlamaydi» matni=0 · tugmasiz/o‘chiq qator=0 · «Qwen2.5-Coder 7B Instruct (Q4_K_M)★★★★★→ ★☆☆☆☆OgohlantirishHajm: 4.4 GBmin RAM: 8 GBkerak joy: 5 GBo‘lchandi: 4/4 · 36.9s · ball 42.03llama.cppENG YAXSHI lokal kod modeli»
+
+XULOSA: 7/7 PASS
+jurnal: D:\loyiha\ChatDev-main\reports\ui_menu_row.log

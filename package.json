@@ -22,6 +22,7 @@
     "test:voice": "node agent/test_local_voice.mjs",
     "test:bench:score": "node agent/test_bench_score.mjs",
     "test:ai:manager": "node scripts/ui_models_manager.mjs",
+    "test:ai:menu": "node scripts/ui_menu_row.mjs",
     "test:ide:modelsui": "node ide/test_local_ai_ui.mjs",
     "test:ide:pytypes": "electron ide/test_python_types.cjs",
     "test:ide:pydebug": "electron ide/test_python_debug.cjs",
